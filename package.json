@@ -1,0 +1,53 @@
+{
+  "name": "phaseforge",
+  "version": "0.1.0",
+  "description": "Activates a senior engineer in your AI coding sessions. Phase-based discipline (discuss → plan → execute → verify) that keeps context small, architecture remembered, and requirements understood before code gets written.",
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "ai-agents",
+    "vibe-coding",
+    "prompt-engineering",
+    "software-architecture",
+    "agent-workflow",
+    "context-engineering",
+    "skills",
+    "gsd"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Subhash Yadav",
+    "email": "subhashyadav98146@gmail.com"
+  },
+  "homepage": "https://github.com/Acrto3Hil3/phaseforge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Acrto3Hil3/phaseforge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Acrto3Hil3/phaseforge/issues"
+  },
+  "type": "module",
+  "bin": {
+    "phaseforge": "./bin/cli.js"
+  },
+  "files": [
+    ".claude-plugin/",
+    "commands/",
+    "skills/",
+    "templates/",
+    "bin/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "postinstall": "node ./bin/cli.js --postinstall-hint || true"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

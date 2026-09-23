@@ -1,0 +1,12 @@
+{
+  "name": "phaseforge",
+  "version": "0.1.0",
+  "description": "Activates a senior engineer in your AI coding sessions. Phase-based discipline that keeps context small, architecture remembered, and requirements understood before code gets written.",
+  "author": {
+    "name": "Subhash Yadav",
+    "url": "https://github.com/Acrto3Hil3"
+  },
+  "homepage": "https://github.com/Acrto3Hil3/phaseforge",
+  "license": "MIT",
+  "keywords": ["workflow", "architecture", "governance", "context-engineering"]
+}
