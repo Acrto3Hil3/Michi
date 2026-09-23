@@ -1,120 +1,221 @@
 # Getting started
 
-A full walkthrough, using a real example: adding credit/"udhaar" tracking to a
-retail system.
+A full walkthrough with a real example: a booking app for a barbershop, built by
+someone who has never written code.
+
+You need two things: an AI coding agent (Claude Code, Codex, Cursor, Antigravity,
+anything) and a folder for your project.
+
+---
 
 ## 1. Install
 
 ```bash
-cd your-project
-npx phaseforge init --docs
+cd my-barber-app
+npx phaseforge init
 ```
 
-Then in Claude Code:
+Open your agent in that folder. If it's Claude Code, the commands below work as
+typed. If it's another agent, everything still works — you just describe the step
+instead of typing a slash command, and the agent follows `AGENTS.md`.
+
+---
+
+## 2. Describe your idea, badly
+
+Don't try to sound technical. Say it the way you'd say it out loud.
 
 ```
-/gsd-init
+/idea an app where people find a barber near them, book a time slot,
+and pay a small deposit so they don't no-show
 ```
 
-It reads your actual repo — stack, layout, what's already built — and fills the
-templates in with real details instead of placeholders. Review what it wrote,
-especially `docs/PROGRESS.md`. **An inaccurate PROGRESS.md is worse than an empty
-one**, because future sessions will trust it.
+Your agent becomes a product manager. It comes back with something like:
 
-## 2. Edit your constitution
-
-Open `docs/ENGINEERING-CONSTITUTION.md`. This is the one file worth ten minutes
-of your time up front.
-
-Delete what doesn't apply. Add your own rules. If your project has a rule like
-"we never delete customer data, only deactivate it" — write it down now, and you
-will never have to say it again in a prompt.
-
-## 3. Start a phase
-
-A "phase" is one coherent unit of work. Not a sprint, not a single function —
-something like "add credit tracking" or "wire the payments screen to real data."
-
-```
-/gsd-discuss credit-tracking
-```
-
-The agent reads only what it needs, then comes back with something like:
-
-> I've looked at the existing orders and payments modules. A few things need
-> your call before I plan this:
+> Good — this is buildable. A few things I need from you before we design it.
+> I'll ask three at a time.
 >
-> 1. When a customer owes money after delivery, should that create a credit
->    record automatically, or does someone create it manually? **My
->    recommendation:** automatic at delivery, since manual creation will be
->    forgotten and the balance is already known.
-> 2. For old paper-ledger debts with no order in the system — do those need to
->    be tracked here too? If yes, they need a different record shape.
->
-> I've assumed credits are Accounts-only to create; say if sales staff need it.
+> 1. When someone books and pays a deposit, then cancels an hour before — does
+>    the barber keep the deposit, does the customer get it back, or does it
+>    depend on how late the cancellation is? **My recommendation:** full refund
+>    if cancelled more than 24 hours ahead, barber keeps it after that. It's the
+>    common pattern and it's easy to explain to customers.
+> 2. Who sets a barber's available hours — the barber themselves, or you?
+> 3. Do you need to handle more than one city at launch, or is one enough?
 
-Answer in plain language. That conversation gets written into the phase file's
-Discussion section, so it survives the session.
+Answer in plain words. "Barber keeps it if it's under 2 hours. Barbers set their
+own hours. One city."
 
-## 4. Plan
+That's it. That conversation becomes `docs/IDEA.md` and it never has to happen
+again — not in this session, not in a new one, not with a different AI.
 
-```
-/gsd-plan credit-tracking
-```
+**This is the most valuable step and it's the one people skip.** Ten minutes here
+saves rebuilding the whole thing in three weeks.
 
-You get an exact file list, in dependency order, broken into committable steps —
-plus the migration it needs and the blast radius it expects to touch. Read it.
-This is the cheapest possible moment to catch a wrong assumption.
+---
 
-## 5. Execute, one step at a time
+## 3. Get the real documents
 
 ```
-/gsd-execute credit-tracking
+/prd
 ```
 
-Each run does **one step**, verifies it, commits it, ticks the box, and stops.
-Run it again for the next step. Between runs your context window is clean, which
-is why step 9 works as well as step 1.
-
-For long phases, loop it — see `docs/RALPH-LOOP.md`.
-
-## 6. Verify
+Writes `docs/PRD.md` — what the product does, who uses it, what each screen needs
+to handle, and what is deliberately *not* in version one. In plain language. Read
+it. If something is wrong, say so now — it costs nothing to change a document.
 
 ```
-/gsd-verify credit-tracking
+/trd
 ```
 
-The agent actually runs things: hits endpoints as different roles, clicks the
-real screens, queries the database, confirms a restricted role gets a 403, and
-cleans up its test data. Then it updates `PROGRESS.md` with what's genuinely
-verified versus merely built.
+Writes `docs/TRD.md` — the technical decisions. Which technologies, how the data
+is structured, and **why** each choice was made.
 
-If something didn't pass, it says so rather than ticking the box.
-
-## 7. Check in any time
+You won't understand every word. That's fine. What matters is the "why" — if the
+reasoning sounds wrong for your situation ("it assumed I'd have thousands of
+users, I'll have forty"), say so, and it gets redesigned before a single line of
+code exists.
 
 ```
-/gsd-status
+/plan
 ```
 
-Ten-second summary: current phase, what's next, what's blocked, what debt is
-tracked.
+Splits the build into phases. Something like:
+
+> - **phase-1-accounts** — people can sign up and log in
+> - **phase-2-barbers** — barbers create a profile and set their hours
+> - **phase-3-booking** — customers see available slots and book one
+> - **phase-4-deposits** — payment, and the cancellation rules
+> - **phase-5-polish** — empty states, errors, mobile layout
+
+Each phase is a thing you can look at and use when it's done.
+
+---
+
+## 4. Build one phase
+
+```
+/build phase-1-accounts
+```
+
+It does one step, checks that it works, saves it, and stops. Run it again for the
+next step. It never dumps 3,000 lines on you at once — you can follow along, and
+if something goes wrong you only have to undo one small piece.
+
+Between runs, your agent starts fresh and small. That's deliberate: it's why the
+tenth step is as reliable as the first, and why this costs fewer tokens than
+letting one giant session sprawl.
+
+---
+
+## 5. Have it checked
+
+When a phase is done:
+
+```
+/review phase-1-accounts
+```
+
+A senior engineer reviews the work that was just done — looking for the things
+that hurt later: security holes, data that can get out of sync, code that will be
+painful to change.
+
+```
+/test phase-1-accounts
+```
+
+A QA tester stops being the author and tries to break it. Empty forms.
+Double-clicking the submit button. Logging in as one person and trying to see
+someone else's bookings. Paying twice. Closing the tab mid-payment.
+
+It reports what it **actually** tested, not "everything works." If your app lets
+one customer see another's phone number, this is where you find out — not your
+customers.
+
+---
+
+## 6. Make a change later
+
+Three weeks in, you want something new. Don't just ask for it:
+
+```
+/refine let customers reschedule instead of cancelling
+```
+
+You get back the brief a senior engineer would have written: what happens to the
+deposit, what the barber sees, how many times someone may reschedule, what
+happens if the new slot gets taken while they're choosing, and what's out of
+scope.
+
+Read it, correct anything wrong, then:
+
+```
+/plan reschedule
+/build reschedule
+```
+
+---
+
+## 7. Go live
+
+```
+/cloud I can spend about $20 a month. Maybe 200 customers in the first few months.
+```
+
+You get one recommendation with real service names and real monthly numbers —
+not a comparison table. Plus what's free now, what makes it stop being free, and
+what the bill becomes then.
+
+```
+/ship
+```
+
+Pre-launch check, then deployment, written into `docs/DEPLOYMENT.md` as steps you
+can follow yourself. It will insist you restore a backup once, on purpose, while
+nothing is wrong. Do it. That's the difference between an outage and losing the
+business.
+
+---
+
+## Any time
+
+```
+/status
+```
+
+Ten seconds: what's built, what's verified, what's next, what's blocked.
 
 ---
 
 ## A realistic first week
 
-- **Day 1** — install, edit the constitution, `/gsd-init`, run `/gsd-status` to
-  see it reflect reality.
-- **Day 2** — do one small phase end to end. Deliberately pick something boring.
-  The point is to see the loop work.
-- **Day 3+** — real work. You'll notice the agent starts asking better questions
-  and stops rewriting things you didn't ask about.
+- **Day 1** — install, run `/idea`, answer the questions honestly. Read the PRD.
+- **Day 2** — `/trd` and `/plan`. Push back on anything that sounds oversized for
+  what you're actually doing.
+- **Day 3** — build phase 1 end to end, including `/review` and `/test`. It'll
+  feel slow. It's the only day that does.
+- **Day 4+** — the loop. Build, review, test, next.
 
-## When *not* to use a phase
+---
 
-Not everything needs the full loop. A typo fix, a copy change, a one-line bug
-fix — just do it. Phases are for work with a blast radius: new features, schema
-changes, anything touching money, permissions, or existing working code.
+## When *not* to use all this
 
-The senior-engineer skill still applies to the small stuff. The ceremony doesn't.
+A typo, a colour change, a wording fix — just ask your agent directly. The
+ceremony is for work with consequences: new features, anything touching money,
+anything touching who-can-see-what, and anything that changes how data is stored.
+
+The engineering skills still apply to small changes. The process doesn't have to.
+
+---
+
+## If your agent isn't Claude Code
+
+The slash commands are Claude Code's format. Everywhere else:
+
+- Codex and Antigravity read `AGENTS.md` on their own — just say *"follow the
+  phaseforge process in AGENTS.md"* once.
+- Cursor, Copilot, Windsurf and Gemini CLI got a pointer file during install.
+- Anything else: open `AGENTS.md`, paste the workflow section into the chat.
+
+Then instead of `/prd`, say *"write the PRD for this, following AGENTS.md."*
+Same result. The process is the product — the commands are just shortcuts.

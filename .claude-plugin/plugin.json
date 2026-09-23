@@ -1,12 +1,20 @@
 {
   "name": "phaseforge",
   "version": "0.1.0",
-  "description": "Activates a senior engineer in your AI coding sessions. Phase-based discipline that keeps context small, architecture remembered, and requirements understood before code gets written.",
+  "description": "A senior software engineering team, installed into your project. Turns your rough idea into a PRD, architecture, phased plan, reviewed code, real testing and a deployment you can afford — with any AI agent.",
   "author": {
     "name": "Subhash Yadav",
     "url": "https://github.com/Acrto3Hil3"
   },
   "homepage": "https://github.com/Acrto3Hil3/phaseforge",
   "license": "MIT",
-  "keywords": ["workflow", "architecture", "governance", "context-engineering"]
+  "keywords": [
+    "workflow",
+    "architecture",
+    "prd",
+    "testing",
+    "deployment",
+    "vibe-coding",
+    "context-engineering"
+  ]
 }

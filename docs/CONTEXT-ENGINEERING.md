@@ -1,90 +1,96 @@
-# Why this reduces token burn
+# Why this makes your AI cheaper and more reliable
 
-The expensive thing in a long AI-assisted project isn't generating code. It's
-**rediscovery** — every fresh session re-reading your codebase to reconstruct
-facts that were already established last week.
+Every AI agent has a limited working memory. Fill it up and two things happen:
+you pay more, and the answers get worse — it starts forgetting what it decided
+an hour ago and contradicting itself.
+
+The expensive thing in a long project isn't writing code. It's **rediscovery** —
+every new session re-reading your whole project to work out facts that were
+already settled last week.
 
 phaseforge attacks that in three places.
 
 ---
 
-## 1. Bounded reads
+## 1. It tells your agent what *not* to read
 
-Every `/gsd-*` command tells the agent **what to read and what to skip**.
+Every command says explicitly which files to open and which to skip.
 
-`/gsd-discuss` reads: the entry point, PROGRESS.md, the constitution, one phase
-file, and only the source files that phase actually touches. Not the repo.
+`/plan` reads the idea document, the progress file, the rules, one phase file,
+and only the parts of the code that phase actually touches. Not the whole
+project.
 
-Without that instruction, an agent handed "add credit tracking" will grep
-broadly, open twenty files, and spend a large share of its window orienting
-before writing a line. With it, the same task starts with a map.
+Without that, an agent handed "add cancellation" will search broadly, open twenty
+files, and spend a large share of its memory just orienting itself before writing
+a single line. With it, the same task starts with a map.
 
-## 2. One step per execution
+## 2. It builds one step at a time
 
-`/gsd-execute` does exactly one plan step, then stops.
+`/build` does exactly one step, then stops.
 
-This sounds like a limitation. It's the opposite: it means step 9 of a plan runs
-in a **clean context window** rather than one already 70% full of steps 1–8. Long
-phases stop degrading, because no single session carries the whole phase.
+This sounds like a limitation. It's the opposite. It means step 9 of a plan runs
+with a **clean, empty memory** instead of one already 70% full of steps 1–8. Long
+stretches of work stop getting worse toward the end, because no single session
+has to carry the whole thing.
 
-The phase file is the handoff. If it's written well, iteration 9 doesn't need to
-have seen iterations 1–8 — which is also exactly what makes unattended loops work.
+The phase file is the handover note. If it's written properly, step 9 doesn't
+need to have witnessed steps 1–8.
 
-## 3. Durable memory instead of re-derivation
+## 3. It writes things down instead of working them out again
 
-The rule in the architecture-memory skill:
+The rule the architecture-memory skill follows:
 
-> Any architectural fact that took more than one file-read to establish gets
-> written down.
+> Any fact that took more than one file to establish gets written down.
 
-Cheap to re-derive → don't bother. Expensive to re-derive → write it in
+Cheap to work out again → don't bother. Expensive → it goes in
 `docs/architecture/`. Things like:
 
-- which module owns which data
-- what a derived value is derived *from*
-- which constraint protects which business rule
-- why an obvious-looking refactor is actually unsafe
+- which part of the system owns which data
+- what a calculated number is calculated *from*
+- which database rule protects which business rule
+- why an obvious-looking cleanup is actually dangerous
 
-The single highest-value page is `docs/architecture/DATA.md` — source of truth per
-value. Most expensive bugs in AI-assisted codebases come from two places both
-claiming to own the same fact, and one table prevents that whole category.
+The single most valuable page is `docs/architecture/DATA.md` — for every
+meaningful value, where the truth lives. The most expensive recurring bug in
+AI-built software is two places both claiming to own the same fact, and one table
+prevents that entire category.
 
 ---
 
 ## What this does *not* do
 
-It doesn't compress your prompts or shrink model context. It changes **what gets
+It doesn't shrink your prompts or change your AI plan. It changes **what gets
 read**, which is where the waste actually is.
 
-And it costs something: writing phase files and architecture notes is real work.
-The trade pays off on projects that run for weeks and sessions that run long. On
-a weekend script, the ceremony isn't worth it — use the senior-engineer skill
-alone and skip the phases.
+And it costs something: writing the documents is real work. The trade pays off on
+anything that runs for weeks. On a weekend script it isn't worth it — just use
+the skills and skip the phases.
 
 ---
 
-## Keeping the docs cheap
+## Keeping the documents cheap
 
-Documentation that costs more context than it saves is a net loss. So:
+Documentation that costs more to read than it saves is a net loss. So:
 
-- Each architecture file stays readable in **one pass**. If `DOMAIN.md` grows
-  past comfortable, split by domain rather than letting it sprawl.
-- `PROGRESS.md` is a status table, not a changelog. Git already has the changelog.
-- Phase files get archived, not deleted — but old ones aren't read unless relevant.
-- **Stale docs are worse than none**, because they get believed. Update in the
-  same change that caused the drift, never as a separate cleanup pass later.
+- Each architecture file should be readable **in one sitting**. If one grows past
+  comfortable, split it rather than letting it sprawl.
+- `PROGRESS.md` is a status table, not a diary. Your version history already has
+  the diary.
+- Old phase files get archived, not deleted — and aren't read unless relevant.
+- **Out-of-date documents are worse than none**, because they get believed.
+  Update them in the same change that made them wrong, never as a cleanup "later."
 
 ---
 
-## Signals it's working
+## Signs it's working
 
-- Sessions stop opening files unrelated to the task
-- The agent references a decision from weeks ago without you re-explaining it
-- Long phases don't visibly degrade toward the end
-- You stop repeating the same three corrections in every prompt
+- Your agent stops opening files unrelated to what you asked
+- It refers back to a decision from weeks ago without you re-explaining it
+- Long stretches of work don't visibly deteriorate toward the end
+- You stop repeating the same three corrections in every message
 
-Signals it isn't:
+Signs it isn't:
 
-- Phase files written but never read back
-- PROGRESS.md that doesn't match reality
-- Architecture docs nobody updates → delete them rather than keeping fiction
+- Phase files being written but never read back
+- A progress file that doesn't match what's actually built
+- Architecture notes nobody updates — delete them rather than keeping fiction

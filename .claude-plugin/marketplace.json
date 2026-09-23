@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "phaseforge",
-  "description": "Senior engineering discipline for AI coding sessions — phase workflow, architecture memory, and a constitution your agent actually follows.",
+  "description": "A senior software engineering team for your AI coding agent — product, architecture, build, review, testing, and deployment.",
   "owner": {
     "name": "Subhash Yadav",
     "url": "https://github.com/Acrto3Hil3"
@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "phaseforge",
-      "description": "Discuss → plan → execute → verify. Keeps context small, architecture remembered, requirements understood before code.",
+      "description": "Idea → PRD → architecture → phased build → senior review → real testing → hosting you can afford. Built for non-technical founders.",
       "source": "./",
       "category": "productivity"
     }

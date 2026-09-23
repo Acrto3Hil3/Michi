@@ -1,159 +1,210 @@
 #!/usr/bin/env node
 /**
- * phaseforge CLI
+ * phaseforge — your engineering team, installed into your project.
  *
- * Installs the phaseforge commands and skills into a project's .claude/
- * directory, and optionally scaffolds the docs/ structure.
- *
- * Usage:
- *   npx phaseforge init          install commands + skills into ./.claude
- *   npx phaseforge init --global install into ~/.claude (all projects)
- *   npx phaseforge init --docs   also scaffold docs/ templates
- *   npx phaseforge status        show what's installed
- *   npx phaseforge uninstall     remove installed phaseforge files
+ *   npx phaseforge init            set up in this project
+ *   npx phaseforge init --agent=X  target a specific AI agent
+ *   npx phaseforge status          what's installed
+ *   npx phaseforge uninstall       remove it
  */
 
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const args = process.argv.slice(2);
-const cmd = args[0];
-const has = (f) => args.includes(f);
+const PKG = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const argv = process.argv.slice(2);
+const cmd = argv[0];
+const has = (f) => argv.includes(f);
+const flag = (name) => {
+  const hit = argv.find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.split("=")[1] : null;
+};
 
 const c = {
   b: (s) => `\x1b[1m${s}\x1b[0m`,
   dim: (s) => `\x1b[2m${s}\x1b[0m`,
   g: (s) => `\x1b[32m${s}\x1b[0m`,
   y: (s) => `\x1b[33m${s}\x1b[0m`,
-  r: (s) => `\x1b[31m${s}\x1b[0m`,
+  cy: (s) => `\x1b[36m${s}\x1b[0m`,
 };
 
-// npm postinstall runs this — print a hint, never mutate the user's project.
 if (has("--postinstall-hint")) {
-  console.log(`\n${c.b("phaseforge")} installed. Set it up in a project:\n\n  ${c.g("npx phaseforge init")}\n`);
+  console.log(`\n${c.b("phaseforge")} installed.\n\n  Set it up in your project:  ${c.g("npx phaseforge init")}\n`);
   process.exit(0);
 }
 
-function targetRoot() {
-  return has("--global") ? join(homedir(), ".claude") : join(process.cwd(), ".claude");
-}
+/**
+ * Where each supported agent reads its instructions from.
+ * AGENTS.md is the cross-agent standard and is always written.
+ */
+const AGENTS = {
+  claude: { label: "Claude Code", instructions: "CLAUDE.md", commands: ".claude/commands", skills: ".claude/skills" },
+  codex: { label: "Codex", instructions: "AGENTS.md" },
+  cursor: { label: "Cursor", instructions: ".cursor/rules/phaseforge.mdc" },
+  antigravity: { label: "Antigravity", instructions: "AGENTS.md" },
+  copilot: { label: "GitHub Copilot", instructions: ".github/copilot-instructions.md" },
+  windsurf: { label: "Windsurf", instructions: ".windsurfrules" },
+  gemini: { label: "Gemini CLI", instructions: "GEMINI.md" },
+};
 
-/** Copy a directory's children, skipping files that already exist. */
-function copyTree(from, to) {
-  if (!existsSync(from)) return { copied: [], skipped: [] };
+function copyTree(from, to, out = { copied: [], skipped: [] }) {
+  if (!existsSync(from)) return out;
   mkdirSync(to, { recursive: true });
-  const copied = [];
-  const skipped = [];
-
   for (const entry of readdirSync(from)) {
     const src = join(from, entry);
     const dest = join(to, entry);
-
     if (statSync(src).isDirectory()) {
-      const r = copyTree(src, dest);
-      copied.push(...r.copied);
-      skipped.push(...r.skipped);
-      continue;
+      copyTree(src, dest, out);
+    } else if (existsSync(dest)) {
+      out.skipped.push(dest);
+    } else {
+      cpSync(src, dest);
+      out.copied.push(dest);
     }
-    if (existsSync(dest)) {
-      skipped.push(dest);
-      continue;
-    }
-    cpSync(src, dest);
-    copied.push(dest);
   }
-  return { copied, skipped };
+  return out;
 }
 
-function rel(p) {
-  return p.replace(process.cwd() + "/", "").replace(homedir(), "~");
+function writeIfMissing(path, content, out) {
+  if (existsSync(path)) {
+    out.skipped.push(path);
+    return;
+  }
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content);
+  out.copied.push(path);
 }
 
 function init() {
-  const root = targetRoot();
-  const scope = has("--global") ? "globally (~/.claude)" : `in this project (${rel(root)})`;
+  const cwd = process.cwd();
+  const global = has("--global");
+  const root = global ? join(homedir(), ".claude") : cwd;
+  const requested = flag("agent");
+  const targets = requested ? [requested] : Object.keys(AGENTS);
 
-  console.log(`\n${c.b("phaseforge")} — installing ${scope}\n`);
-
-  const results = [
-    ["commands", copyTree(join(PKG_ROOT, "commands"), join(root, "commands"))],
-    ["skills", copyTree(join(PKG_ROOT, "skills"), join(root, "skills"))],
-  ];
-
-  if (has("--docs")) {
-    const docsRoot = join(process.cwd(), "docs");
-    results.push(["docs", copyTree(join(PKG_ROOT, "templates"), docsRoot)]);
+  if (requested && !AGENTS[requested]) {
+    console.log(`\n${c.y("Unknown agent:")} ${requested}`);
+    console.log(`Supported: ${Object.keys(AGENTS).join(", ")}\n`);
+    process.exit(1);
   }
 
-  let totalCopied = 0;
-  let totalSkipped = 0;
+  console.log(`\n${c.b("phaseforge")} — installing your engineering team\n`);
 
-  for (const [label, r] of results) {
-    totalCopied += r.copied.length;
-    totalSkipped += r.skipped.length;
-    console.log(`  ${c.g("✓")} ${label.padEnd(10)} ${r.copied.length} installed${r.skipped.length ? c.dim(`, ${r.skipped.length} already present (left alone)`) : ""}`);
-  }
+  const out = { copied: [], skipped: [] };
+  const agentsMd = readFileSync(join(PKG, "templates", "AGENTS.md"), "utf8");
 
-  console.log(`\n${c.b("Next:")}`);
-  if (!has("--docs")) {
-    console.log(`  Run ${c.g("/gsd-init")} in Claude Code to scaffold docs and write your constitution.`);
+  if (global) {
+    // Global install: Claude Code commands + skills for every project.
+    copyTree(join(PKG, "commands"), join(root, "commands"), out);
+    copyTree(join(PKG, "skills"), join(root, "skills"), out);
+    console.log(`  ${c.g("✓")} Installed globally to ${c.dim("~/.claude")} — available in every project`);
   } else {
-    console.log(`  Edit ${c.g("docs/ENGINEERING-CONSTITUTION.md")} — make it yours.`);
-    console.log(`  Then run ${c.g("/gsd-init")} to fill the templates with this project's real details.`);
-  }
-  console.log(`  Then: ${c.g("/gsd-discuss <phase>")} → ${c.g("/gsd-plan")} → ${c.g("/gsd-execute")} → ${c.g("/gsd-verify")}\n`);
+    // Cross-agent instructions file — the universal entry point.
+    writeIfMissing(join(cwd, "AGENTS.md"), agentsMd, out);
 
-  if (totalSkipped > 0) {
-    console.log(c.dim(`  ${totalSkipped} existing file(s) were left untouched. Nothing was overwritten.\n`));
+    // Claude Code gets executable commands + skills.
+    if (targets.includes("claude")) {
+      copyTree(join(PKG, "commands"), join(cwd, ".claude", "commands"), out);
+      copyTree(join(PKG, "skills"), join(cwd, ".claude", "skills"), out);
+      writeIfMissing(
+        join(cwd, "CLAUDE.md"),
+        `# Project instructions\n\nSee [AGENTS.md](AGENTS.md) — the same rules apply here.\n\nphaseforge commands are available: \`/setup\`, \`/idea\`, \`/prd\`, \`/trd\`, \`/plan\`,\n\`/refine\`, \`/build\`, \`/test\`, \`/review\`, \`/cloud\`, \`/ship\`, \`/status\`.\n`,
+        out,
+      );
+    }
+
+    // Other agents read a pointer to AGENTS.md from their own conventional path.
+    const pointer = `# Engineering rules\n\nThis project follows the process in [AGENTS.md](AGENTS.md).\nRead that file before making changes — it defines how work is planned,\nbuilt, verified, and what must never be decided without asking.\n`;
+
+    for (const key of targets) {
+      const a = AGENTS[key];
+      if (!a || a.instructions === "AGENTS.md" || key === "claude") continue;
+      // Cursor .mdc files need frontmatter or the rule is never applied.
+      const body = key === "cursor" ? `---\ndescription: phaseforge engineering process\nalwaysApply: true\n---\n\n${pointer}` : pointer;
+      writeIfMissing(join(cwd, a.instructions), body, out);
+    }
+
+    // Project docs scaffold.
+    copyTree(join(PKG, "templates", "architecture"), join(cwd, "docs", "architecture"), out);
+    copyTree(join(PKG, "templates", "phases"), join(cwd, "docs", "phases"), out);
+    for (const f of ["ENGINEERING-CONSTITUTION.md", "PROGRESS.md"]) {
+      writeIfMissing(join(cwd, "docs", f), readFileSync(join(PKG, "templates", f), "utf8"), out);
+    }
+
+    console.log(`  ${c.g("✓")} ${c.b("AGENTS.md")} ${c.dim("— works with Codex, Cursor, Antigravity, Copilot, any agent")}`);
+    if (targets.includes("claude")) {
+      console.log(`  ${c.g("✓")} ${c.b(".claude/")} ${c.dim("— 12 commands + 8 engineering skills")}`);
+    }
+    console.log(`  ${c.g("✓")} ${c.b("docs/")} ${c.dim("— constitution, progress, architecture templates")}`);
   }
-  if (totalCopied === 0) {
-    console.log(c.y("  Everything was already installed — nothing to do.\n"));
-  }
+
+  console.log(`\n  ${c.dim(`${out.copied.length} files created${out.skipped.length ? `, ${out.skipped.length} already existed and were left alone` : ""}`)}\n`);
+
+  console.log(c.b("  Start here:\n"));
+  console.log(`    ${c.cy("/setup")}   tell your agent about this project`);
+  console.log(`    ${c.cy("/idea")}    describe what you want to build, in plain words\n`);
+  console.log(c.dim("  Not using Claude Code? Open AGENTS.md and paste the workflow"));
+  console.log(c.dim("  section into your agent — it works the same way.\n"));
 }
 
 function status() {
-  for (const root of [join(process.cwd(), ".claude"), join(homedir(), ".claude")]) {
-    const commands = join(root, "commands");
-    const skills = join(root, "skills");
-    const found = [];
+  const cwd = process.cwd();
+  console.log(`\n${c.b("phaseforge")} — what's installed here\n`);
 
-    if (existsSync(commands)) {
-      found.push(...readdirSync(commands).filter((f) => f.startsWith("gsd-")));
+  const checks = [
+    ["AGENTS.md", join(cwd, "AGENTS.md")],
+    ["CLAUDE.md", join(cwd, "CLAUDE.md")],
+    [".claude/commands", join(cwd, ".claude", "commands")],
+    [".claude/skills", join(cwd, ".claude", "skills")],
+    ["docs/ENGINEERING-CONSTITUTION.md", join(cwd, "docs", "ENGINEERING-CONSTITUTION.md")],
+    ["docs/PROGRESS.md", join(cwd, "docs", "PROGRESS.md")],
+  ];
+
+  for (const [label, path] of checks) {
+    const there = existsSync(path);
+    let detail = "";
+    if (there && statSync(path).isDirectory()) {
+      detail = c.dim(` (${readdirSync(path).length} items)`);
     }
-    const ourSkills = ["senior-engineer", "requirement-analyst", "architecture-memory"]
-      .filter((s) => existsSync(join(skills, s)));
+    console.log(`  ${there ? c.g("✓") : c.dim("·")} ${there ? label : c.dim(label)}${detail}`);
+  }
 
-    console.log(`\n${c.b(rel(root))}`);
-    console.log(`  commands: ${found.length ? c.g(found.join(", ")) : c.dim("none")}`);
-    console.log(`  skills:   ${ourSkills.length ? c.g(ourSkills.join(", ")) : c.dim("none")}`);
+  const globalCmds = join(homedir(), ".claude", "commands");
+  if (existsSync(globalCmds)) {
+    console.log(`\n  ${c.dim("global:")} ~/.claude/commands ${c.dim(`(${readdirSync(globalCmds).length} items)`)}`);
   }
   console.log("");
 }
 
 function uninstall() {
-  const root = targetRoot();
+  const cwd = process.cwd();
   const removed = [];
+  const ours = new Set(readdirSync(join(PKG, "commands")));
+  const ourSkills = new Set(readdirSync(join(PKG, "skills")));
 
-  const commandsDir = join(root, "commands");
-  if (existsSync(commandsDir)) {
-    for (const f of readdirSync(commandsDir).filter((f) => f.startsWith("gsd-"))) {
-      rmSync(join(commandsDir, f));
-      removed.push(join(commandsDir, f));
+  const cmdDir = join(cwd, ".claude", "commands");
+  if (existsSync(cmdDir)) {
+    for (const f of readdirSync(cmdDir)) {
+      if (ours.has(f)) {
+        rmSync(join(cmdDir, f));
+        removed.push(f);
+      }
     }
   }
-  for (const s of ["senior-engineer", "requirement-analyst", "architecture-memory"]) {
-    const p = join(root, "skills", s);
-    if (existsSync(p)) {
-      rmSync(p, { recursive: true });
-      removed.push(p);
+  const skillDir = join(cwd, ".claude", "skills");
+  if (existsSync(skillDir)) {
+    for (const s of readdirSync(skillDir)) {
+      if (ourSkills.has(s)) {
+        rmSync(join(skillDir, s), { recursive: true });
+        removed.push(s);
+      }
     }
   }
 
-  console.log(`\n${c.b("phaseforge")} — removed ${removed.length} file(s) from ${rel(root)}`);
-  console.log(c.dim("  Your docs/ folder was not touched — that's your project's content.\n"));
+  console.log(`\n${c.b("phaseforge")} — removed ${removed.length} item(s)`);
+  console.log(c.dim("  Your docs/, AGENTS.md and CLAUDE.md were left alone — they're your project's content.\n"));
 }
 
 switch (cmd) {
@@ -168,13 +219,15 @@ switch (cmd) {
     break;
   default:
     console.log(`
-${c.b("phaseforge")} — senior engineering discipline for AI coding sessions
+${c.b("phaseforge")} — a senior engineering team, installed into your project
 
-  ${c.g("npx phaseforge init")}             install into this project's .claude/
-  ${c.g("npx phaseforge init --docs")}      also scaffold docs/ templates
-  ${c.g("npx phaseforge init --global")}    install into ~/.claude for every project
-  ${c.g("npx phaseforge status")}           show what's installed
-  ${c.g("npx phaseforge uninstall")}        remove phaseforge files
+  ${c.g("npx phaseforge init")}              set up in this project
+  ${c.g("npx phaseforge init --agent=codex")} target one agent
+  ${c.g("npx phaseforge init --global")}     Claude Code, every project
+  ${c.g("npx phaseforge status")}            what's installed
+  ${c.g("npx phaseforge uninstall")}         remove it
+
+  ${c.dim(`agents: ${Object.keys(AGENTS).join(", ")}`)}
 
 Docs: https://github.com/Acrto3Hil3/phaseforge
 `);

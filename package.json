@@ -1,18 +1,22 @@
 {
   "name": "phaseforge",
   "version": "0.1.0",
-  "description": "Activates a senior engineer in your AI coding sessions. Phase-based discipline (discuss → plan → execute → verify) that keeps context small, architecture remembered, and requirements understood before code gets written.",
+  "description": "A senior software engineering team, installed into your project. Turns your rough idea into a PRD, architecture, phased plan, reviewed code, real testing and a deployment you can afford — with any AI agent.",
   "keywords": [
-    "claude-code",
-    "claude-code-plugin",
     "ai-agents",
     "vibe-coding",
     "prompt-engineering",
+    "claude-code",
+    "claude-code-plugin",
+    "codex",
+    "cursor",
+    "agents-md",
+    "no-code",
+    "prd",
     "software-architecture",
     "agent-workflow",
     "context-engineering",
-    "skills",
-    "gsd"
+    "skills"
   ],
   "license": "MIT",
   "author": {
