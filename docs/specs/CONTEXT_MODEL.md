@@ -84,10 +84,28 @@ filesystem iteration order.
 
 ## Budget
 
-A budget is a token ceiling for the compiled instruction. With no model
-available, tokens are estimated deterministically — `ceil(chars / 4)` by
-default, divisor configurable per adapter — and always displayed as approximate
-(`≈18,000`). See open question OQ-005.
+A budget is a token ceiling for the compiled instruction.
+
+MICHI has no tokenizer and no model (`ARCHITECTURE.md`, the three layers), so
+token counts are **estimates**, computed deterministically as `ceil(chars / 4)`.
+
+*OQ-005, locked 2026-09-28:* an estimate is never presented in the shape of an
+exact result. Every surface that reports a token count states the number as
+approximate **and names the method**:
+
+```text
+Estimated context size: ~18.4k tokens
+Estimation method:      chars/4
+```
+
+Not `18,420 tokens`. That number would be a division dressed up as a
+measurement, and someone would eventually tune a budget against it (P9).
+
+A tokenizer adapter may be added later — an optional interface returning an
+exact count and reporting itself as the method — but a tokenizer is **not** a
+dependency in v1, and nothing may require one to be present. Code reads the
+estimate through one interface that returns both the number and the method, so
+adding a real tokenizer changes what that interface returns and nothing else.
 
 Algorithm:
 
@@ -124,6 +142,7 @@ id: CTX-104
 task_id: TASK-034
 budget_tokens: 18000
 estimated_tokens: 14200
+estimation_method: chars/4
 context_hash: sha256:…
 generated_at: 2026-09-28T09:40:00Z
 ---
@@ -174,7 +193,7 @@ prisma/migrations/**
 ## Excluded from this packet
 payments module            — out of scope for this task
 marketing pages            — unrelated
-ADR-002 (superseded)       — no longer in force
+D002 (superseded)          — no longer in force
 12 further files           — budget
 ```
 

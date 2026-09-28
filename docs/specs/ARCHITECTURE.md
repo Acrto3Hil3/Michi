@@ -39,21 +39,96 @@ Project brain on disk
 Read top-to-bottom it is a compiler. Read bottom-to-top it is a feedback loop.
 Both directions must work for the product to be worth anything.
 
-## Where intelligence lives
+## The three layers
 
-The single most important boundary in the system:
+*OQ-004, locked 2026-09-28. This is the boundary that keeps MICHI from becoming
+another AI-agent framework, and it outranks convenience everywhere it applies.*
 
 ```text
-MICHI core         deterministic.   state, schemas, selection, compilation, validation
-The coding agent   probabilistic.   conversation, judgement, prose, writing code
+┌─────────────────────────────────────────────────────────┐
+│                   EXPERIENCE LAYER                      │
+│                                                         │
+│   MICHI skills, running inside the user's own agent     │
+│   Claude Code · Codex · Kimi · Gemini · Cursor · …      │
+│                                                         │
+│   conversation · clarification · interpretation         │
+│   recommendation · explanation · asking for approval    │
+│   translating all of that into structured operations    │
+└────────────────────────────┬────────────────────────────┘
+                             │  structured calls
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│                      MICHI CORE                         │
+│                                                         │
+│   intent · requirements · decisions · architecture      │
+│   planning · tasks · context · graph · state            │
+│   verification · artifacts · prompt compilation         │
+│                                                         │
+│   deterministic · local-first · model-agnostic          │
+│   agent-agnostic · testable · scriptable                │
+└────────────────────────────┬────────────────────────────┘
+                             │  validated reads and writes
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│                    PROJECT STATE                        │
+│                                                         │
+│                       .michi/                           │
+│                                                         │
+│   requirements · architecture · decisions · ADRs        │
+│   tasks · graph · context packets · sessions · state    │
+│                                                         │
+│   the persistent engineering memory of the project      │
+└─────────────────────────────────────────────────────────┘
 ```
 
-The core contains **no model calls and no network access**. Everything it does
-is reproducible from the same inputs. If a piece of work requires judgement, the
-core does not do it — it prepares the structured material for a skill running
-inside the user's agent, and persists what comes back.
+And then, outward:
 
-This is what makes MICHI cheap, offline-capable, provider-neutral and testable.
+```text
+MICHI Core → compiled engineering instruction → existing coding agent
+          → source repository → evidence → MICHI state
+```
+
+### What belongs where
+
+| | Experience Layer | MICHI Core | Project State |
+|---|---|---|---|
+| **Is** | prompts and instructions | TypeScript | text files |
+| **Runs in** | the user's agent | Node, locally | nothing — it is data |
+| **Handles** | language and judgement | structure and rules | persistence |
+| **Deterministic** | no | yes | n/a |
+| **Needs a model** | yes — the user's own | never | never |
+| **Ships as** | `SKILL.md` files | `core` + `cli` | scaffolded by `michi init` |
+
+### The rules
+
+1. **MICHI Core contains no model call, no network access, no chat interface.**
+   Not optional, not configurable, not behind a flag. A mandatory LLM, hosted AI
+   service, model API or chat UI in Core is a product-level violation, not a
+   design preference.
+2. **Core never conducts an interview.** Where the process requires a
+   conversation, Core reports what it does not know, in structured form, and
+   accepts structured answers back. The talking happens a layer up.
+3. **The skills contain no deterministic logic.** Selection, validation,
+   hashing, state transitions and compilation live in Core. A `SKILL.md` that
+   grows an algorithm is a bug — the algorithm is in the wrong layer.
+4. **The coding agent is not part of MICHI.** It is an external executor,
+   downstream of the compiled instruction. MICHI does not wrap it, embed it,
+   orchestrate it, or depend on which one it is.
+5. **Project State is readable without MICHI.** Every file is text a person can
+   open, and a `git clone` carries the whole engineering memory with it.
+
+### Why this boundary is load-bearing
+
+It is what makes MICHI free to run, usable offline, portable across agents,
+testable without mocking a model, and scriptable in CI. Each of those follows
+from Core being deterministic, and every one of them is lost the moment a model
+call appears below the Experience Layer.
+
+It also protects the product from the failure mode in `MICHI.md` §71 — becoming
+thirty agents, a gateway, a broker and a dashboard. There is nothing to
+orchestrate here. The user already has an agent; MICHI gives it a brief.
+
+A future local model changes nothing below the top layer.
 
 ## Package layout
 
@@ -62,9 +137,9 @@ Start with three packages. Split further only when a real boundary demands it.
 ```text
 michi/
 ├── packages/
-│   ├── core/          @michi/core     engines, schemas, state, no I/O beyond the project brain
-│   ├── cli/           @michi/cli      the michi binary; thin — argument parsing and rendering
-│   └── skills/        @michi/skills   the seven SKILL.md files and their templates
+│   ├── core/          the engines, schemas and state layer
+│   ├── cli/           the binary; thin — argument parsing and rendering
+│   └── skills/        the seven SKILL.md files and their templates
 │
 ├── schemas/           JSON Schema, generated from the Zod definitions in core
 ├── templates/         what gets scaffolded into a user's project brain
@@ -72,6 +147,14 @@ michi/
 ├── examples/          worked end-to-end example projects
 └── tests/             cross-package integration tests
 ```
+
+**Published names are not settled** (OQ-002). `MICHI.md` assumes `@michi/core`,
+`@michi/cli`, `@michi/skills` and a `michi` binary, but npm availability has not
+been checked. Package and binary identity is therefore read from configuration
+and referenced through one constant — never spelled out across the codebase,
+docs and help text — so that resolving OQ-002 is a configuration change rather
+than a rename across the repository. These specifications say "Core", "the CLI"
+and "the binary" for the same reason.
 
 `scanner/` and `adapters/` are described in §65 as separate packages. They start
 as directories inside `core/`; they graduate to packages when something outside
@@ -116,7 +199,11 @@ cli  ────────►  core  ◄──────── skills (via 
 Rules, enforceable by lint:
 
 - `core` imports nothing from `cli`, `skills`, or any adapter.
-- `core` makes no network calls and reads no files outside the project root.
+- `core` makes no network calls and no model calls, ever.
+- `core` **reads** the user's repository — the scanner must, to build the
+  project map — and **writes** only inside `.michi/`. Read widely, write
+  narrowly. Whether it may also *execute* anything in the user's project is
+  open; see OQ-006.
 - `cli` contains no engineering logic — it parses arguments, calls one or more
   engines, and renders. If a command's body contains a real algorithm, that
   algorithm belongs in `core`.
@@ -128,16 +215,16 @@ Rules, enforceable by lint:
 
 ```text
 Human
-  ↕     conversation
-AI coding agent
+  ↕     conversation                          ┐
+AI coding agent                                │  Experience Layer
   ↕     reads .claude/skills/… (or the equivalent for its own format)
-MICHI skill
+MICHI skill                                    ┘
   ↕     shells out: michi <command> --json
-MICHI CLI
-  ↕     function calls
-MICHI core
+MICHI CLI                                      ┐
+  ↕     function calls                         │  MICHI Core
+MICHI core                                     ┘
   ↕     validated reads and writes
-.michi/  — the project brain
+.michi/  — the project brain                      Project State
 ```
 
 The agent holds the conversation. The skill tells the agent what the process is
@@ -146,7 +233,7 @@ guarantees the state is valid.
 
 A consequence worth stating plainly: **every command that participates in a
 conversation needs a `--json` mode**, because its real caller is an agent, not a
-person at a terminal. See open question OQ-004 in `README.md`.
+person at a terminal. This follows from OQ-004, locked above.
 
 ## Storage
 

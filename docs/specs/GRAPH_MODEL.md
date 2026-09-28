@@ -33,6 +33,7 @@ FEATURE       FEAT-inventory a user-visible capability
 USE_CASE      UC-adjust      a concrete flow through a feature
 DOMAIN        DOM-inventory  a bounded area of the product
 DECISION      D004           an approved engineering or product choice
+                             (the object; its ADR is documentation, not a node)
 COMPONENT     CMP-inventory  a module in the architecture
 ENTITY        ENT-product    a thing in the data model
 API           API-stock-adj  an interface boundary
@@ -88,7 +89,7 @@ violation.
     { "id": "REQ-021", "type": "REQUIREMENT", "label": "Merchant stock adjustment",
       "source": "requirements/requirements.yaml", "durable": true },
     { "id": "D004", "type": "DECISION", "label": "Authentication provider",
-      "source": "decisions/ADR-004-authentication.md", "durable": true,
+      "source": "decisions/index.yaml#D004", "durable": true,
       "attrs": { "status": "LOCKED", "category": "authentication" } },
     { "id": "src/modules/inventory/stock.ts", "type": "FILE",
       "label": "stock.ts", "source": "scan", "durable": false,

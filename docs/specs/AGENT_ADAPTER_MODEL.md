@@ -25,7 +25,9 @@ Very little, which is why this stays cheap:
 3. **How work is invoked.** A slash command, a plain instruction, a file the
    agent reads on startup.
 4. **Token budget defaults.** Different context windows, different sensible
-   packet sizes.
+   packet sizes — and, later, an optional tokenizer. An adapter may supply a
+   real tokenizer for its agent; none is required, and the `chars/4` estimate
+   with its method label (OQ-005) remains the default.
 
 That is the whole surface. Everything else — the process, the state, the
 decisions, the context selection — is identical, because it is engineering, not
@@ -143,5 +145,6 @@ plainly what it could not verify, and never quietly downgrades its standard for
 - Change the on-disk state format. `.michi/` is agent-independent, and a project
   must be able to switch agents mid-build without migration.
 - Send anything anywhere. Adapters write local files, nothing else (P8).
-- Add a vendor SDK dependency to `core`.
+- Add a vendor SDK dependency to Core, or any model call anywhere below the
+  Experience Layer.
 - Assume a model, a context window, or a pricing model.

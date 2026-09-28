@@ -46,8 +46,14 @@ What exists right now is the specification:
 - [`MICHI.md`](MICHI.md) — the master product document, and the source of truth
 - [`docs/specs/`](docs/specs/) — eleven engineering contracts derived from it
 
-Five [open questions](docs/specs/README.md#open-questions) need answering before
-implementation begins.
+The architecture is settled. MICHI has three layers: the **skills** that talk to
+you, running inside the AI agent you already use; **MICHI Core**, which is
+ordinary software with no AI in it at all; and `.michi/`, a folder of plain text
+files holding everything your project has decided.
+
+Two questions remain open — the published package name, and one about how test
+results get verified — neither of which blocks the first build. They are listed
+[here](docs/specs/README.md#open).
 
 The roadmap, in order:
 

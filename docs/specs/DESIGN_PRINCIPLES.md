@@ -138,8 +138,14 @@ telemetry, no account, no mandatory cloud service, no mandatory model API. The
 core must not know which agent will consume its output; agent-specific knowledge
 lives only in adapters.
 
-**Violation.** A network call in the core. A feature that only works with one
-vendor. `if (agent === 'claude')` anywhere outside `adapters/`.
+**The three layers** (`ARCHITECTURE.md`) are how this is enforced structurally:
+conversation and judgement live in the Experience Layer, inside the user's own
+agent; everything deterministic lives in MICHI Core; everything durable lives in
+`.michi/`. The coding agent is an external executor, not part of MICHI.
+
+**Violation.** A network call in Core. A model call anywhere below the
+Experience Layer. A feature that only works with one vendor.
+`if (agent === 'claude')` anywhere outside `adapters/`.
 
 ---
 

@@ -7,8 +7,11 @@ Derived from `MICHI.md` §56–§64, §51, §69.
 The only way into the project brain. Every read and every write goes through
 it, so that validation, permission checks and atomic writes cannot be bypassed.
 
-It is deliberately thin: parse arguments, call engines in `@michi/core`, render
-the result. No engineering logic lives here (see `ARCHITECTURE.md`).
+It is deliberately thin: parse arguments, call engines in MICHI Core, render the
+result. No engineering logic lives here (see `ARCHITECTURE.md`).
+
+The binary is written `michi` throughout this document. That name is not
+confirmed (OQ-002) and is read from configuration rather than hard-coded.
 
 ## Two audiences
 
@@ -24,9 +27,11 @@ because the primary caller is an agent (see OQ-004).
 
 ## What the CLI does not do
 
+*OQ-004, locked 2026-09-28.*
+
 It does not converse. It has no model and makes no network calls (§69, P8). It
 cannot interview a founder, judge a code change, or decide what a requirement
-means.
+means. No command may be specified in a way that assumes otherwise.
 
 So `michi discover` does not run an interview. It opens a discovery session,
 reports what is still unknown, and accepts structured answers back. The
@@ -162,18 +167,43 @@ not say what is waiting on the human is a wall of numbers.
 ### `michi discover`
 
 ```bash
-michi discover [--json]
-michi discover answer --key <k> --value <v>
+michi discover start   [--json]
+michi discover status  [--json]
+michi discover answer  --file <answers.json>
+michi discover export  [--json]
 michi discover close
 ```
 
-Opens or resumes a discovery session. Prints what is known, what is assumed, and
-the ranked list of what is still unknown — one question at a time in human
-mode, the full structured list in `--json`.
+Structured operations only. There is no bare `michi discover` that starts
+talking to someone.
 
-The agent reads the unknowns, has the conversation, and persists each answer via
-`discover answer`. `discover close` converts the session into an intent record
-and moves the project to `SPECIFICATION`.
+| | |
+|---|---|
+| `start` | opens a discovery session, or resumes the open one |
+| `status` | what is known, what is assumed, what is still unknown — ranked |
+| `answer` | persists a batch of structured answers from a file |
+| `export` | emits the structured discovery result; read-only |
+| `close` | converts the session into an intent record and moves the project to `SPECIFICATION` |
+
+The division of labour:
+
+```text
+michi discover status --json     →  the skill reads the unknowns
+                                    the skill asks the human, in their language
+                                    "Do you mean one shop or several?"
+                                    "What happens when someone cancels?"
+                                    the skill interprets the replies
+michi discover answer --file     ←  the structured result is persisted
+```
+
+`answer` takes a file rather than `--key`/`--value` pairs because the caller is
+an agent persisting a batch of interpreted answers, not a person typing one
+fact. Each answer records its `key`, `value`, `confidence`
+(`STATED` | `INFERRED` | `ASSUMED`) and the question it came from — an inferred
+answer must never later be reported as something the user said (P9).
+
+`export` is read-only. `close` is the only one of the five that advances the
+project stage.
 
 ### `michi plan`
 
@@ -198,12 +228,12 @@ and their time.
 ### `michi decide`
 
 ```bash
-michi decide                                          list
-michi decide show <id>
+michi decide                                          list the registry
+michi decide show <id>                                the object and its ADR
 michi decide propose --category <c> --title <t> [--options <file>]
-michi decide confirm <id> --choice <key> --by user
+michi decide confirm <id> --choice <key> --by user --adr <file>
 michi decide reject  <id> --reason <text>
-michi decide supersede <id> --with <newId>
+michi decide supersede <id> --with <new-id>
 michi decide impact  <id>
 ```
 
@@ -215,9 +245,14 @@ D004 Auth         Clerk          LOCKED
 D008 Jobs         —              PROPOSED   ← waiting on you
 ```
 
-`confirm` is the only path to `LOCKED`, it requires `--by`, and it records the
-timestamp. There is no flag that locks a decision without a named approver
-(P2) — this is enforced in the schema, not by convention.
+All ids here are **decision** ids (`D004`), never ADR ids (OQ-003). The registry
+resolves the mapping; nothing computes one from the other.
+
+`confirm` is the only path to `LOCKED`. It requires `--by`, records the
+timestamp, and requires `--adr <file>` — the prose the skill wrote, which
+becomes `decisions/ADR-00N-<slug>.md`. There is no flag that locks a decision
+without a named approver, and none that locks one with no ADR (P2). Both are
+enforced by the schema, not by convention.
 
 `impact` runs the blast-radius analysis from `DECISION_MODEL.md` before a change
 is made, and renders it as consequences rather than node ids.
@@ -244,7 +279,20 @@ Resolves and prints the context packet: what is included, at which tier, and —
 importantly — what was excluded and why (§63). `--explain` adds the ranking
 score for each candidate, which is how you debug a selection that looks wrong.
 
-Fails with `TASK_TOO_LARGE` rather than truncating mandatory context.
+```text
+Context for TASK-034
+
+Estimated context size:  ~14.2k tokens
+Budget:                  ~18.0k tokens
+Estimation method:       chars/4
+
+MUST INCLUDE   5 items
+PREFERRED      4 items
+EXCLUDED       3 items + 12 more over budget
+```
+
+Sizes are always reported as estimates with the method named (OQ-005). Fails
+with `TASK_TOO_LARGE` rather than truncating mandatory context.
 
 ### `michi task`
 
@@ -270,7 +318,12 @@ michi debug  <task-id> --stage REPRODUCE|OBSERVE|HYPOTHESIS|ROOT_CAUSE|FIX|VERIF
 ```
 
 These record structured results; the judgement that produced them happened in
-the agent. `review` with `CHANGES_REQUIRED` returns the task to
+the agent.
+
+**Open (OQ-006):** whether `michi test` may additionally *execute* a configured
+test command itself and capture the real exit code, rather than only ingesting
+what the agent reports. The signature above covers the recording case, which is
+required either way. Do not implement execution until OQ-006 is decided. `review` with `CHANGES_REQUIRED` returns the task to
 `CHANGES_DETECTED`. `debug` advances the disciplined process and refuses to
 reach `FIX` before a reproduction is recorded — the process is the point, and a
 CLI that lets you skip to the fix is not enforcing it.
@@ -282,7 +335,9 @@ michi verify <task-id> [--json]
 ```
 
 Evaluates recorded evidence against the acceptance criteria and writes the
-verification record. Every criterion must be `SATISFIED`, `UNSATISFIED` or
+verification record. Each piece of evidence carries who produced it — the agent,
+or MICHI itself — so that the record stays honest under either answer to
+OQ-006. Every criterion must be `SATISFIED`, `UNSATISFIED` or
 `NOT_APPLICABLE` with a reason.
 
 **Only this command can move a task to `VERIFIED`** (P3), and only `VERIFIED`

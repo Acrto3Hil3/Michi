@@ -9,13 +9,18 @@ engineering process: what its job is, what it must establish before acting, what
 it must never do, and which `michi` commands to call to read and write state.
 
 A skill is **instructions**, not a program. The deterministic work — selection,
-validation, hashing, persistence — lives in `@michi/core` behind the CLI. If a
+validation, hashing, persistence — lives in MICHI Core behind the CLI. If a
 `SKILL.md` starts to contain an algorithm, that algorithm is in the wrong place
 (§55).
 
 ```text
 AI Agent  →  MICHI Skill  →  MICHI CLI  →  MICHI Core  →  Project State
+└──────── Experience Layer ────────┘     └─ MICHI Core ─┘     └─ .michi/ ─┘
 ```
+
+The skills **are** the Experience Layer (`ARCHITECTURE.md`, the three layers).
+They are the only part of MICHI that a model ever reads, and the only part that
+is allowed to need one. Everything deterministic belongs below them.
 
 ## Seven skills
 

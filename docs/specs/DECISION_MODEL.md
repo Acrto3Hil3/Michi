@@ -19,15 +19,55 @@ Two kinds, never conflated (§75):
 
 MICHI may propose either. It may lock neither on its own.
 
-## Identity
+## Decision and ADR are two different things
 
-One decision is one object with one canonical id, `D001`, stored in one file
-whose numbering always matches: `decisions/ADR-001-<slug>.md`. See open question
-OQ-003 — `MICHI.md` uses both spellings and never reconciles them.
+*OQ-003, locked 2026-09-28.*
 
-`decisions/index.yaml` is the authoritative index. Ids are allocated
-sequentially and never reused, including for decisions that are later
-superseded or rejected.
+```text
+D001                       the Decision — a structured object in project state
+ └── ADR-001               the ADR — the human-readable document describing it
+      └── decisions/ADR-001-database.md
+```
+
+A **Decision** is machine-readable project state: typed fields, validated
+against a schema, queried by the graph, checked by the CLI, relied on by every
+downstream engine. It lives in the decision registry.
+
+An **ADR** is the document a person reads in eight months when they want to know
+why the project is like this. It lives in its own Markdown file and is mostly
+prose.
+
+They are **not competing identifiers for one thing**, and neither is derived
+from the other by string manipulation. `D004` is not "ADR-004 with the letters
+changed" — it is a different object with a different job, and the registry is
+what connects them.
+
+Why keep both rather than collapsing them:
+
+- Tooling needs fields it can trust — `status`, `category`, `superseded_by`.
+  Parsing those out of prose is fragile.
+- People need reasoning, alternatives and consequences in continuous English.
+  Cramming that into YAML makes it unreadable and it stops being written.
+- The two have different lifetimes. A decision's `status` changes when it is
+  superseded; the ADR that documented it stays exactly as it was, because it is
+  a record of what was decided *then*.
+
+### Rules
+
+- Each decision has **at most one** ADR. Each ADR documents **exactly one**
+  decision.
+- A decision may exist without an ADR while `PROPOSED`. It cannot reach
+  `LOCKED` without one — an undocumented locked decision is how a project
+  forgets why it is shaped the way it is.
+- Decision ids (`D001`) and ADR ids (`ADR-001`) are allocated from separate
+  counters and neither is reused, including for decisions that are later
+  rejected or superseded.
+- The numbers are kept aligned where possible, because `D004 → ADR-004` is
+  easier for humans to hold. Alignment is a **convenience, not a guarantee**:
+  nothing in the implementation may compute one id from the other. Always
+  resolve through the registry.
+- The registry is authoritative for the mapping. A file present in
+  `decisions/` but absent from the registry is an error, not a decision.
 
 ## Lifecycle
 
@@ -143,19 +183,10 @@ not refuse, and it does not quietly override.
 
 ```markdown
 ---
-id: D004
 adr: ADR-004
+decision: D004
 title: Authentication provider
-status: LOCKED
-kind: engineering            # product | engineering
-category: authentication
 date: 2026-09-26
-approved_by: user
-approved_at: 2026-09-26T14:22:00Z
-supersedes: null
-superseded_by: null
-affects_requirements: [REQ-003, REQ-011]
-affects_components: [auth, api, web]
 ---
 
 # ADR-004 — Authentication provider
@@ -199,38 +230,117 @@ None recorded.
 User, 2026-09-26.
 ```
 
-Frontmatter is machine-readable and schema-validated. Prose is for the human.
-Both matter: the frontmatter makes `michi decide` and the graph work; the prose
-is what answers "why are we doing it this way?" in eight months.
+The frontmatter is deliberately thin: an ADR identifies itself and names the
+decision it documents, and nothing more. Status, approval, supersession and
+category are **not** repeated here.
 
-## `decisions/index.yaml`
+That is the whole point of the split. Duplicating state into the document
+guarantees the two copies disagree eventually — a decision gets superseded, the
+registry is updated, and the ADR still says `status: LOCKED` forever. One
+authoritative place for each fact: the registry for state, the document for
+reasoning.
+
+The body is prose because it is read by a person, and it is the only artifact
+that survives everyone forgetting the conversation.
+
+## The decision registry
+
+`decisions/index.yaml` holds the Decision objects. It is the authoritative
+record of what has been decided and where each decision is documented.
 
 ```yaml
 schema_version: 1
-next_id: 10
+next_decision_id: 10
+next_adr_id: 10
+
 decisions:
   - id: D001
-    adr: ADR-001
     title: Frontend framework
-    choice: React
-    status: LOCKED
+    type: engineering              # product | engineering
     category: frontend
-    file: ADR-001-frontend.md
+    status: LOCKED                 # PROPOSED | USER_CONFIRMED | LOCKED
+                                   # | REJECTED | SUPERSEDED
+    selected_option: react
+    options:
+      - key: react
+        label: React
+      - key: vue
+        label: Vue
+    rationale: >
+      The team's agent has the most training data here, and the component
+      ecosystem covers everything in the requirements.
+    alternatives_rejected:
+      - key: vue
+        reason: No advantage for this project; smaller ecosystem for the
+                specific components needed.
+    consequences:
+      - React's build tooling becomes part of the deployment story
+    approval:
+      by: user
+      at: 2026-01-14T09:30:00Z
+    adr: ADR-001
+    adr_file: ADR-001-frontend.md
+    affects_requirements: [REQ-002]
+    affects_components: [web]
+    supersedes: null
+    superseded_by: null
+    created_at: 2026-01-14T09:12:00Z
+    updated_at: 2026-01-14T09:30:00Z
+
   - id: D004
-    adr: ADR-004
     title: Authentication provider
-    choice: Managed provider
-    status: LOCKED
+    type: engineering
     category: authentication
-    file: ADR-004-authentication.md
+    status: LOCKED
+    selected_option: managed
+    rationale: >
+      The project handles medical records; a managed provider removes most of
+      the ways we could get authentication wrong, and is free at this scale.
+    approval:
+      by: user
+      at: 2026-09-26T14:22:00Z
+    adr: ADR-004
+    adr_file: ADR-004-authentication.md
+    affects_requirements: [REQ-003, REQ-011]
+    affects_components: [auth, api, web]
+    supersedes: null
+    superseded_by: null
+    created_at: 2026-09-26T14:02:00Z
+    updated_at: 2026-09-26T14:22:00Z
+
   - id: D008
-    adr: ADR-008
     title: Background job processing
-    choice: null
-    status: PROPOSED
+    type: engineering
     category: infrastructure
-    file: ADR-008-background-jobs.md
+    status: PROPOSED
+    selected_option: null
+    options:
+      - key: inline
+        label: Run the work immediately, while the user waits
+      - key: queue
+        label: A job queue
+      - key: cron
+        label: A scheduled task
+    approval: null
+    adr: null                      # written when it is confirmed
+    adr_file: null
+    created_at: 2026-09-28T11:05:00Z
+    updated_at: 2026-09-28T11:05:00Z
 ```
+
+### Field rules
+
+- `approval` is `null` until a human confirms. `status: LOCKED` with
+  `approval: null` must fail schema validation — this is where P2 is enforced
+  mechanically rather than by good intentions.
+- `adr` and `adr_file` are `null` only while `PROPOSED`. Reaching `LOCKED`
+  requires both.
+- `selected_option` must be one of the `options` keys, when options are
+  recorded.
+- `rationale` is required at `LOCKED`. A decision nobody can explain is not a
+  decision, it is a habit.
+- `created_at` / `updated_at` on every decision.
+- `supersedes` and `superseded_by` are decision ids, never ADR ids.
 
 ## Changing a decision
 
@@ -241,7 +351,9 @@ A locked decision may be changed. It may not be changed quietly (§18).
 2. ANALYZE     compute the blast radius
 3. EXPLAIN     present it in plain language, with the real cost
 4. ASK         confirm they still want it, knowing that
-5. SUPERSEDE   new ADR created; old one marked SUPERSEDED, not deleted
+5. SUPERSEDE   a new decision with its own ADR; the old decision becomes
+               SUPERSEDED and is never deleted. The old ADR is left exactly as
+               written — it is an accurate record of what was decided then.
 6. PROPAGATE   requirements, architecture, tasks and graph updated
 7. REPLAN      affected completed work returns to the task queue
 ```

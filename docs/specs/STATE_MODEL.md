@@ -7,7 +7,8 @@ be able to reconstruct where the project stands by reading these files (P5).
 
 ## The project brain
 
-Provisionally `.michi/` — see open question OQ-001.
+`.michi/` — *OQ-001, locked 2026-09-28.* The `.senior-engineer/` name in
+`MICHI.md` §17 and §30 is legacy terminology and is never used.
 
 ```text
 .michi/
@@ -30,8 +31,8 @@ Provisionally `.michi/` — see open question OQ-001.
 │   └── diagrams/               mermaid or text
 │
 ├── decisions/
-│   ├── index.yaml              authoritative decision index
-│   └── ADR-*.md                one file per decision
+│   ├── index.yaml              the decision registry — structured objects
+│   └── ADR-*.md                the human-readable document for each
 │
 ├── graph/
 │   ├── nodes.json
@@ -256,13 +257,16 @@ verification:
   verified_at: 2026-09-28T10:20:00Z
   evidence:
     - kind: TESTS
+      produced_by: AGENT          # AGENT | MICHI  (see OQ-006)
       command: pnpm vitest run src/modules/inventory
       exit_code: 0
       summary: 14 passed
     - kind: TYPECHECK
+      produced_by: AGENT
       command: pnpm tsc --noEmit
       exit_code: 0
     - kind: REVIEW
+      produced_by: AGENT
       verdict: PASS
       by: reviewer
   criteria:
@@ -274,6 +278,11 @@ verification:
 
 Evidence kinds: `TESTS` · `BUILD` · `TYPECHECK` · `LINT` · `REVIEW` · `RUNTIME`
 · `SECURITY` · `SCREENSHOT` · `REPRODUCTION`.
+
+`produced_by` records whether MICHI observed the result itself or is repeating
+what the agent reported. Under P3 that distinction is the difference between
+evidence and a claim, and it must survive into the record whichever way OQ-006
+is decided.
 
 Every acceptance criterion must be `SATISFIED`, `UNSATISFIED` or
 `NOT_APPLICABLE` with a reason. An unaddressed criterion blocks `VERIFIED`.
