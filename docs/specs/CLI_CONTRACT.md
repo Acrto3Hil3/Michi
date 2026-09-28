@@ -320,10 +320,17 @@ michi debug  <task-id> --stage REPRODUCE|OBSERVE|HYPOTHESIS|ROOT_CAUSE|FIX|VERIF
 These record structured results; the judgement that produced them happened in
 the agent.
 
-**Open (OQ-006):** whether `michi test` may additionally *execute* a configured
-test command itself and capture the real exit code, rather than only ingesting
-what the agent reports. The signature above covers the recording case, which is
-required either way. Do not implement execution until OQ-006 is decided. `review` with `CHANGES_REQUIRED` returns the task to
+`michi test` has two forms (OQ-006, locked):
+
+```bash
+michi test <task-id> --record <file>      ingest what the agent reported
+michi test <task-id> --run test           run the allow-listed command itself
+```
+
+`--run <key>` names an entry in `verification.allow`; it is not a command
+string, and no command may be passed at the call site. Results captured this way
+are recorded `produced_by: MICHI`; `--record` results are `produced_by: AGENT`.
+The executor itself lands in Phase 7. `review` with `CHANGES_REQUIRED` returns the task to
 `CHANGES_DETECTED`. `debug` advances the disciplined process and refuses to
 reach `FIX` before a reproduction is recorded — the process is the point, and a
 CLI that lets you skip to the fix is not enforcing it.
@@ -335,9 +342,9 @@ michi verify <task-id> [--json]
 ```
 
 Evaluates recorded evidence against the acceptance criteria and writes the
-verification record. Each piece of evidence carries who produced it — the agent,
-or MICHI itself — so that the record stays honest under either answer to
-OQ-006. Every criterion must be `SATISFIED`, `UNSATISFIED` or
+verification record. Each piece of evidence carries who produced it — `MICHI`
+where Core ran the command itself, `AGENT` where it was reported (OQ-006) — and
+the verdict states which it rested on. Every criterion must be `SATISFIED`, `UNSATISFIED` or
 `NOT_APPLICABLE` with a reason.
 
 **Only this command can move a task to `VERIFIED`** (P3), and only `VERIFIED`

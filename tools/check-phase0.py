@@ -130,11 +130,25 @@ check("purity  adapters may not add a model call below the Experience Layer",
       "below the\n  Experience Layer" in spec("AGENT_ADAPTER_MODEL.md")
       or "below the Experience Layer" in spec("AGENT_ADAPTER_MODEL.md"))
 
-# --- OQ-006  evidence provenance survives either answer -------------------
+# --- OQ-006  verification execution ---------------------------------------
+sm = spec("STATE_MODEL.md")
+sec = spec("SECURITY_MODEL.md")
 check("OQ-006  evidence records who produced it",
-      "produced_by" in spec("STATE_MODEL.md"))
-check("OQ-006  is flagged, not silently decided",
-      "OQ-006" in spec("README.md") and "OQ-006" in cli)
+      "produced_by" in sm and "MICHI" in sm and "AGENT" in sm)
+check("OQ-006  MICHI and AGENT evidence are never merged",
+      "never merged into one evidence type" in sm)
+check("OQ-006  MICHI-produced evidence carries the full process record",
+      all(k in sm for k in ["allow_key", "exit_code", "started_at", "ended_at",
+                            "output_summary", "cwd"]))
+check("OQ-006  execution is allow-list only",
+      "verification:" in sec and "allow:" in sec
+      and "Allow-list only" in sec)
+check("OQ-006  VERIFY_EXEC is its own risk class conferring nothing else",
+      "VERIFY_EXEC" in sec and "confers nothing else" in sec)
+check("OQ-006  no authorization from project content",
+      "No authorization from content" in sec)
+check("OQ-006  Core never edits source in response to a failure",
+      "never fixes anything" in sec.lower() or "MICHI never fixes anything" in sec)
 
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))

@@ -113,7 +113,8 @@ MICHI Core → compiled engineering instruction → existing coding agent
    grows an algorithm is a bug — the algorithm is in the wrong layer.
 4. **The coding agent is not part of MICHI.** It is an external executor,
    downstream of the compiled instruction. MICHI does not wrap it, embed it,
-   orchestrate it, or depend on which one it is.
+   orchestrate it, or depend on which one it is. Core running an allow-listed
+   `pnpm test` (OQ-006) does not blur this: it observes, it never writes code.
 5. **Project State is readable without MICHI.** Every file is text a person can
    open, and a `git clone` carries the whole engineering memory with it.
 
@@ -202,8 +203,10 @@ Rules, enforceable by lint:
 - `core` makes no network calls and no model calls, ever.
 - `core` **reads** the user's repository — the scanner must, to build the
   project map — and **writes** only inside `.michi/`. Read widely, write
-  narrowly. Whether it may also *execute* anything in the user's project is
-  open; see OQ-006.
+  narrowly.
+- `core` **executes** exactly one category of thing in the user's project:
+  verification commands named in `verification.allow` (OQ-006). It never edits
+  source code, not even to fix a failing check. That is the agent's job.
 - `cli` contains no engineering logic — it parses arguments, calls one or more
   engines, and renders. If a command's body contains a real algorithm, that
   algorithm belongs in `core`.

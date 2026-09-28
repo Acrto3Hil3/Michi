@@ -30,9 +30,10 @@ About to write code: `ARCHITECTURE` → the model for the engine you are touchin
 
 Phase 0. No implementation exists yet.
 
-Four of the five original open questions are **LOCKED** by the owner and applied
-throughout these contracts. One remains open and does not block Phase 1. One new
-question was found while applying them, and is open.
+All five original open questions are **LOCKED** by the owner and applied
+throughout these contracts, as is OQ-006, found while applying them. One
+question — the published npm name — remains open and blocks nothing before
+release.
 
 ---
 
@@ -101,6 +102,52 @@ Never present an estimate in the shape of an exact tokenizer result. The
 architecture leaves room for tokenizer adapters later; a tokenizer is not a
 dependency in v1.
 
+### OQ-006 — Verification execution · **LOCKED: Core may run allow-listed checks**
+
+*Raised while applying OQ-004; decided by the owner 2026-09-28.*
+
+MICHI Core **may** execute a narrowly scoped, allow-listed set of local
+verification commands and capture their real results.
+
+This does not make MICHI a coding agent. The boundary:
+
+```text
+MICHI Core                          Existing AI agent
+├── reads the project               ├── writes code
+├── writes .michi/                  ├── changes dependencies
+├── builds context                  ├── makes implementation decisions
+├── validates state                 └── performs the implementation
+├── executes approved
+│   verification commands
+└── captures evidence
+```
+
+MICHI runs `test`, `lint`, `typecheck`, `build` and other explicitly configured
+verification commands. MICHI never edits source code — not even in response to a
+failing test. That remains the agent's job.
+
+**Why.** P3 says *no completion without evidence*. If Core can only record what
+the agent reports, then "tests passed" is a claim by the party being evaluated,
+and the principle cannot actually be enforced.
+
+**Evidence stays distinguishable.** `produced_by: MICHI` for results MICHI
+observed by running the command itself; `produced_by: AGENT` for results
+reported to it. These are never merged into one evidence type. Full field
+list in [`STATE_MODEL.md`](STATE_MODEL.md).
+
+**Security.** Only commands named in the verification policy execute
+automatically. Nothing in a README, a source comment, a test's output, a
+`package.json` script body or an agent's text is authorization to run anything.
+Verification execution is its own risk class and confers no other permission —
+a deployment, a production database change, a credential rotation or a
+destructive filesystem operation does not become automatically executable
+because it appears inside a script a test command happens to call. See
+[`SECURITY_MODEL.md`](SECURITY_MODEL.md#verification-execution).
+
+**Scope for now.** Phase 1 defines the contract and the abstraction boundary.
+The executor itself is built in Phase 7. Do not attempt to solve every
+command-security problem before then.
+
 ---
 
 ## Open
@@ -114,42 +161,3 @@ Treated as unresolved. Package and binary identity is read from configuration
 rather than hard-coded across the architecture, so resolving this later is a
 configuration change, not a refactor. Must be settled before the first public
 release.
-
-### OQ-006 — Does MICHI Core execute anything in the user's project? · **open, blocks Phase 7**
-
-**Found while applying OQ-004.** Not decided here.
-
-`MICHI.md` §51 gives a permission policy containing `tests: AUTO` and
-`git_diff: AUTO`, which reads as MICHI running those commands itself. §95 lists
-tests, build, lint and typecheck as verification evidence.
-
-But under the three layers now locked by OQ-004, the coding agent is the
-external executor and MICHI Core is a deterministic state layer. If Core never
-runs anything, then `tests: AUTO` governs an action MICHI never takes, and all
-evidence is recorded second-hand from the agent's report.
-
-The two readings produce different products:
-
-**A — Core records only.** `michi test --record <file>` ingests what the agent
-ran. Core needs no subprocess runner. Maximum layer purity. Weakness: every
-piece of evidence is a claim the agent made about itself, which sits awkwardly
-against P3 (*no completion without evidence*) — the whole point of which is that
-an agent's self-report is not evidence.
-
-**B — Core may run read-only verification commands.** Core can execute a
-configured test, build, lint or typecheck command and capture the real exit code
-and output. Still no model, still deterministic, still local. Verification
-becomes genuinely independent of the agent's claims. Weakness: Core now spawns
-processes in the user's repository, which is a real expansion of its blast
-radius and makes the permission policy load-bearing.
-
-**Recommendation: B**, narrowly scoped — an allow-list of verification commands
-read from `.michi/config.yaml`, never inferred, never arbitrary, governed by the
-existing `ASK`/`AUTO`/`BLOCK` policy. P3 is one of the top-three principles, and
-under A it cannot actually be enforced.
-
-Until this is decided, the contracts describe evidence capture in a way that
-works under either reading: `SECURITY_MODEL.md` keeps the policy as written in
-`MICHI.md`, and `STATE_MODEL.md` records for each piece of evidence *who
-produced it*. Phase 7 cannot be specified in detail without an answer, but
-Phases 1–6 are unaffected.

@@ -257,18 +257,32 @@ verification:
   verified_at: 2026-09-28T10:20:00Z
   evidence:
     - kind: TESTS
-      produced_by: AGENT          # AGENT | MICHI  (see OQ-006)
+      produced_by: MICHI          # MICHI ran it and observed this
+      allow_key: test
       command: pnpm vitest run src/modules/inventory
+      cwd: .
+      started_at: 2026-09-28T10:18:02Z
+      ended_at: 2026-09-28T10:18:29Z
       exit_code: 0
-      summary: 14 passed
+      output_summary: "14 passed, 0 failed"
+      output_truncated: false
+      run_id: RUN-0071
     - kind: TYPECHECK
-      produced_by: AGENT
+      produced_by: MICHI
+      allow_key: typecheck
       command: pnpm tsc --noEmit
+      cwd: .
+      started_at: 2026-09-28T10:18:30Z
+      ended_at: 2026-09-28T10:18:41Z
       exit_code: 0
+      output_summary: ""
+      output_truncated: false
+      run_id: RUN-0071
     - kind: REVIEW
-      produced_by: AGENT
+      produced_by: AGENT          # reported to MICHI, not observed by it
       verdict: PASS
       by: reviewer
+      run_id: RUN-0071
   criteria:
     AC-001: SATISFIED
     AC-002: SATISFIED
@@ -279,10 +293,28 @@ verification:
 Evidence kinds: `TESTS` · `BUILD` · `TYPECHECK` · `LINT` · `REVIEW` · `RUNTIME`
 · `SECURITY` · `SCREENSHOT` · `REPRODUCTION`.
 
-`produced_by` records whether MICHI observed the result itself or is repeating
-what the agent reported. Under P3 that distinction is the difference between
-evidence and a claim, and it must survive into the record whichever way OQ-006
-is decided.
+### Provenance
+
+`produced_by` is the most important field in the record.
+
+| | Meaning |
+|---|---|
+| `MICHI` | Core ran the command itself and observed this result |
+| `AGENT` | the coding agent reported this result to MICHI |
+
+Under P3 that is the difference between evidence and a claim, and the two are
+**never merged into one evidence type**. A verdict that rests on `AGENT`
+evidence alone is a verdict that trusts the party being evaluated, and any
+report must be able to say so.
+
+`MICHI`-produced evidence carries the full process record — `allow_key`,
+`command`, `cwd`, `started_at`, `ended_at`, `exit_code`, `output_summary`,
+`output_truncated`, `run_id`. `allow_key` names the entry in
+`verification.allow` that authorised it (OQ-006), so every execution traces back
+to something the user wrote down.
+
+`AGENT`-produced evidence carries whatever the agent reported and is never
+decorated with fields that imply MICHI observed it.
 
 Every acceptance criterion must be `SATISFIED`, `UNSATISFIED` or
 `NOT_APPLICABLE` with a reason. An unaddressed criterion blocks `VERIFIED`.

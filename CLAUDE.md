@@ -80,16 +80,17 @@ Phase 0 complete and internally consistent: `MICHI.md` plus eleven contracts in
 - **OQ-005** token counts are estimates (`chars/4`) and are always labelled as
   estimates with the method named
 
+- **OQ-006** MICHI Core may execute an allow-listed set of local verification
+  commands and capture real results. It never edits source code. Evidence is
+  tagged `produced_by: MICHI` or `produced_by: AGENT` and the two are never
+  merged. Executor lands in Phase 7.
+
 **Open — needs the owner, don't decide these unasked:**
 
-1. **OQ-006** — may MICHI Core execute verification commands in the user's
-   project, or only record what the agent reports? Blocks Phase 7; Phases 1–6
-   are unaffected. Recommendation and both readings are in
-   [`docs/specs/README.md`](docs/specs/README.md#open).
-2. **OQ-002** — npm package and binary names are unverified. Doesn't block
+1. **OQ-002** — npm package and binary names are unverified. Doesn't block
    implementation; package identity is read from configuration.
-3. `npm login` — the user must run it themselves.
-4. No GitHub repository exists, and `gh` is not installed.
+2. `npm login` — the user must run it themselves.
+3. No GitHub repository exists, and `gh` is not installed.
 
 Next step: **Phase 1** — `michi init`, `scan`, `status` — built test-first
 against [`STATE_MODEL.md`](docs/specs/STATE_MODEL.md) and
