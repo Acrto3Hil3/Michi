@@ -67,13 +67,33 @@ that edits a stranger's repository owes them a way to look first.
 4   invalid state — a file on disk failed schema validation
 5   blocked — a stop condition fired; human input required
 6   permission denied — policy refused the action
-7   conflict — the requested change conflicts with a locked decision
+7   conflict — the request conflicts with state that already exists
 8   not found — the named id does not exist
 ```
 
 Distinct codes because the agent branches on them. `5` means "ask the human",
 `7` means "explain the conflict" — collapsing both into `1` forces the agent to
 parse error text, and that is how brittle integrations start.
+
+Exit codes are the coarse channel. The **error code** in the payload is the
+precise one, and several error codes may share an exit code:
+
+| Error code | Exit | Meaning |
+|---|---|---|
+| — (success) | 0 | |
+| `INTERNAL_ERROR` | 1 | something unexpected; a bug |
+| `EXECUTION_ERROR` | 1 | the command ran and failed |
+| `USAGE_ERROR` | 2 | bad arguments, or not a directory |
+| `NOT_INITIALIZED` | 3 | no `.michi/` here |
+| `VALIDATION_ERROR` | 4 | a file on disk failed its schema |
+| `BLOCKED` | 5 | a stop condition fired; a human is needed |
+| `PERMISSION_DENIED` | 6 | policy refused the action |
+| `CONFLICT` | 7 | conflicts with a locked decision |
+| `ALREADY_INITIALIZED` | 7 | `.michi/` already exists; nothing was changed |
+| `NOT_FOUND` | 8 | the named id does not exist |
+
+Nothing may invent a second numbering. New conditions get a new error code
+mapped onto one of these nine exit codes.
 
 ## Error shape
 

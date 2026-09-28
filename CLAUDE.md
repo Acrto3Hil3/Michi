@@ -26,6 +26,8 @@ disagree, `MICHI.md` wins and the contract is a bug.
 |---|---|
 | `MICHI.md` | The master product document. Source of truth. |
 | `docs/specs/` | Phase 0 — eleven engineering contracts, the locked decisions and the open questions |
+| `packages/core/` | MICHI Core — schemas, state, scanner, commands. Deterministic; no model, no network. |
+| `packages/cli/` | The binary. Thin: parse, call Core, render. No engineering logic. |
 | `tools/check-phase0.py` | Reproducible consistency check over the contracts. Run it after editing any spec. |
 | `LICENSE` | MIT, © Subhash Yadav |
 
@@ -65,10 +67,24 @@ Nothing is implemented yet. The intended package layout is in
 9. **Never publish or push without explicit say-so.** Not `npm publish`, not
    `git push`, not creating the GitHub repo.
 
+## Verify
+
+```bash
+pnpm verify        # typecheck + tests + spec consistency
+```
+
+Do not report work as done without running it (P3).
+
 ## Current state (2026-09-28)
 
-Phase 0 complete and internally consistent: `MICHI.md` plus eleven contracts in
-`docs/specs/`. No code, no `package.json`, no dependencies, nothing published.
+Phase 0 complete and internally consistent. **Phase 1 complete**: `michi init`,
+`michi scan`, `michi status`, 77 tests, TypeScript build clean. Nothing
+published.
+
+Phase 1 deliberately contains no graph engine, no context engine, no skills, no
+adapters and no verification executor. Those are Phases 5–8; building their
+abstractions now would be the premature scaffolding the product exists to
+prevent (P4).
 
 **Locked by the owner** — settled, follow them, don't relitigate:
 
@@ -92,7 +108,8 @@ Phase 0 complete and internally consistent: `MICHI.md` plus eleven contracts in
 2. `npm login` — the user must run it themselves.
 3. No GitHub repository exists, and `gh` is not installed.
 
-Next step: **Phase 1** — `michi init`, `scan`, `status` — built test-first
-against [`STATE_MODEL.md`](docs/specs/STATE_MODEL.md) and
-[`CLI_CONTRACT.md`](docs/specs/CLI_CONTRACT.md). A small, testable vertical
-slice before the repository grows; not the seven-skill system at once.
+Next step: **Phase 2** — the `senior-engineer` skill, and `michi discover`
+(`start` / `status` / `answer --file` / `export` / `close`) against
+[`SKILL_CONTRACT.md`](docs/specs/SKILL_CONTRACT.md) and
+[`CLI_CONTRACT.md`](docs/specs/CLI_CONTRACT.md). That is the step that first
+puts a human conversation on top of the state layer.

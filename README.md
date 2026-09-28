@@ -39,7 +39,8 @@ agent is building the right thing.
 
 ## Status
 
-**Pre-implementation.** Nothing is built yet.
+**Phase 1 built.** `michi init`, `michi scan` and `michi status` work. Nothing
+is published yet.
 
 What exists right now is the specification:
 
@@ -51,16 +52,20 @@ you, running inside the AI agent you already use; **MICHI Core**, which is
 ordinary software with no AI in it at all; and `.michi/`, a folder of plain text
 files holding everything your project has decided.
 
-Two questions remain open — the published package name, and one about how test
-results get verified — neither of which blocks the first build. They are listed
-[here](docs/specs/README.md#open).
+One question remains open — what the published package will be called. It is
+listed [here](docs/specs/README.md#open).
+
+What works today: point MICHI at a project and it writes down what is actually
+there — the language, the package manager, the frameworks, the database — and
+says plainly which of those it could not establish rather than guessing. That
+becomes the starting point for everything after it.
 
 The roadmap, in order:
 
 | Phase | What | State |
 |---|---|---|
 | 0 | Specification | **done** |
-| 1 | `michi init` · `scan` · `status` | not started |
+| 1 | `michi init` · `scan` · `status` | **done** |
 | 2 | The `senior-engineer` skill | not started |
 | 3 | Product planning — PRD, TRD, requirements | not started |
 | 4 | Architecture and decision records | not started |

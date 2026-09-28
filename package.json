@@ -1,0 +1,21 @@
+{
+  "name": "michi-workspace",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build --force",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:specs": "python3 tools/check-phase0.py",
+    "verify": "pnpm typecheck && pnpm test && pnpm check:specs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

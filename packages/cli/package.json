@@ -1,0 +1,12 @@
+{
+  "name": "@michi/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "michi": "./dist/index.js" },
+  "main": "./dist/index.js",
+  "dependencies": {
+    "@michi/core": "workspace:*",
+    "commander": "^12.1.0"
+  }
+}

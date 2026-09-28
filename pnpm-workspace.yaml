@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+
+# esbuild is a dev-only transitive dependency of vitest. Its postinstall only
+# fetches a platform binary that is already installed as an optional
+# dependency, so the script is denied rather than approved.
+# See docs/specs/SECURITY_MODEL.md, "Supply chain": no postinstall scripts.
+allowBuilds:
+  esbuild: false

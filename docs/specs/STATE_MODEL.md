@@ -15,6 +15,7 @@ be able to reconstruct where the project stands by reading these files (P5).
 ├── config.yaml                 tool config: version, policies, adapter settings
 │
 ├── project/
+│   ├── map.json                what the scanner found in the repository
 │   ├── identity.md             what this product is, in plain language
 │   ├── constraints.md          budget, timeline, team, compliance, hard limits
 │   └── preferences.md          stated user preferences that are not yet decisions
@@ -55,6 +56,17 @@ be able to reconstruct where the project stands by reading these files (P5).
 
 Everything is text. Everything is diffable. Everything is committed to the
 user's repository and travels with it.
+
+`project/map.json` is the one regenerated file: `michi scan` rebuilds it from
+the repository, and it is a cache, not a record. Its identity is a hash that
+excludes `generated_at` and every ignored directory — including `.michi/`
+itself — so that a scan reports a change only when the user's project actually
+changed.
+
+`init` also writes `.michi/README.md`, a plain-language note explaining what
+the folder is. The directory turns up in someone's repository; if they cannot
+code, it should still be obvious what it is and that deleting it loses
+something.
 
 ## Project stages
 
