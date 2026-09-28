@@ -5,10 +5,6 @@
 It has nothing to do with Kundan Gems (`~/Kundan Gems`) — a separate, unrelated
 project. Don't read or reference it from here.
 
-This directory was previously a different project called *phaseforge*, which was
-wiped on 2026-09-28 and replaced by MICHI. Phaseforge's files are recoverable at
-commit `58c71e1` if ever needed; nothing in this repo should refer to it.
-
 ## What MICHI is
 
 A local-first engineering layer that sits between a non-technical founder and
