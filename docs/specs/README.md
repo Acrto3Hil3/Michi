@@ -152,6 +152,42 @@ command-security problem before then.
 
 ## Open
 
+### OQ-007 — What happens when discovery runs a second time? · **open, blocks Phase 3**
+
+**Found while building Phase 2.** Not decided.
+
+`michi discover close` writes `requirements/requirements.yaml` from the
+confirmed requirements of the session that just closed. On a first run that is
+right. On a second run — the founder comes back in March wanting multi-store
+support — the current implementation would **replace** the file, silently
+dropping requirements confirmed months earlier.
+
+That is a change-management question (`MICHI.md` §77), and the readings differ
+materially:
+
+**A — Replace.** Each discovery produces the complete requirement set. Simple,
+and wrong for any project that survives its first month.
+
+**B — Merge, with ids continuing.** A later session allocates `REQ-006` onward
+and adds to the existing set. Requirements no longer wanted are superseded
+explicitly, the way decisions are. Matches how decisions already work, and
+keeps the history §77 asks for.
+
+**C — Discovery is once-only.** Later change goes through a different command
+built for it, and `discover` refuses to reopen on a project past
+`SPECIFICATION`.
+
+**Recommendation: B**, because it is the only one of the three that matches the
+supersede-don't-delete rule the rest of the product already follows, and
+because a founder returning with a change is the normal case rather than the
+exception.
+
+**Current behaviour is A**, and it is the reason this is written down rather
+than left to be discovered later. Nothing in Phase 2 depends on the answer: a
+second `discover start` on a `SPECIFICATION`-stage project has not been
+exercised, and requirement ids are already allocated from the session rather
+than globally, which is the part that would need to change under B.
+
 ### OQ-002 — npm package and binary names · **open, does not block Phase 1**
 
 `MICHI.md` §57 and §65 assume `@michi/cli`, `@michi/core`, `@michi/skills` and a
