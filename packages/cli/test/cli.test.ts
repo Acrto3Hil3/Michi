@@ -118,8 +118,8 @@ describe("michi status", () => {
     const d = json(a).data;
     expect(Object.keys(d).sort()).toEqual([
       "active_task", "architecture_status", "counts", "current_milestone",
-      "detected", "initialized", "last_scan", "needs_you", "project",
-      "schema_version", "stage", "stage_entered_at",
+      "detected", "discovery", "initialized", "last_scan", "needs_you",
+      "project", "schema_version", "stage", "stage_entered_at",
     ]);
   });
 

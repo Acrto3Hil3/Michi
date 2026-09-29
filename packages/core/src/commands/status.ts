@@ -6,9 +6,11 @@ import { CONFIG_FILE, MAP_FILE, STATE_FILE, brainDir, readJson, readYaml } from 
 import { ConfigSchema } from "../schemas/config.js";
 import { StateSchema } from "../schemas/state.js";
 import type { ProjectStage } from "../schemas/state.js";
+import type { SessionState } from "../schemas/discovery.js";
 import { ProjectMapSchema } from "../schemas/scan.js";
 import type { Detections } from "../schemas/scan.js";
 import { requireInitialized } from "./scan.js";
+import { openSession } from "./discover.js";
 import { cmd } from "../identity.js";
 
 export interface StatusOptions {
@@ -27,6 +29,7 @@ export interface StatusData {
   active_task: string | null;
   counts: Record<string, number>;
   last_scan: { at: string; project_map_hash: string } | null;
+  discovery: { session_id: string; status: SessionState; open_questions: number } | null;
   detected: { generated_at: string; detections: Detections } | null;
   needs_you: string[];
 }
@@ -35,13 +38,36 @@ export interface StatusData {
  * A status report that does not say what is waiting on the human is a wall of
  * numbers (CLI_CONTRACT.md).
  */
-function needsYou(state: { stage: ProjectStage; counts: StatusData["counts"] }, hasMap: boolean): string[] {
+function needsYou(
+  state: { stage: ProjectStage; counts: StatusData["counts"] },
+  hasMap: boolean,
+  discovery: StatusData["discovery"],
+): string[] {
   const items: string[] = [];
   if (state.stage === "DISCOVERY") {
-    items.push(`Tell MICHI what you want to build — run: ${cmd("discover start")}`);
+    if (!discovery) {
+      items.push(`Tell MICHI what you want to build — run: ${cmd("discover start")}`);
+    } else if (discovery.status === "READY_FOR_CONFIRMATION") {
+      items.push(
+        `${discovery.session_id} is waiting for you to confirm what MICHI understood — ` +
+          `run: ${cmd("discover status")}`,
+      );
+    } else if (discovery.open_questions > 0) {
+      items.push(
+        `${discovery.session_id} has ${discovery.open_questions} question(s) for you — ` +
+          `run: ${cmd("discover status")}`,
+      );
+    } else {
+      items.push(
+        `${discovery.session_id} is under way (${discovery.status}) — run: ${cmd("discover status")}`,
+      );
+    }
   }
-  if ((state.counts.decisions_open ?? 0) > 0) {
-    items.push(`${state.counts.decisions_open} decision(s) waiting on your answer — run: ${cmd("decide")}`);
+  const open = state.counts.decisions_open ?? 0;
+  if (open > 0) {
+    items.push(
+      `${open} decision${open === 1 ? "" : "s"} waiting on your answer — run: ${cmd("decide")}`,
+    );
   }
   if ((state.counts.tasks_blocked ?? 0) > 0) {
     items.push(`${state.counts.tasks_blocked} task(s) blocked — run: ${cmd("task list --status BLOCKED")}`);
@@ -70,6 +96,15 @@ export function status(options: StatusOptions): Result<StatusData> {
       if (MichiError.from(e).payload.code !== "NOT_FOUND") throw e;
     }
 
+    const session = openSession(root);
+    const discovery: StatusData["discovery"] = session
+      ? {
+          session_id: session.session_id,
+          status: session.status,
+          open_questions: session.open_questions.length,
+        }
+      : null;
+
     return ok({
       initialized: true,
       schema_version: state.schema_version,
@@ -81,8 +116,9 @@ export function status(options: StatusOptions): Result<StatusData> {
       active_task: state.active_task,
       counts: state.counts,
       last_scan: state.last_scan,
+      discovery,
       detected,
-      needs_you: needsYou(state, detected !== null),
+      needs_you: needsYou(state, detected !== null, discovery),
     });
   } catch (e) {
     return errorPayload(MichiError.from(e));

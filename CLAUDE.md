@@ -28,6 +28,7 @@ disagree, `MICHI.md` wins and the contract is a bug.
 | `docs/specs/` | Phase 0 — eleven engineering contracts, the locked decisions and the open questions |
 | `packages/core/` | MICHI Core — schemas, state, scanner, commands. Deterministic; no model, no network. |
 | `packages/cli/` | The binary. Thin: parse, call Core, render. No engineering logic. |
+| `packages/skills/` | The Experience Layer — instructions for the user's own agent. One `SKILL.md` per department. |
 | `tools/check-phase0.py` | Reproducible consistency check over the contracts. Run it after editing any spec. |
 | `LICENSE` | MIT, © Subhash Yadav |
 
@@ -77,14 +78,15 @@ Do not report work as done without running it (P3).
 
 ## Current state (2026-09-28)
 
-Phase 0 complete and internally consistent. **Phase 1 complete**: `michi init`,
-`michi scan`, `michi status`, 77 tests, TypeScript build clean. Nothing
-published.
+Phase 0 complete and internally consistent. **Phases 1 and 2 complete**:
+`michi init`, `scan`, `status`, `discover` (start/status/answer/export/close),
+`decide` (list/show/propose/confirm/reject/supersede), and the
+`senior-engineer` skill. 165 tests, TypeScript build clean. Nothing published.
 
-Phase 1 deliberately contains no graph engine, no context engine, no skills, no
-adapters and no verification executor. Those are Phases 5–8; building their
-abstractions now would be the premature scaffolding the product exists to
-prevent (P4).
+Still deliberately absent: the graph engine, the context engine, the other six
+skills, agent adapters and the verification executor. Those are Phases 3–8;
+building their abstractions now would be the premature scaffolding the product
+exists to prevent (P4).
 
 **Locked by the owner** — settled, follow them, don't relitigate:
 
@@ -108,8 +110,14 @@ prevent (P4).
 2. `npm login` — the user must run it themselves.
 3. No GitHub repository exists, and `gh` is not installed.
 
-Next step: **Phase 2** — the `senior-engineer` skill, and `michi discover`
-(`start` / `status` / `answer --file` / `export` / `close`) against
-[`SKILL_CONTRACT.md`](docs/specs/SKILL_CONTRACT.md) and
-[`CLI_CONTRACT.md`](docs/specs/CLI_CONTRACT.md). That is the step that first
-puts a human conversation on top of the state layer.
+Next step: **Phase 3** — the `product-planner` skill, PRD and TRD, and the
+scope table (`IN SCOPE` / `OUT OF SCOPE` / `FUTURE` / `UNKNOWN`), building on
+the confirmed requirements discovery now produces.
+
+Two rules that Phase 2 established and that everything after it depends on:
+
+- **Nothing is confirmed without a named human.** The schema refuses a
+  `CONFIRMED` requirement with no `confirmed_by`, and a `LOCKED` decision with
+  no approval, no rationale or no ADR. Do not add a bypass.
+- **A locked decision is superseded, never edited.** `decide confirm` on a
+  locked decision exits 7 and points at `decide supersede`.

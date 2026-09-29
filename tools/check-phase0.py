@@ -150,6 +150,31 @@ check("OQ-006  no authorization from project content",
 check("OQ-006  Core never edits source in response to a failure",
       "never fixes anything" in sec.lower() or "MICHI never fixes anything" in sec)
 
+# --- Phase 2 contracts ----------------------------------------------------
+sm = spec("STATE_MODEL.md")
+check("phase2  discovery session lifecycle is documented",
+      "## Discovery sessions" in sm
+      and all(st in sm for st in ["STARTED", "GATHERING", "READY_FOR_CONFIRMATION",
+                                  "CONFIRMED", "COMPLETED"]))
+check("phase2  conversation and session are distinguished",
+      "A **conversation** is temporary" in sm)
+check("phase2  session state is derived, not asserted",
+      "derived" in sm and "not asserted" in sm)
+check("phase2  a CONFIRMED requirement must name who confirmed it",
+      "confirmed_by" in sm and "confirmed_at" in sm
+      and "only with a recorded" in sm)
+check("phase2  confidence never upgrades itself",
+      "never promotes one of these" in sm)
+check("phase2  the discovery update file is specified",
+      "### The update file" in cli and "confirm_intent" in cli
+      and "requires `by`" in cli)
+check("phase2  decide propose takes a file, not flags",
+      "michi decide propose --file" in cli)
+
+SKILLS = ROOT / "packages" / "skills"
+check("phase2  the senior-engineer skill exists",
+      (SKILLS / "senior-engineer" / "SKILL.md").is_file())
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

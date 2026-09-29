@@ -39,7 +39,8 @@ agent is building the right thing.
 
 ## Status
 
-**Phase 1 built.** `michi init`, `michi scan` and `michi status` work. Nothing
+**Phases 1 and 2 built.** MICHI can look at a project, hold a structured
+discovery with you through your AI agent, and record what you decided. Nothing
 is published yet.
 
 What exists right now is the specification:
@@ -56,9 +57,15 @@ One question remains open — what the published package will be called. It is
 listed [here](docs/specs/README.md#open).
 
 What works today: point MICHI at a project and it writes down what is actually
-there — the language, the package manager, the frameworks, the database — and
-says plainly which of those it could not establish rather than guessing. That
-becomes the starting point for everything after it.
+there, saying plainly which parts it could not establish rather than guessing.
+Then describe what you want to build, and your AI agent — following MICHI's
+`senior-engineer` skill — asks you the questions a senior engineer would, turns
+your answers into written requirements, and puts real technical choices to you
+in plain language with a recommendation.
+
+Nothing becomes a requirement until you say so, and nothing becomes a decision
+until you choose. MICHI refuses to record either on your behalf — that is
+enforced in the code, not left to good intentions.
 
 The roadmap, in order:
 
@@ -66,7 +73,7 @@ The roadmap, in order:
 |---|---|---|
 | 0 | Specification | **done** |
 | 1 | `michi init` · `scan` · `status` | **done** |
-| 2 | The `senior-engineer` skill | not started |
+| 2 | The `senior-engineer` skill · `michi discover` · `michi decide` | **done** |
 | 3 | Product planning — PRD, TRD, requirements | not started |
 | 4 | Architecture and decision records | not started |
 | 5 | The context engine | not started |

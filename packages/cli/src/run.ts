@@ -1,9 +1,15 @@
 import { Command, CommanderError } from "commander";
 import {
   ExitCode, IDENTITY, MichiError, errorPayload, exitCodeFor, init, scan, status,
+  discoverStart, discoverStatus, discoverAnswer, discoverExport, discoverClose,
+  decideList, decideShow, decidePropose, decideConfirm, decideReject, decideSupersede,
 } from "@michi/core";
 import type { Result } from "@michi/core";
-import { renderInit, renderScan, renderStatus } from "./render.js";
+import {
+  renderInit, renderScan, renderStatus,
+  renderDiscoverStart, renderDiscoverAnswer, renderDiscoverStatus, renderDiscoverClose,
+  renderDecideList, renderDecision, renderDecideShow, renderSupersede,
+} from "./render.js";
 
 export interface Io {
   out(line: string): void;
@@ -103,6 +109,115 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .description("where the project stands, and what needs you")
     .action(() => {
       code = emit(status({ root: root(), now }), opts(), io, renderStatus);
+    });
+
+  // -------------------------------------------------------------------------
+  // discover — structured operations only. The conversation happens a layer up.
+  // -------------------------------------------------------------------------
+  const discover = program
+    .command("discover")
+    .description("turn what the user wants into structured engineering state");
+
+  discover
+    .command("start")
+    .description("open a discovery session, or resume the open one")
+    .action(() => {
+      code = emit(discoverStart({ root: root(), now }), opts(), io, renderDiscoverStart);
+    });
+
+  discover
+    .command("status")
+    .description("what is known, what is assumed, and what is still unknown")
+    .action(() => {
+      code = emit(discoverStatus({ root: root(), now }), opts(), io, renderDiscoverStatus);
+    });
+
+  discover
+    .command("answer")
+    .description("record what a turn of conversation established")
+    .requiredOption("--file <path>", "the discovery update, as JSON")
+    .action((local: { file: string }) => {
+      code = emit(
+        discoverAnswer({ root: root(), now, file: local.file }), opts(), io, renderDiscoverAnswer,
+      );
+    });
+
+  discover
+    .command("export")
+    .description("emit the discovery result; writes nothing")
+    .action(() => {
+      code = emit(discoverExport({ root: root(), now }), opts(), io, renderDiscoverStatus);
+    });
+
+  discover
+    .command("close")
+    .description("write the confirmed requirements and move on to specification")
+    .action(() => {
+      code = emit(discoverClose({ root: root(), now }), opts(), io, renderDiscoverClose);
+    });
+
+  // -------------------------------------------------------------------------
+  // decide
+  // -------------------------------------------------------------------------
+  const decide = program
+    .command("decide")
+    .description("the choices this project has made, and why")
+    .action(() => {
+      code = emit(decideList({ root: root(), now }), opts(), io, renderDecideList);
+    });
+
+  decide
+    .command("show <id>")
+    .description("one decision and the record written up for it")
+    .action((id: string) => {
+      code = emit(decideShow({ root: root(), now, id }), opts(), io, renderDecideShow);
+    });
+
+  decide
+    .command("propose")
+    .description("put a choice to the user; decides nothing")
+    .requiredOption("--file <path>", "the proposal, as JSON")
+    .action((local: { file: string }) => {
+      code = emit(
+        decidePropose({ root: root(), now, file: local.file }), opts(), io, renderDecision,
+      );
+    });
+
+  decide
+    .command("confirm <id>")
+    .description("record the user's choice and lock it")
+    .requiredOption("--choice <key>", "the option the user picked")
+    .requiredOption("--by <who>", "who approved it")
+    .requiredOption("--rationale <text>", "why, in one sentence")
+    .requiredOption("--adr <path>", "the written reasoning, as Markdown")
+    .action((id: string, local: { choice: string; by: string; rationale: string; adr: string }) => {
+      code = emit(
+        decideConfirm({
+          root: root(), now, id, choice: local.choice, by: local.by,
+          rationale: local.rationale, adrFile: local.adr,
+        }),
+        opts(), io, renderDecision,
+      );
+    });
+
+  decide
+    .command("reject <id>")
+    .description("record that the user said no")
+    .requiredOption("--reason <text>", "why not")
+    .action((id: string, local: { reason: string }) => {
+      code = emit(
+        decideReject({ root: root(), now, id, reason: local.reason }), opts(), io, renderDecision,
+      );
+    });
+
+  decide
+    .command("supersede <id>")
+    .description("replace a locked decision with a newer locked one")
+    .requiredOption("--with <id>", "the replacement decision")
+    .action((id: string, local: { with: string }) => {
+      code = emit(
+        decideSupersede({ root: root(), now, id, withId: local.with }), opts(), io, renderSupersede,
+      );
     });
 
   try {

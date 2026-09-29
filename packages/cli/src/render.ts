@@ -5,7 +5,10 @@
  * nothing here may know something the JSON does not. Short, plain language,
  * and always ending with what needs the person (CLI_CONTRACT.md, P11).
  */
-import type { InitData, ScanData, StatusData, Detection } from "@michi/core";
+import type {
+  InitData, ScanData, StatusData, Detection,
+  StartData, AnswerData, CloseData, DiscoverStatusData, Decision,
+} from "@michi/core";
 import { cmd } from "@michi/core";
 
 const bullet = (s: string) => `  ${s}`;
@@ -89,4 +92,154 @@ export function renderStatus(data: StatusData): string[] {
     for (const item of data.needs_you) lines.push(bullet(item));
   }
   return lines;
+}
+
+// ---------------------------------------------------------------------------
+// Discovery
+// ---------------------------------------------------------------------------
+
+const show = (value: unknown): string =>
+  Array.isArray(value) ? value.join(", ") : value === null || value === undefined ? "—" : String(value);
+
+export function renderDiscoverStart(data: StartData): string[] {
+  return [
+    data.resumed
+      ? `Picking up where you left off: ${data.session.session_id} (${data.session.status}).`
+      : `Started ${data.session.session_id}. MICHI knows nothing about this idea yet.`,
+    "",
+    "Next:",
+    bullet("Ask the user what they want to build, in their own words."),
+    bullet(`Then record what you learned: ${cmd("discover answer --file <update.json>")}`),
+  ];
+}
+
+export function renderDiscoverAnswer(data: AnswerData): string[] {
+  const a = data.applied;
+  const lines = [`Recorded. ${data.session.session_id} is now ${data.session.status}.`, ""];
+  const did: string[] = [];
+  if (a.intent_fields) did.push(`${a.intent_fields} part(s) of the intent`);
+  if (a.answers) did.push(`${a.answers} answer(s)`);
+  if (a.questions_opened) did.push(`${a.questions_opened} new question(s)`);
+  if (a.questions_resolved) did.push(`${a.questions_resolved} question(s) answered`);
+  if (a.requirements_added.length) did.push(`proposed ${a.requirements_added.join(", ")}`);
+  if (a.requirements_confirmed.length) did.push(`confirmed ${a.requirements_confirmed.join(", ")}`);
+  if (a.requirements_rejected.length) did.push(`rejected ${a.requirements_rejected.join(", ")}`);
+  if (a.intent_confirmed) did.push("the user confirmed the overall understanding");
+  for (const item of did) lines.push(bullet(item));
+  return lines;
+}
+
+export function renderDiscoverStatus(data: DiscoverStatusData): string[] {
+  const s = data.session;
+  const lines = [
+    `DISCOVERY — ${s.session_id} (${s.status})`,
+    "",
+    "What the user has told us:",
+  ];
+  if (data.known.length === 0) lines.push(bullet("nothing yet"));
+  for (const field of data.known) lines.push(bullet(`${field.padEnd(16)} ${show(s.intent[field as "problem"].value)}`));
+
+  if (data.inferred.length > 0) {
+    lines.push("", "What MICHI worked out (not confirmed):");
+    for (const f of data.inferred) lines.push(bullet(`${f.padEnd(16)} ${show(s.intent[f as "problem"].value)}`));
+  }
+  if (data.assumed.length > 0) {
+    lines.push("", "What MICHI is assuming:");
+    for (const f of data.assumed) lines.push(bullet(`${f.padEnd(16)} ${show(s.intent[f as "problem"].value)}`));
+  }
+  if (data.unknown.length > 0) {
+    lines.push("", "Still unknown:");
+    for (const f of data.unknown) lines.push(bullet(f));
+  }
+  if (data.open_questions.length > 0) {
+    lines.push("", "Open questions:");
+    for (const q of data.open_questions) lines.push(bullet(`${q.id}  ${q.text}  (${q.why})`));
+  }
+  lines.push(
+    "",
+    `Requirements: ${data.requirements.confirmed} confirmed, ` +
+      `${data.requirements.proposed} awaiting the user, ${data.requirements.rejected} rejected`,
+    "",
+    "Next:",
+    bullet(data.next_step),
+  );
+  return lines;
+}
+
+export function renderDiscoverClose(data: CloseData): string[] {
+  return [
+    "Discovery is complete.",
+    "",
+    bullet(`Confirmed requirements written: ${data.requirements_written}`),
+    ...data.artifacts.map((f) => bullet(f)),
+    "",
+    `The project has moved to ${data.stage}.`,
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Decisions
+// ---------------------------------------------------------------------------
+
+function decisionRow(d: Decision): string {
+  const choice = d.options.find((o) => o.key === d.selected_option);
+  return bullet(
+    `${d.id.padEnd(6)} ${d.category.padEnd(18)} ${(choice?.label ?? "—").padEnd(24)} ${d.status}`,
+  );
+}
+
+export function renderDecideList(data: { decisions: Decision[] }): string[] {
+  if (data.decisions.length === 0) {
+    return [
+      "No decisions have been made on this project yet.",
+      "",
+      "MICHI records a decision when there is a real choice to make and you have made it.",
+    ];
+  }
+  const lines = ["DECISIONS", ""];
+  for (const d of data.decisions) lines.push(decisionRow(d));
+  const open = data.decisions.filter((d) => d.status === "PROPOSED");
+  if (open.length > 0) {
+    lines.push("", "Waiting on you:");
+    for (const d of open) lines.push(bullet(`${d.id}  ${d.title}`));
+  }
+  return lines;
+}
+
+export function renderDecision(data: { decision: Decision; adr_path?: string }): string[] {
+  const d = data.decision;
+  const chosen = d.options.find((o) => o.key === d.selected_option);
+  const lines = [`${d.id} — ${d.title}`, "", bullet(`Status     ${d.status}`)];
+  if (chosen) lines.push(bullet(`Chosen     ${chosen.label}`));
+  if (d.rationale) lines.push(bullet(`Because    ${d.rationale}`));
+  if (d.approval) lines.push(bullet(`Approved   ${d.approval.by}, ${d.approval.at.slice(0, 10)}`));
+  if (d.adr) lines.push(bullet(`Written up ${d.adr} (${d.adr_file})`));
+  if (d.superseded_by) lines.push(bullet(`Replaced   by ${d.superseded_by}`));
+  if (d.rejected_reason) lines.push(bullet(`Rejected   ${d.rejected_reason}`));
+
+  if (d.status === "PROPOSED") {
+    lines.push("", "The options:");
+    for (const o of d.options) {
+      lines.push(bullet(`${o.key.padEnd(12)} ${o.label}`));
+      if (o.explanation) lines.push(`      ${o.explanation}`);
+      if (o.tradeoffs) lines.push(`      Trade-off: ${o.tradeoffs}`);
+    }
+    lines.push("", "Nothing is decided until you choose.");
+  }
+  return lines;
+}
+
+export function renderDecideShow(data: { decision: Decision; adr_text: string | null }): string[] {
+  const lines = renderDecision(data);
+  if (data.adr_text) lines.push("", "--- the written record ---", "", data.adr_text.trimEnd());
+  return lines;
+}
+
+export function renderSupersede(data: { superseded: Decision; replacement: Decision }): string[] {
+  return [
+    `${data.superseded.id} has been replaced by ${data.replacement.id}.`,
+    "",
+    bullet(`${data.superseded.id} is now SUPERSEDED. It was not deleted — the history is the point.`),
+    bullet(`Its written record (${data.superseded.adr}) is unchanged; it is an accurate account of what was decided then.`),
+  ];
 }

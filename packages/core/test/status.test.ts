@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { tempProject, clock, NOW } from "./helpers.js";
 import { init } from "../src/commands/init.js";
 import { status } from "../src/commands/status.js";
+import { discoverStart } from "../src/commands/discover.js";
 
 describe("michi status", () => {
   it("says a project is not initialized, with the next step", () => {
@@ -36,6 +37,21 @@ describe("michi status", () => {
     if (!r.ok) return;
     expect(Array.isArray(r.data.needs_you)).toBe(true);
     expect(r.data.needs_you.join(" ")).toMatch(/discover/i);
+  });
+
+  it("stops telling the user to start discovery once discovery is under way", () => {
+    const root = tempProject({ "package.json": '{"name":"a"}' });
+    init({ root, now: clock });
+    const before = status({ root, now: clock });
+    if (!before.ok) throw new Error("expected ok");
+    expect(before.data.needs_you.join(" ")).toMatch(/discover start/);
+
+    discoverStart({ root, now: clock });
+    const after = status({ root, now: clock });
+    if (!after.ok) throw new Error("expected ok");
+    expect(after.data.needs_you.join(" ")).not.toMatch(/discover start/);
+    expect(after.data.needs_you.join(" ")).toMatch(/SESSION-001/);
+    expect(after.data.discovery?.status).toBe("STARTED");
   });
 
   it("produces the same data twice — it never writes", () => {

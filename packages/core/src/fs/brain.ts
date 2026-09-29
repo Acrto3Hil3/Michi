@@ -2,7 +2,17 @@ import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSyn
 import { dirname, join, basename } from "node:path";
 import { randomBytes } from "node:crypto";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
-import type { ZodType } from "zod";
+import type { ZodType, ZodTypeDef } from "zod";
+
+/**
+ * A schema read from an unknown blob on disk.
+ *
+ * Pinning Input to `unknown` makes TypeScript infer T from the schema's
+ * *output*. Without it, a schema using `.default()` infers its input type,
+ * where defaulted fields are optional — and every caller then sees a type
+ * that does not match what parsing actually returns.
+ */
+type Reader<T> = ZodType<T, ZodTypeDef, unknown>;
 import { MichiError } from "../errors.js";
 
 /** OQ-001: the project-state directory is `.michi/`. */
@@ -82,7 +92,7 @@ function readText(file: string): string {
   }
 }
 
-function validate<T>(file: string, raw: unknown, schema: ZodType<T>): T {
+function validate<T>(file: string, raw: unknown, schema: Reader<T>): T {
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     throw new MichiError({
@@ -102,7 +112,7 @@ function validate<T>(file: string, raw: unknown, schema: ZodType<T>): T {
   return parsed.data;
 }
 
-export function readYaml<T>(file: string, schema: ZodType<T>): T {
+export function readYaml<T>(file: string, schema: Reader<T>): T {
   const text = readText(file);
   let raw: unknown;
   try {
@@ -119,7 +129,7 @@ export function readYaml<T>(file: string, schema: ZodType<T>): T {
   return validate(file, raw, schema);
 }
 
-export function readJson<T>(file: string, schema: ZodType<T>): T {
+export function readJson<T>(file: string, schema: Reader<T>): T {
   const text = readText(file);
   let raw: unknown;
   try {

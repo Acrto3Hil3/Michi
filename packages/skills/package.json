@@ -1,0 +1,6 @@
+{
+  "name": "@michi/skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MICHI's skills — the Experience Layer. Instructions for the user's own coding agent."
+}

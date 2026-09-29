@@ -222,6 +222,158 @@ updated_at: 2026-09-28T10:14:00Z
 anything relevant changed since we last did expensive work here?" — see
 `CONTEXT_MODEL.md`.
 
+## Discovery sessions
+
+*Added in Phase 2. `MICHI.md` §59 and §86 describe discovery and the intent
+model but specify neither a lifecycle nor a record, so both are defined here.*
+
+A **conversation** is temporary. A **session** is the structured process that
+conversation feeds. The distinction is the whole reason discovery survives
+closing a chat window:
+
+```text
+Conversation  →  Session  →  Intent  →  Requirements  →  Decisions  →  .michi/
+   ephemeral      durable     durable      durable         durable
+```
+
+`sessions/SESSION-001.yaml`. One session is open at a time.
+
+### Lifecycle
+
+```text
+STARTED ──► GATHERING ──► READY_FOR_CONFIRMATION ──► CONFIRMED ──► COMPLETED
+```
+
+| State | Meaning | Left when |
+|---|---|---|
+| `STARTED` | session opened, nothing ingested yet | the first update lands |
+| `GATHERING` | answers and draft requirements accumulating | no open questions remain and at least one requirement exists |
+| `READY_FOR_CONFIRMATION` | MICHI believes it understands; the human has not said so | the human confirms the intent |
+| `CONFIRMED` | the human signed off on the intent and its requirements | `close` runs |
+| `COMPLETED` | artifacts written, project advanced to `SPECIFICATION` | terminal |
+
+The state is **derived**, not asserted: Core recomputes it from the session's
+contents after every update. A skill cannot set it directly, which is what
+stops an agent declaring itself finished.
+
+Transitions only ever move forward. A new answer that reopens a question moves
+`READY_FOR_CONFIRMATION` back to `GATHERING` — that is not a failure, it is
+discovery working. `CONFIRMED` is the one state that cannot be reached by
+recomputation, because it requires a human.
+
+### The record
+
+```yaml
+schema_version: 1
+session_id: SESSION-001
+status: GATHERING
+opened_at: 2026-09-29T09:00:00Z
+updated_at: 2026-09-29T09:40:00Z
+closed_at: null
+
+intent:
+  problem:
+    value: Small retailers lose track of stock and discover it too late.
+    confidence: STATED
+  goal:
+    value: Let a shop owner see and correct stock without a spreadsheet.
+    confidence: STATED
+  users:
+    value: [Store owner, Shop assistant]
+    confidence: STATED
+  desired_outcome:
+    value: Stock counts that are trusted, and a warning before running out.
+    confidence: INFERRED
+  constraints:
+    value: []
+    confidence: UNKNOWN
+  assumptions:
+    value: [One shop, not a chain]
+    confidence: ASSUMED
+
+answers:
+  - key: primary_user
+    value: Store owner
+    confidence: STATED
+    question: Who will actually use this every day?
+    recorded_at: 2026-09-29T09:12:00Z
+
+open_questions:
+  - id: Q-004
+    text: What should happen when stock goes negative?
+    why: It changes whether corrections need an approval step.
+    asked_at: 2026-09-29T09:40:00Z
+
+requirements:
+  - id: REQ-001
+    title: Manage products
+    description: A store owner can add, edit and retire the products they stock.
+    type: functional
+    priority: high
+    status: CONFIRMED
+    origin_confidence: STATED
+    acceptance_criteria:
+      - A store owner can add a product
+      - A store owner can edit a product
+    confirmed_by: user
+    confirmed_at: 2026-09-29T09:35:00Z
+
+intent_confirmed_by: null
+intent_confirmed_at: null
+```
+
+### Confidence, and why it never upgrades itself
+
+Answers and intent fields carry a confidence:
+
+| | Meaning |
+|---|---|
+| `STATED` | the human said it |
+| `INFERRED` | MICHI worked it out from what they said |
+| `ASSUMED` | MICHI is proceeding as if it were true, and has said so |
+| `UNKNOWN` | not established |
+
+Core never promotes one of these to another. An inferred answer that later
+turns out to be right is still inferred unless the human states it, because the
+record has to be able to answer "did they actually say that?" months later
+(P9).
+
+### Requirements
+
+Requirement ids are stable and sequential (`REQ-001`), allocated by Core, never
+reused. The shape follows `MICHI.md` §98, with the status vocabulary made
+explicit:
+
+```text
+PROPOSED ──► CONFIRMED        the human said yes
+         └─► REJECTED         the human said no
+```
+
+**A requirement reaches `CONFIRMED` only with a recorded `confirmed_by` and
+`confirmed_at`.** Schema validation refuses it otherwise. This is the single
+most important rule in the phase: without it, an agent's inference becomes a
+project requirement by default, and everything downstream — architecture,
+tasks, code — inherits a thing nobody asked for.
+
+`origin_confidence` records how the requirement arose. A requirement may be
+`CONFIRMED` and still record that MICHI inferred it originally; those are
+different facts and both are worth keeping.
+
+Rejected requirements are kept, not deleted — knowing what was turned down
+stops it being proposed again next month.
+
+### What `close` produces
+
+`close` requires `status: CONFIRMED` and refuses otherwise. It then writes:
+
+- `project/identity.md` — the intent, in plain language
+- `requirements/requirements.yaml` — the confirmed requirements only
+- the session marked `COMPLETED` with `closed_at`
+- project stage advanced `DISCOVERY → SPECIFICATION`
+
+Rejected and still-proposed requirements stay in the session record. They are
+not promoted, and they are not lost.
+
 ## Agent run record
 
 `sessions/RUN-0071.yaml`. Append-only; a run is never edited after it closes.

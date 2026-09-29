@@ -225,6 +225,50 @@ answer must never later be reported as something the user said (P9).
 `export` is read-only. `close` is the only one of the five that advances the
 project stage.
 
+### The update file
+
+`answer --file` takes one **discovery update** — everything the skill learned
+from a single turn of conversation. Every field is optional; Core validates,
+allocates ids, and recomputes the session's state.
+
+```json
+{
+  "intent": {
+    "problem": { "value": "Retailers lose track of stock.", "confidence": "STATED" },
+    "users":   { "value": ["Store owner"], "confidence": "STATED" }
+  },
+  "answers": [
+    { "key": "shop_count", "value": "one", "confidence": "STATED",
+      "question": "One shop, or several?" }
+  ],
+  "questions": [
+    { "text": "What happens when stock goes negative?",
+      "why": "It decides whether corrections need approval." }
+  ],
+  "requirements": [
+    { "title": "Manage products", "description": "…", "type": "functional",
+      "priority": "high", "origin_confidence": "INFERRED",
+      "acceptance_criteria": ["A store owner can add a product"] }
+  ],
+  "resolve_questions": ["Q-002"],
+  "confirm": { "requirements": ["REQ-001", "REQ-002"], "by": "user" },
+  "reject":  { "requirements": ["REQ-003"], "by": "user", "reason": "Out of scope for now" },
+  "confirm_intent": { "by": "user" }
+}
+```
+
+Requirements arrive `PROPOSED`. They become `CONFIRMED` only through
+`confirm`, and `confirm` **requires `by`** — there is no path to a confirmed
+requirement that does not name the human who confirmed it. An update that tries
+is rejected with `VALIDATION_ERROR`, not quietly accepted (P2).
+
+`confirm_intent` is what moves a session to `CONFIRMED`, and it is the one
+state Core cannot compute for itself.
+
+One ingestion point rather than five subcommands: a conversational turn
+produces answers, questions and draft requirements together, and splitting them
+across separate calls would let a crash land half a turn.
+
 ### `michi plan`
 
 ```bash
@@ -250,7 +294,7 @@ and their time.
 ```bash
 michi decide                                          list the registry
 michi decide show <id>                                the object and its ADR
-michi decide propose --category <c> --title <t> [--options <file>]
+michi decide propose --file <proposal.json>
 michi decide confirm <id> --choice <key> --by user --adr <file>
 michi decide reject  <id> --reason <text>
 michi decide supersede <id> --with <new-id>
@@ -264,6 +308,10 @@ D003 Database     PostgreSQL     LOCKED
 D004 Auth         Clerk          LOCKED
 D008 Jobs         —              PROPOSED   ← waiting on you
 ```
+
+`propose` takes a file rather than flags: a proposal carries options, each with
+its own plain-language explanation and tradeoffs, and that does not fit on a
+command line. The caller is a skill writing a document, not a person typing.
 
 All ids here are **decision** ids (`D004`), never ADR ids (OQ-003). The registry
 resolves the mapping; nothing computes one from the other.
