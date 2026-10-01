@@ -96,6 +96,23 @@ MICHI will refuse a confirmation that does not name who gave it. Do not try to
 work around that. It is the rule that stops your guesses becoming their
 project.
 
+### Coming back to a project that already has requirements
+
+Discovery is cumulative. A second session **adds to** what is already agreed —
+it never replaces it. `michi discover start` tells you how many requirements
+the project already has.
+
+If the user describes something already agreed, MICHI will refuse the duplicate
+and name the existing requirement. That is usually a signal to say so:
+
+> "You've already got that one — REQ-001 covers managing products. Did you mean
+>  to change it, or is this something new?"
+
+If they want to change it, propose the replacement with
+`"supersedes": "REQ-001"`. The old requirement is kept and marked, never
+deleted, so the project can always show what it used to say and when it
+changed.
+
 Never invent a requirement they did not ask for. If you spot something
 obviously missing — what happens when a payment fails, who can delete things —
 raise it as a **question**, not as a requirement.

@@ -30,10 +30,9 @@ About to write code: `ARCHITECTURE` → the model for the engine you are touchin
 
 Phase 0. No implementation exists yet.
 
-All five original open questions are **LOCKED** by the owner and applied
-throughout these contracts, as is OQ-006, found while applying them. One
-question — the published npm name — remains open and blocks nothing before
-release.
+Six of the seven questions raised so far are **LOCKED** by the owner and
+applied throughout these contracts. One — the published npm name — remains
+open and blocks nothing before release.
 
 ---
 
@@ -150,9 +149,88 @@ command-security problem before then.
 
 ---
 
+### OQ-007 — A second discovery session · **LOCKED: cumulative**
+
+*Raised while building Phase 2; decided by the owner 2026-10-01.*
+
+Discovery is **cumulative**. Requirements are project-level and persistent. A
+later session adds to them, and anything no longer wanted is **superseded
+explicitly, never deleted** — exactly as decisions already behave.
+
+```text
+SESSION-001 ──close──► REQ-001  REQ-002  REQ-003
+SESSION-002 ──close──► REQ-001  REQ-002  REQ-003 (SUPERSEDED by REQ-005)
+                       REQ-004  REQ-005
+```
+
+#### The ten answers
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | What does a second discovery session mean? | A continuation of the same specification, not a replacement for it. |
+| 2 | Do confirmed requirements persist across sessions? | Yes. Closing a session never removes a requirement another session confirmed. |
+| 3 | Append and refine, or produce a new set? | Append and refine. |
+| 4 | How is a changed requirement represented? | As a new requirement that `supersedes` the old one. The old one is marked `SUPERSEDED` and kept. |
+| 5 | Is supersession mandatory? | Yes. There is no delete. |
+| 6 | Are requirement ids project-wide or session-scoped? | **Project-wide.** Allocated from the requirements registry, never from the session, and never reused — including for requirements that were only ever proposed and then rejected. |
+| 7 | What happens to a previous session's open questions? | Nothing, because they cannot survive. See the note below. |
+| 8 | What if a new proposal conflicts with a confirmed requirement? | **Refused.** The proposal must declare `supersedes` explicitly. A conflicting proposal never silently wins. |
+| 9 | Does a closed session stay immutable? | Yes. A `COMPLETED` session is never written again, and remains the audit record of what was confirmed when. |
+| 10 | What does `close` write when prior requirements exist? | The merged current set: everything already in the registry, plus this session's confirmed requirements, with supersessions applied. |
+
+#### Two consequences worth naming
+
+**Conflict needs a mechanical definition** (question 8). MICHI cannot judge
+whether two requirements mean the same thing. The rule is therefore narrow and
+honest: a proposal whose title matches an active requirement's title — compared
+case- and punctuation-insensitively — is refused unless it declares
+`supersedes`. That catches the common case (the founder restating something
+already agreed) and will miss a genuine semantic duplicate worded differently.
+It is a guard, not a judgement, and it is documented as such rather than
+oversold.
+
+**Question 7's answer is "nothing", and that is not an evasion.** A session can
+only reach `COMPLETED` through `close`, `close` requires `CONFIRMED`, and
+`CONFIRMED` is unreachable while any question is open. So open questions
+structurally cannot survive a closed session. Carry-forward is therefore
+**specified but deliberately not implemented** — writing it now would be dead
+code for a path that does not exist. If an abandon path is ever added, this
+rule is what it must obey, and there is a test asserting the invariant that a
+completed session has no open questions.
+
+#### What changed in the implementation
+
+- Requirement ids come from `requirements/requirements.yaml`, which now holds
+  `next_requirement_id` alongside the requirements themselves.
+- `REQUIREMENT_STATES` gained `SUPERSEDED`; requirements gained `supersedes`
+  and `superseded_by`.
+- `discover close` merges rather than replaces.
+- `discover start` is permitted on a project past `DISCOVERY`, because that is
+  the normal case under this decision.
+
+---
+
+---
+
 ## Open
 
-### OQ-007 — What does a second discovery session mean? · **open, blocks Phase 3**
+### OQ-002 — npm package and binary names · **open, does not block Phase 1**
+
+`MICHI.md` §57 and §65 assume `@michi/cli`, `@michi/core`, `@michi/skills` and a
+`michi` binary. Availability on npm has **not been checked**.
+
+Treated as unresolved. Package and binary identity is read from configuration
+rather than hard-coded across the architecture, so resolving this later is a
+configuration change, not a refactor. Must be settled before the first public
+release.
+
+---
+
+## Appendix — the OQ-007 analysis
+
+Kept because the options not taken are part of the record (P10).
+
+### The question as it stood before it was answered
 
 **Found while building Phase 2. Accepted as a product-level lifecycle decision,
 not an implementation detail. Not decided, and deliberately not implemented.**
@@ -273,13 +351,3 @@ answered:
 None of those are exercised by the Phase 2 tests, so the existing verification
 remains valid. A second `discover start` after `close` is **untested
 territory**, not supported behaviour.
-
-### OQ-002 — npm package and binary names · **open, does not block Phase 1**
-
-`MICHI.md` §57 and §65 assume `@michi/cli`, `@michi/core`, `@michi/skills` and a
-`michi` binary. Availability on npm has **not been checked**.
-
-Treated as unresolved. Package and binary identity is read from configuration
-rather than hard-coded across the architecture, so resolving this later is a
-configuration change, not a refactor. Must be settled before the first public
-release.

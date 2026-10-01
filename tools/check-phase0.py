@@ -171,15 +171,33 @@ check("phase2  the discovery update file is specified",
 check("phase2  decide propose takes a file, not flags",
       "michi decide propose --file" in cli)
 
+check("OQ-007  the skill teaches the cumulative model",
+      "Discovery is cumulative" in (ROOT / "packages" / "skills" / "senior-engineer" / "SKILL.md").read_text()
+      and "supersedes" in (ROOT / "packages" / "skills" / "senior-engineer" / "SKILL.md").read_text())
+
 SKILLS = ROOT / "packages" / "skills"
 check("phase2  the senior-engineer skill exists",
       (SKILLS / "senior-engineer" / "SKILL.md").is_file())
 
 # --- OQ-007, and honest reporting of what tests prove ---------------------
 rd = spec("README.md")
-check("OQ-007  is still open, not quietly decided",
+sm = spec("STATE_MODEL.md")
+check("OQ-007  is locked in the locked section, with its analysis kept",
       "### OQ-007" in rd
-      and rd.index("## Open") < rd.index("### OQ-007"))
+      and rd.index("## Locked decisions") < rd.index("### OQ-007") < rd.index("## Open")
+      and "LOCKED: cumulative" in rd
+      and "Appendix — the OQ-007 analysis" in rd)
+check("OQ-007  requirement ids are project-wide, not session-scoped",
+      "**Project-wide.**" in rd and "project-wide" in sm.lower())
+check("OQ-007  supersession is mandatory and there is no delete",
+      "There is no delete" in rd or "There is no delete" in sm)
+check("OQ-007  a conflicting proposal is refused, not silently accepted",
+      "**Refused.**" in rd and "guard, not a judgement" in rd)
+check("OQ-007  close merges rather than replaces",
+      "Merges, not replaces" in sm)
+check("OQ-007  carry-forward is named as unreachable rather than faked",
+      "specified but deliberately not implemented" in rd
+      or "**specified but deliberately not implemented**" in rd)
 check("OQ-007  states all ten questions the decision must settle",
       all(q in rd for q in [
           "What does a second discovery session", "persist across sessions",

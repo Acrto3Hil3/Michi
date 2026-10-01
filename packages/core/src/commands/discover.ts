@@ -7,11 +7,13 @@ import { ok } from "../result.js";
 import { STATE_FILE, brainDir, readYaml, writeText, writeYaml } from "../fs/brain.js";
 import { StateSchema } from "../schemas/state.js";
 import {
-  ConfidenceSchema, INTENT_FIELDS, RequirementSchema, SessionSchema, newSession,
-  nextRequirementId, questionId,
+  ConfidenceSchema, INTENT_FIELDS, RequirementSchema, RequirementsRegistrySchema,
+  SessionSchema, isActive, newRequirementsRegistry, newSession, questionId,
+  requirementId, titleKey,
 } from "../schemas/discovery.js";
 import type {
-  DiscoverySession, Intent, IntentFieldName, Requirement, SessionState,
+  DiscoverySession, Intent, IntentFieldName, Requirement, RequirementsRegistry,
+  SessionState,
 } from "../schemas/discovery.js";
 import { requireInitialized } from "./scan.js";
 import { cmd } from "../identity.js";
@@ -58,6 +60,8 @@ const UpdateSchema = z
         priority: z.enum(["high", "medium", "low"]),
         origin_confidence: ConfidenceSchema,
         acceptance_criteria: z.array(z.string().min(1)).min(1),
+        /** OQ-007: required when this replaces an active requirement. */
+        supersedes: z.string().regex(/^REQ-\d{3,}$/).optional(),
       }))
       .optional(),
     confirm: z
@@ -104,6 +108,37 @@ const UpdateSchema = z
   });
 
 export type DiscoveryUpdate = z.infer<typeof UpdateSchema>;
+
+// ---------------------------------------------------------------------------
+// The requirements registry — project-level, per OQ-007
+// ---------------------------------------------------------------------------
+
+const REQUIREMENTS = join("requirements", "requirements.yaml");
+
+function registryPath(root: string): string {
+  return join(brainDir(root), REQUIREMENTS);
+}
+
+function loadRequirements(root: string, now: string): RequirementsRegistry {
+  const file = registryPath(root);
+  if (!existsSync(file)) return newRequirementsRegistry(now);
+  return readYaml(file, RequirementsRegistrySchema);
+}
+
+function saveRequirements(root: string, registry: RequirementsRegistry, now: string): void {
+  writeYaml(registryPath(root), RequirementsRegistrySchema.parse({ ...registry, updated_at: now }));
+}
+
+/**
+ * Every requirement in force across the project: those already merged into the
+ * registry, plus those this session has confirmed but not yet closed.
+ */
+function activeRequirements(
+  registry: RequirementsRegistry,
+  session: DiscoverySession,
+): Requirement[] {
+  return [...registry.requirements, ...session.requirements].filter(isActive);
+}
 
 // ---------------------------------------------------------------------------
 // Session storage
@@ -195,6 +230,8 @@ function persist(root: string, session: DiscoverySession, now: string): Discover
 export interface StartData {
   session: DiscoverySession;
   resumed: boolean;
+  /** Requirements already in force on the project (OQ-007: discovery is cumulative). */
+  existing_requirements: number;
 }
 
 export function discoverStart(options: DiscoverOptions): Result<StartData> {
@@ -202,14 +239,17 @@ export function discoverStart(options: DiscoverOptions): Result<StartData> {
     const { root, now } = options;
     requireInitialized(root);
 
+    const timestamp = now();
+    const existing = loadRequirements(root, timestamp).requirements.filter(isActive).length;
+
     const open = findOpenSession(root);
-    if (open) return ok({ session: open, resumed: true });
+    if (open) return ok({ session: open, resumed: true, existing_requirements: existing });
 
     const count = listSessionIds(root).length;
     const id = `SESSION-${String(count + 1).padStart(3, "0")}`;
-    const session = newSession({ id, now: now() });
+    const session = newSession({ id, now: timestamp });
     writeYaml(sessionFile(root, id), session);
-    return ok({ session, resumed: false });
+    return ok({ session, resumed: false, existing_requirements: existing });
   } catch (e) {
     return errorPayload(MichiError.from(e));
   }
@@ -358,21 +398,66 @@ export function discoverAnswer(options: AnswerOptions): Result<AnswerData> {
       applied.questions_resolved += 1;
     }
 
+    const registry = loadRequirements(root, timestamp);
+    let allocated = 0;
+
     for (const draft of update.requirements ?? []) {
-      const id = nextRequirementId(next.requirements.map((r) => r.id));
+      const active = activeRequirements(registry, next);
+
+      if (draft.supersedes) {
+        if (!active.some((r) => r.id === draft.supersedes)) {
+          throw new MichiError({
+            class: "UNKNOWN",
+            code: "NOT_FOUND",
+            message: `${draft.supersedes} is not an active requirement, so nothing can replace it.`,
+            detail: { active: active.map((r) => r.id) },
+          });
+        }
+      } else {
+        // OQ-007: a restatement of something already agreed is refused rather
+        // than quietly becoming a second, near-identical requirement.
+        const clash = active.find((r) => titleKey(r.title) === titleKey(draft.title));
+        if (clash) {
+          throw new MichiError({
+            class: "INVALID",
+            code: "CONFLICT",
+            message:
+              `"${draft.title}" repeats ${clash.id}, which the user has already confirmed.`,
+            detail: { existing: clash.id, existing_title: clash.title },
+            next:
+              `If this is meant to replace it, add "supersedes": "${clash.id}" to the ` +
+              `requirement. Nothing is deleted either way.`,
+          });
+        }
+      }
+
+      const id = requirementId(registry.next_requirement_id + allocated);
+      allocated += 1;
       next.requirements.push(
         RequirementSchema.parse({
           ...draft,
+          supersedes: draft.supersedes ?? null,
           id,
           status: "PROPOSED",
           confirmed_by: null,
           confirmed_at: null,
+          confirmed_in: null,
+          superseded_by: null,
           rejected_reason: null,
           created_at: timestamp,
           updated_at: timestamp,
         }),
       );
       applied.requirements_added.push(id);
+    }
+
+    // The number is spent at proposal time, even if the proposal is rejected.
+    if (allocated > 0) {
+      saveRequirements(
+        root,
+        { ...registry, next_requirement_id: registry.next_requirement_id + allocated },
+        timestamp,
+      );
     }
 
     if (update.confirm) {
@@ -382,6 +467,7 @@ export function discoverAnswer(options: AnswerOptions): Result<AnswerData> {
         requirement.status = "CONFIRMED";
         requirement.confirmed_by = by;
         requirement.confirmed_at = timestamp;
+        requirement.confirmed_in = next.session_id;
         requirement.updated_at = timestamp;
         applied.requirements_confirmed.push(id);
       }
@@ -498,7 +584,11 @@ function lastSession(root: string): DiscoverySession {
 
 export interface CloseData {
   session: DiscoverySession;
+  /** Confirmed in this session. */
   requirements_written: number;
+  /** In force across the project once this session is merged in. */
+  requirements_total: number;
+  superseded: { old: string; by: string }[];
   artifacts: string[];
   stage: string;
 }
@@ -528,12 +618,31 @@ export function discoverClose(options: DiscoverOptions): Result<CloseData> {
     const confirmed = session.requirements.filter((r) => r.status === "CONFIRMED");
     const brain = brainDir(root);
 
-    writeYaml(join(brain, "requirements", "requirements.yaml"), {
-      schema_version: session.schema_version,
-      generated_from: session.session_id,
-      generated_at: timestamp,
-      requirements: confirmed,
-    });
+    // OQ-007: merge into the project's requirement set, never replace it. A
+    // requirement another session confirmed is not removed by closing this one.
+    const registry = loadRequirements(root, timestamp);
+    const merged: Requirement[] = [...registry.requirements, ...confirmed];
+
+    const superseded: { old: string; by: string }[] = [];
+    for (const requirement of confirmed) {
+      if (!requirement.supersedes) continue;
+      const replaced = merged.find((r) => r.id === requirement.supersedes);
+      if (!replaced) {
+        throw new MichiError({
+          class: "INVALID",
+          code: "CONFLICT",
+          message:
+            `${requirement.id} says it replaces ${requirement.supersedes}, which is not ` +
+            `in this project's requirements. Nothing was written.`,
+        });
+      }
+      replaced.status = "SUPERSEDED";
+      replaced.superseded_by = requirement.id;
+      replaced.updated_at = timestamp;
+      superseded.push({ old: replaced.id, by: requirement.id });
+    }
+
+    saveRequirements(root, { ...registry, requirements: merged }, timestamp);
     writeText(join(brain, "project", "identity.md"), identityDocument(session, timestamp));
 
     const closed: DiscoverySession = { ...session, closed_at: timestamp, updated_at: timestamp };
@@ -546,13 +655,17 @@ export function discoverClose(options: DiscoverOptions): Result<CloseData> {
       ...state,
       stage: "SPECIFICATION",
       stage_entered_at: timestamp,
-      counts: { ...state.counts, requirements: confirmed.length },
+      // The count is of requirements still in force, not of everything ever
+      // written: a superseded requirement is kept but no longer counted.
+      counts: { ...state.counts, requirements: merged.filter(isActive).length },
       updated_at: timestamp,
     });
 
     return ok({
       session: closed,
       requirements_written: confirmed.length,
+      requirements_total: merged.filter(isActive).length,
+      superseded,
       artifacts: ["requirements/requirements.yaml", "project/identity.md"],
       stage: "SPECIFICATION",
     });

@@ -102,13 +102,22 @@ const show = (value: unknown): string =>
   Array.isArray(value) ? value.join(", ") : value === null || value === undefined ? "—" : String(value);
 
 export function renderDiscoverStart(data: StartData): string[] {
+  const n = data.existing_requirements;
+  const opening = data.resumed
+    ? `Picking up where you left off: ${data.session.session_id} (${data.session.status}).`
+    : n === 0
+      ? `Started ${data.session.session_id}. MICHI knows nothing about this idea yet.`
+      : `Started ${data.session.session_id}. This project already has ${n} ` +
+        `requirement${n === 1 ? "" : "s"} agreed — nothing here replaces them.`;
   return [
-    data.resumed
-      ? `Picking up where you left off: ${data.session.session_id} (${data.session.status}).`
-      : `Started ${data.session.session_id}. MICHI knows nothing about this idea yet.`,
+    opening,
     "",
     "Next:",
-    bullet("Ask the user what they want to build, in their own words."),
+    bullet(
+      n === 0
+        ? "Ask the user what they want to build, in their own words."
+        : "Ask the user what has changed or what they want to add.",
+    ),
     bullet(`Then record what you learned: ${cmd("discover answer --file <update.json>")}`),
   ];
 }
@@ -167,14 +176,19 @@ export function renderDiscoverStatus(data: DiscoverStatusData): string[] {
 }
 
 export function renderDiscoverClose(data: CloseData): string[] {
-  return [
+  const lines = [
     "Discovery is complete.",
     "",
-    bullet(`Confirmed requirements written: ${data.requirements_written}`),
-    ...data.artifacts.map((f) => bullet(f)),
-    "",
-    `The project has moved to ${data.stage}.`,
+    bullet(`Confirmed in this session: ${data.requirements_written}`),
+    bullet(`Requirements now in force on this project: ${data.requirements_total}`),
   ];
+  if (data.superseded.length > 0) {
+    lines.push("", "Replaced (kept on the record, not deleted):");
+    for (const s of data.superseded) lines.push(bullet(`${s.old} → ${s.by}`));
+  }
+  lines.push("", "Written:", ...data.artifacts.map((f) => bullet(f)));
+  lines.push("", `The project has moved to ${data.stage}.`);
+  return lines;
 }
 
 // ---------------------------------------------------------------------------

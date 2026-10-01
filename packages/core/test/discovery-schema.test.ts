@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   ConfidenceSchema, RequirementSchema, SessionSchema, IntentSchema,
-  newSession, SESSION_STATES, nextRequirementId, unknownField,
+  RequirementsRegistrySchema, newSession, newRequirementsRegistry,
+  SESSION_STATES, REQUIREMENT_STATES, requirementId, isActive, titleKey,
+  unknownField,
 } from "../src/schemas/discovery.js";
 import { NOW } from "./helpers.js";
 
@@ -59,11 +61,33 @@ describe("requirement status", () => {
     expect(() => RequirementSchema.parse({ ...baseReq, status: "APPROVED-ISH" })).toThrow();
   });
 
-  it("allocates stable sequential ids that are never reused", () => {
-    expect(nextRequirementId([])).toBe("REQ-001");
-    expect(nextRequirementId(["REQ-001", "REQ-002"])).toBe("REQ-003");
-    // REQ-002 was rejected and removed from view; its number is still spent.
-    expect(nextRequirementId(["REQ-001", "REQ-007"])).toBe("REQ-008");
+  it("has SUPERSEDED, because there is no delete (OQ-007)", () => {
+    expect(REQUIREMENT_STATES).toEqual(["PROPOSED", "CONFIRMED", "REJECTED", "SUPERSEDED"]);
+  });
+
+  it("counts only confirmed requirements as still in force", () => {
+    const of = (status: string) => ({ ...baseReq, status, confirmed_by: "user", confirmed_at: NOW });
+    expect(isActive(RequirementSchema.parse(of("CONFIRMED")))).toBe(true);
+    expect(isActive(RequirementSchema.parse(of("SUPERSEDED")))).toBe(false);
+    expect(isActive(RequirementSchema.parse({ ...baseReq, status: "PROPOSED" }))).toBe(false);
+    expect(isActive(RequirementSchema.parse({ ...baseReq, status: "REJECTED" }))).toBe(false);
+  });
+
+  it("names ids from a project-wide counter, not by scanning a session", () => {
+    expect(requirementId(1)).toBe("REQ-001");
+    expect(requirementId(8)).toBe("REQ-008");
+    expect(requirementId(142)).toBe("REQ-142");
+  });
+
+  it("starts the project counter at one and validates the registry", () => {
+    const r = newRequirementsRegistry(NOW);
+    expect(r.next_requirement_id).toBe(1);
+    expect(() => RequirementsRegistrySchema.parse(r)).not.toThrow();
+  });
+
+  it("compares titles for conflicts ignoring case and punctuation only", () => {
+    expect(titleKey("Manage Products!")).toBe(titleKey("manage  products"));
+    expect(titleKey("Manage products")).not.toBe(titleKey("Manage stock"));
   });
 });
 

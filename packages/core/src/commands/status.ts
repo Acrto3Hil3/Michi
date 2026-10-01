@@ -44,7 +44,10 @@ function needsYou(
   discovery: StatusData["discovery"],
 ): string[] {
   const items: string[] = [];
-  if (state.stage === "DISCOVERY") {
+
+  // An open session is waiting on the user whatever stage the project is in:
+  // under OQ-007 a second discovery on a specified project is ordinary.
+  if (state.stage === "DISCOVERY" || discovery) {
     if (!discovery) {
       items.push(`Tell MICHI what you want to build — run: ${cmd("discover start")}`);
     } else if (discovery.status === "READY_FOR_CONFIRMATION") {

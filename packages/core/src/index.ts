@@ -25,12 +25,14 @@ export type { StatusOptions, StatusData } from "./commands/status.js";
 
 export {
   ConfidenceSchema, IntentSchema, RequirementSchema, SessionSchema,
-  newSession, nextRequirementId, unknownField, INTENT_FIELDS,
+  newSession, unknownField, INTENT_FIELDS,
+  RequirementsRegistrySchema, newRequirementsRegistry, requirementId,
+  isActive, titleKey,
   REQUIREMENT_STATES, SESSION_STATES, questionId,
 } from "./schemas/discovery.js";
 export type {
   Answer, DiscoveryConfidence, DiscoverySession, Intent, IntentField,
-  IntentFieldName, Question, Requirement, SessionState,
+  IntentFieldName, Question, Requirement, RequirementsRegistry, SessionState,
 } from "./schemas/discovery.js";
 
 export {

@@ -203,7 +203,7 @@ talking to someone.
 | `status` | what is known, what is assumed, what is still unknown — ranked |
 | `answer` | persists a batch of structured answers from a file |
 | `export` | emits the structured discovery result; read-only |
-| `close` | converts the session into an intent record and moves the project to `SPECIFICATION` |
+| `close` | merges the confirmed requirements into the project set and moves the project to `SPECIFICATION` |
 
 The division of labour:
 
@@ -224,6 +224,12 @@ answer must never later be reported as something the user said (P9).
 
 `export` is read-only. `close` is the only one of the five that advances the
 project stage.
+
+`start` is permitted on a project already past `DISCOVERY`: discovery is
+cumulative (OQ-007), so a founder returning with a change is ordinary. `close`
+then **merges** into `requirements/requirements.yaml` rather than replacing it,
+and a proposal that collides with an active requirement is refused unless it
+declares `supersedes`.
 
 ### The update file
 

@@ -56,6 +56,10 @@ files holding everything your project has decided.
 One question remains open — what the published package will be called. It is
 listed [here](docs/specs/README.md#open).
 
+Requirements accumulate rather than being overwritten: come back in six months
+with a change and MICHI adds to what you already agreed, marking what the
+change replaced instead of quietly losing it.
+
 What works today: point MICHI at a project and it writes down what is actually
 there, saying plainly which parts it could not establish rather than guessing.
 Then describe what you want to build, and your AI agent — following MICHI's

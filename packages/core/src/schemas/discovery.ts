@@ -58,7 +58,13 @@ export const QuestionSchema = z.object({
 });
 export type Question = z.infer<typeof QuestionSchema>;
 
-export const REQUIREMENT_STATES = ["PROPOSED", "CONFIRMED", "REJECTED"] as const;
+/**
+ * OQ-007: there is no delete. A requirement no longer wanted is superseded by
+ * the one that replaces it, and both are kept — the rule decisions follow.
+ */
+export const REQUIREMENT_STATES = [
+  "PROPOSED", "CONFIRMED", "REJECTED", "SUPERSEDED",
+] as const;
 
 /**
  * MICHI.md §98, with the status vocabulary made explicit.
@@ -80,7 +86,11 @@ export const RequirementSchema = z
     acceptance_criteria: z.array(z.string().min(1)),
     confirmed_by: z.string().min(1).nullable().default(null),
     confirmed_at: z.string().datetime().nullable().default(null),
+    /** The session that confirmed it, so the registry stays traceable. */
+    confirmed_in: z.string().regex(/^SESSION-\d{3,}$/).nullable().default(null),
     rejected_reason: z.string().min(1).nullable().default(null),
+    supersedes: z.string().regex(/^REQ-\d{3,}$/).nullable().default(null),
+    superseded_by: z.string().regex(/^REQ-\d{3,}$/).nullable().default(null),
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
   })
@@ -163,12 +173,52 @@ export function newSession(input: { id: string; now: string }): DiscoverySession
   };
 }
 
-const num = (id: string): number => Number(id.slice(id.lastIndexOf("-") + 1));
+/**
+ * The project's requirement set, and the authority on id allocation (OQ-007).
+ *
+ * `next_requirement_id` is bumped the moment a requirement is *proposed*, not
+ * when it is confirmed, so a rejected proposal still spends its number. That
+ * is what makes an id safe to quote in conversation before anyone has agreed
+ * to anything.
+ */
+export const RequirementsRegistrySchema = z.object({
+  schema_version: z.literal(SCHEMA_VERSION),
+  next_requirement_id: z.number().int().positive(),
+  updated_at: z.string().datetime(),
+  requirements: z.array(RequirementSchema),
+});
+export type RequirementsRegistry = z.infer<typeof RequirementsRegistrySchema>;
 
-/** Sequential and never reused, including for rejected requirements. */
-export function nextRequirementId(existing: string[]): string {
-  const highest = existing.reduce((max, id) => Math.max(max, num(id)), 0);
-  return `REQ-${String(highest + 1).padStart(3, "0")}`;
+export function newRequirementsRegistry(now: string): RequirementsRegistry {
+  return {
+    schema_version: SCHEMA_VERSION,
+    next_requirement_id: 1,
+    updated_at: now,
+    requirements: [],
+  };
+}
+
+/** Project-wide, sequential, never reused. */
+export function requirementId(next: number): string {
+  return `REQ-${String(next).padStart(3, "0")}`;
+}
+
+/**
+ * A requirement still in force: not rejected, not replaced by a later one.
+ */
+export function isActive(r: Requirement): boolean {
+  return r.status === "CONFIRMED";
+}
+
+/**
+ * Title comparison for conflict detection.
+ *
+ * Deliberately crude: case and punctuation are ignored, nothing else. It
+ * catches the founder restating something already agreed, and will miss a
+ * genuine duplicate worded differently. A guard, not a judgement.
+ */
+export function titleKey(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
 export function questionId(n: number): string {

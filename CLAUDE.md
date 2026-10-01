@@ -81,7 +81,7 @@ Do not report work as done without running it (P3).
 Phase 0 complete and internally consistent. **Phases 1 and 2 complete**:
 `michi init`, `scan`, `status`, `discover` (start/status/answer/export/close),
 `decide` (list/show/propose/confirm/reject/supersede), and the
-`senior-engineer` skill. 165 tests, TypeScript build clean. Nothing published.
+`senior-engineer` skill. 186 tests, TypeScript build clean. Nothing published.
 
 Still deliberately absent: the graph engine, the context engine, the other six
 skills, agent adapters and the verification executor. Those are Phases 3–8;
@@ -117,20 +117,13 @@ behaviour. See
 2. `npm login` — the user must run it themselves.
 3. No GitHub repository exists, and `gh` is not installed.
 
-**Phase 3 is blocked.** Do not start it until OQ-007 is answered by the owner
-and recorded as a locked decision with an ADR. OQ-007 decides whether MICHI's
-requirement system is durable project memory or a one-session specification
-generator, and every later phase sits on that answer. It is decision-ready in
-[`docs/specs/README.md`](docs/specs/README.md#open) — ten questions, three
-options, a recommendation, and an explicit list of what is deliberately not
-implemented.
+**OQ-007 is answered and implemented**: discovery is cumulative. Requirements
+are project-level, ids come from `requirements/requirements.yaml`, `close`
+merges, and a requirement is superseded rather than deleted. A proposal
+repeating an active requirement's title is refused unless it declares
+`supersedes`. Do not add a bypass for either rule.
 
-While it is open: do not change `discover close`, do not change requirement id
-allocation, and do not make `discover start` refuse on a `SPECIFICATION`-stage
-project. A second `discover start` after `close` is untested territory, not
-supported behaviour.
-
-Phase 3, once unblocked: the `product-planner` skill, PRD and TRD, and the
+Next: **Phase 3** — the `product-planner` skill, PRD and TRD, and the
 scope table (`IN SCOPE` / `OUT OF SCOPE` / `FUTURE` / `UNKNOWN`), building on
 the confirmed requirements discovery now produces.
 

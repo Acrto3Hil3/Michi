@@ -340,14 +340,23 @@ record has to be able to answer "did they actually say that?" months later
 
 ### Requirements
 
-Requirement ids are stable and sequential (`REQ-001`), allocated by Core, never
-reused. The shape follows `MICHI.md` §98, with the status vocabulary made
-explicit:
+*OQ-007, locked 2026-10-01: discovery is cumulative and requirements are
+project-level.*
+
+Requirement ids are stable, sequential (`REQ-001`) and **project-wide** —
+allocated from the requirements registry, never from the session, and never
+reused, including for requirements that were only ever proposed and then
+rejected. Two sessions can never both produce a `REQ-001`.
+
+The shape follows `MICHI.md` §98, with the status vocabulary made explicit:
 
 ```text
-PROPOSED ──► CONFIRMED        the human said yes
-         └─► REJECTED         the human said no
+PROPOSED ──► CONFIRMED ──► SUPERSEDED     replaced by a later requirement
+         └─► REJECTED                     the human said no
 ```
+
+There is no delete. A requirement that is no longer wanted is superseded by the
+one that replaces it, and both are kept — the same rule decisions follow (P10).
 
 **A requirement reaches `CONFIRMED` only with a recorded `confirmed_by` and
 `confirmed_at`.** Schema validation refuses it otherwise. This is the single
@@ -362,17 +371,71 @@ different facts and both are worth keeping.
 Rejected requirements are kept, not deleted — knowing what was turned down
 stops it being proposed again next month.
 
+### The requirements registry
+
+`requirements/requirements.yaml` is the project's requirement set and the
+authority on id allocation:
+
+```yaml
+schema_version: 1
+next_requirement_id: 6
+updated_at: 2026-10-01T09:40:00Z
+requirements:
+  - id: REQ-001
+    title: Manage products
+    status: CONFIRMED
+    confirmed_by: user
+    confirmed_at: 2026-09-29T09:35:00Z
+    confirmed_in: SESSION-001
+    supersedes: null
+    superseded_by: null
+    # … the rest of the §98 shape
+  - id: REQ-003
+    title: Warn before running out
+    status: SUPERSEDED
+    superseded_by: REQ-005
+    confirmed_in: SESSION-001
+```
+
+`next_requirement_id` is bumped the moment a requirement is *proposed*, not
+when it is confirmed. A rejected proposal therefore still spends its number,
+which is what makes ids safe to quote in conversation before anyone has agreed
+to anything.
+
+`confirmed_in` names the session that confirmed each requirement, so the
+registry stays traceable back to the conversation it came from.
+
+### Conflicting proposals
+
+A proposal whose title matches an active requirement's title — compared
+case- and punctuation-insensitively — is **refused** unless it declares
+`supersedes`. The founder restating something already agreed is the common
+case, and silently creating a near-duplicate requirement is worse than an
+error message.
+
+This is a guard, not a judgement. MICHI cannot tell whether two differently
+worded requirements mean the same thing, and it does not pretend to.
+
 ### What `close` produces
 
-`close` requires `status: CONFIRMED` and refuses otherwise. It then writes:
+`close` requires `status: CONFIRMED` and refuses otherwise. It then:
 
-- `project/identity.md` — the intent, in plain language
-- `requirements/requirements.yaml` — the confirmed requirements only
-- the session marked `COMPLETED` with `closed_at`
-- project stage advanced `DISCOVERY → SPECIFICATION`
+- **merges** this session's confirmed requirements into the registry, applying
+  any supersessions they declare
+- writes `project/identity.md` — the intent, in plain language
+- marks the session `COMPLETED` with `closed_at`, after which it is never
+  written again
+- advances the project stage to `SPECIFICATION`
+
+Merges, not replaces. A requirement another session confirmed is never removed
+by closing this one.
 
 Rejected and still-proposed requirements stay in the session record. They are
 not promoted, and they are not lost.
+
+A second session on a project already past `DISCOVERY` is permitted and
+ordinary — a founder returning with a change is the normal case, not an
+exception. The stage is not moved backwards by starting one.
 
 ## Agent run record
 
