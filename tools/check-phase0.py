@@ -241,6 +241,10 @@ check("phase3  TRD is deferred to architecture rather than stubbed",
       and "Not `TRD.md`" in spec("SKILL_CONTRACT.md"))
 check("phase3  product-planner does not create requirements",
       "It does not create requirements" in spec("SKILL_CONTRACT.md"))
+check("OQ-008  the frozen-specification dead end is raised, not hidden",
+      "### OQ-008" in rd
+      and rd.index("## Open") < rd.index("### OQ-008")
+      and "Current behaviour is a hard refusal" in rd)
 check("phase3  the product-planner skill exists",
       (ROOT / "packages" / "skills" / "product-planner" / "SKILL.md").is_file())
 

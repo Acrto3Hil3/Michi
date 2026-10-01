@@ -214,6 +214,44 @@ completed session has no open questions.
 
 ## Open
 
+### OQ-008 — How does a published specification change? · **open, blocks nothing yet**
+
+**Found while building Phase 3.** Not decided.
+
+Requirements accumulate and supersede (OQ-007). Decisions supersede. The
+product specification does neither: once `plan close` publishes it,
+`plan update` is **refused outright**, with a message telling the agent to raise
+it with the user. That is a dead end, and it is the same question OQ-007 asked,
+one level up.
+
+It will be reached the first time a founder comes back wanting a different MVP —
+which is the normal case, not an edge one.
+
+**A — Re-open.** An update on a `PUBLISHED` specification moves it back to
+`DRAFT` and `close` runs again. Simplest. Loses any record of what was published
+when, and therefore what the architecture phase was working from.
+
+**B — Versioned.** Each `close` produces a numbered specification version;
+`PRD.md` is regenerated and the previous version archived. Matches
+supersede-don't-delete most literally, but needs a versioning mechanism nothing
+else in `.michi/` has yet.
+
+**C — Cumulative, like requirements.** One evolving specification. Scope
+assignments already replace in place; `close` becomes re-runnable, regenerates
+`PRD.md`, and appends to a list of publication records (when, confirmed by whom,
+what the scope was at that moment).
+
+**Recommendation: C.** It is what the data model already does — scope
+assignments replace rather than accumulate — so it is the smallest honest
+change, and the publication records give the audit trail B was reaching for
+without inventing document versioning. B becomes worth it only if someone needs
+to read the PRD *as it was*, and nobody has asked for that.
+
+**Current behaviour is a hard refusal**, named here rather than left to be
+discovered. It blocks nothing in Phase 4: architecture consumes the published
+specification and does not change it. It becomes urgent the first time scope
+needs revisiting.
+
 ### OQ-002 — npm package and binary names · **open, does not block Phase 1**
 
 `MICHI.md` §57 and §65 assume `@michi/cli`, `@michi/core`, `@michi/skills` and a

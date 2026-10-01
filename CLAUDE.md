@@ -113,10 +113,16 @@ behaviour. See
 
 **Open — needs the owner, don't decide these unasked:**
 
-1. **OQ-002** — npm package and binary names are unverified. Doesn't block
+1. **OQ-008** — how does a *published* specification change? Right now
+   `plan update` on a published specification is refused outright, which is a
+   dead end the first time a founder wants a different MVP. Three options and a
+   recommendation are in
+   [`docs/specs/README.md`](docs/specs/README.md#open). Blocks nothing in
+   Phase 4; architecture reads the specification and does not change it.
+2. **OQ-002** — npm package and binary names are unverified. Doesn't block
    implementation; package identity is read from configuration.
-2. `npm login` — the user must run it themselves.
-3. No GitHub repository exists, and `gh` is not installed.
+3. `npm login` — the user must run it themselves.
+4. No GitHub repository exists, and `gh` is not installed.
 
 **OQ-007 is answered and implemented**: discovery is cumulative. Requirements
 are project-level, ids come from `requirements/requirements.yaml`, `close`
