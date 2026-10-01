@@ -88,6 +88,13 @@ skills, agent adapters and the verification executor. Those are Phases 3–8;
 building their abstractions now would be the premature scaffolding the product
 exists to prevent (P4).
 
+**Phase 2's real limitation**: the `senior-engineer` skill is verified
+structurally, never behaviourally. 165 green tests say nothing about whether an
+agent following that skill asks good questions or avoids confirming things the
+user did not agree to. Never cite the test count as evidence of agent
+behaviour. See
+[`SKILL_CONTRACT.md`](docs/specs/SKILL_CONTRACT.md#known-limitation-skills-are-verified-structurally-not-behaviourally).
+
 **Locked by the owner** — settled, follow them, don't relitigate:
 
 - **OQ-001** the project-state directory is `.michi/`
@@ -110,7 +117,20 @@ exists to prevent (P4).
 2. `npm login` — the user must run it themselves.
 3. No GitHub repository exists, and `gh` is not installed.
 
-Next step: **Phase 3** — the `product-planner` skill, PRD and TRD, and the
+**Phase 3 is blocked.** Do not start it until OQ-007 is answered by the owner
+and recorded as a locked decision with an ADR. OQ-007 decides whether MICHI's
+requirement system is durable project memory or a one-session specification
+generator, and every later phase sits on that answer. It is decision-ready in
+[`docs/specs/README.md`](docs/specs/README.md#open) — ten questions, three
+options, a recommendation, and an explicit list of what is deliberately not
+implemented.
+
+While it is open: do not change `discover close`, do not change requirement id
+allocation, and do not make `discover start` refuse on a `SPECIFICATION`-stage
+project. A second `discover start` after `close` is untested territory, not
+supported behaviour.
+
+Phase 3, once unblocked: the `product-planner` skill, PRD and TRD, and the
 scope table (`IN SCOPE` / `OUT OF SCOPE` / `FUTURE` / `UNKNOWN`), building on
 the confirmed requirements discovery now produces.
 

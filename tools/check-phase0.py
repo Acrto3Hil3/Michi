@@ -175,6 +175,29 @@ SKILLS = ROOT / "packages" / "skills"
 check("phase2  the senior-engineer skill exists",
       (SKILLS / "senior-engineer" / "SKILL.md").is_file())
 
+# --- OQ-007, and honest reporting of what tests prove ---------------------
+rd = spec("README.md")
+check("OQ-007  is still open, not quietly decided",
+      "### OQ-007" in rd
+      and rd.index("## Open") < rd.index("### OQ-007"))
+check("OQ-007  states all ten questions the decision must settle",
+      all(q in rd for q in [
+          "What does a second discovery session", "persist across sessions",
+          "append to and refine", "changed* requirement",
+          "supersession mandatory", "globally unique across the project",
+          "open questions left behind", "conflicts with an already-confirmed",
+          "immutable and auditable", "prior requirements already exist"]))
+check("OQ-007  names what is deliberately not implemented",
+      "What is deliberately not being done" in rd
+      and "still replaces" in rd and "untested\nterritory" in rd.replace("\r", ""))
+check("OQ-007  marks its recommendation as a recommendation, not a decision",
+      "recommendation, not a decision" in rd)
+
+sk = spec("SKILL_CONTRACT.md")
+check("honesty  skill tests are documented as structural, not behavioural",
+      "verified structurally, not behaviourally" in sk
+      and "never present skill fixture tests as evidence" in sk.lower())
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

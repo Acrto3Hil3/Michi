@@ -296,6 +296,36 @@ what now prevents it. A bug fixed and not written down gets reintroduced.
 
 ---
 
+## Known limitation: skills are verified structurally, not behaviourally
+
+A skill's tests are fixture tests over a Markdown file. They can prove:
+
+- the frontmatter is present and the description states a trigger
+- every `michi …` command the skill tells an agent to run actually exists
+- the universal rules and prohibitions are stated
+- the file is short enough to be read in full each time it loads
+
+They cannot prove any of the things that actually matter:
+
+- that an agent following it conducts a good discovery session
+- that it asks the right question next, rather than a reasonable-sounding one
+- that it recognises ambiguity instead of smoothing over it
+- that it resists confirming a requirement the user never agreed to
+- that a person who cannot code understands what it said to them
+
+This gap is structural, not an oversight. Behaviour depends on the model
+reading the skill, and that model is not in this repository — which is the
+point of the three layers. A green test suite says the skill is *well formed*.
+It says nothing about whether it works.
+
+**So a skill is not finished when its tests pass.** It is finished when it has
+been run by a real agent, with a real non-technical person, on a real idea, and
+the resulting `.michi/` contents are something an engineer would recognise as
+correct. Until that has happened, say so rather than citing the test count.
+
+The honest reporting rule: never present skill fixture tests as evidence of
+agent behaviour.
+
 ## Writing a skill
 
 - Address the agent directly: "Read the state before you answer."

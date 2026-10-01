@@ -152,41 +152,127 @@ command-security problem before then.
 
 ## Open
 
-### OQ-007 — What happens when discovery runs a second time? · **open, blocks Phase 3**
+### OQ-007 — What does a second discovery session mean? · **open, blocks Phase 3**
 
-**Found while building Phase 2.** Not decided.
+**Found while building Phase 2. Accepted as a product-level lifecycle decision,
+not an implementation detail. Not decided, and deliberately not implemented.**
+
+#### The problem
 
 `michi discover close` writes `requirements/requirements.yaml` from the
-confirmed requirements of the session that just closed. On a first run that is
-right. On a second run — the founder comes back in March wanting multi-store
-support — the current implementation would **replace** the file, silently
-dropping requirements confirmed months earlier.
+confirmed requirements of the session that just closed:
 
-That is a change-management question (`MICHI.md` §77), and the readings differ
-materially:
+```text
+SESSION-001 ──close──► requirements.yaml
+                       REQ-001 REQ-002 REQ-003
 
-**A — Replace.** Each discovery produces the complete requirement set. Simple,
-and wrong for any project that survives its first month.
+SESSION-002 ──close──► requirements.yaml
+                       REQ-001 REQ-002
+                            ↑
+                       REQ-003 is gone, and nobody was told
+```
 
-**B — Merge, with ids continuing.** A later session allocates `REQ-006` onward
-and adds to the existing set. Requirements no longer wanted are superseded
-explicitly, the way decisions are. Matches how decisions already work, and
-keeps the history §77 asks for.
+On a first run that is correct. On a second — the founder returns in March
+wanting multi-store support — it silently drops requirements confirmed months
+earlier. That contradicts the supersede-don't-delete rule the rest of MICHI
+already follows (P10, `MICHI.md` §18, §77), and it decides by accident whether
+MICHI's requirement system is **durable project memory** or merely a
+**one-session specification generator**. Every later phase sits on top of that
+answer.
 
-**C — Discovery is once-only.** Later change goes through a different command
-built for it, and `discover` refuses to reopen on a project past
-`SPECIFICATION`.
+#### The ten questions the decision must settle
 
-**Recommendation: B**, because it is the only one of the three that matches the
-supersede-don't-delete rule the rest of the product already follows, and
-because a founder returning with a change is the normal case rather than the
-exception.
+Each needs an explicit answer. None should be guessed.
 
-**Current behaviour is A**, and it is the reason this is written down rather
-than left to be discovered later. Nothing in Phase 2 depends on the answer: a
-second `discover start` on a `SPECIFICATION`-stage project has not been
-exercised, and requirement ids are already allocated from the session rather
-than globally, which is the part that would need to change under B.
+| # | Question |
+|---|---|
+| 1 | What does a second discovery session *mean*? |
+| 2 | Do confirmed requirements persist across sessions? |
+| 3 | Does a new session append to and refine the existing set, or produce a new one? |
+| 4 | How is a *changed* requirement represented? |
+| 5 | Is supersession mandatory, with deletion forbidden? |
+| 6 | Are requirement ids globally unique across the project, or scoped to a session? |
+| 7 | What happens to open questions left behind by a previous session? |
+| 8 | What happens when a new session proposes a requirement that conflicts with an already-confirmed one? |
+| 9 | Does a closed session stay immutable and auditable? |
+| 10 | What does `discover close` write when prior requirements already exist? |
+
+#### The three options
+
+**A — Replace.** Each discovery produces the complete requirement set; closing
+overwrites what was there.
+
+**B — Cumulative.** Discovery is additive. Requirements are project-level and
+persistent; a later session adds to them, and anything no longer wanted is
+superseded explicitly rather than dropped.
+
+**C — Once-only.** Discovery runs once. After `SPECIFICATION`, `discover start`
+is refused and change goes through a separate mechanism built for it.
+
+A fourth shape is worth naming because it sits between B and C: **B′ —
+snapshotted replacement**, where each session produces a new specification
+version and the previous one is archived rather than lost. It keeps history,
+but it makes "the current requirements" a version lookup rather than a set, and
+it needs a versioning mechanism that does not exist yet.
+
+#### How each option answers the ten questions
+
+| # | A — Replace | B — Cumulative | C — Once-only |
+|---|---|---|---|
+| 1 | a fresh specification | a continuation of the same specification | not permitted |
+| 2 | no | yes | n/a — only one session ever |
+| 3 | produces a new set | appends and refines | n/a |
+| 4 | by disappearing and reappearing | a new requirement superseding the old | by whatever the later mechanism decides |
+| 5 | no — deletion is the mechanism | yes, mandatory | deferred to the later mechanism |
+| 6 | session-scoped is survivable | **must become project-global** | session-scoped is fine |
+| 7 | discarded | carried forward, or closed with a reason | n/a |
+| 8 | no conflict is possible, because nothing persists | must be detected and resolved explicitly | n/a |
+| 9 | yes, but it no longer matches `requirements.yaml` | yes, and it stays consistent | yes |
+| 10 | the new set only | the merged set, with supersession recorded | nothing — it cannot run |
+
+Two rows carry most of the cost. **Row 6**: under B, requirement ids move from
+per-session to project-global, which is the change that makes this more than a
+patch. **Row 8**: B is the only option that has to detect a new proposal
+conflicting with a confirmed requirement, and that needs its own rule — most
+likely refuse, and require an explicit supersession instead.
+
+#### Recommendation
+
+**B — cumulative**, with:
+
+- requirement ids allocated project-wide from the registry, not from the session
+- a changed requirement represented as a new requirement that `supersedes` the
+  old one, exactly as decisions already work
+- deletion forbidden; superseded requirements kept and marked
+- a conflicting proposal **refused** with a pointer to supersession, rather than
+  silently winning
+- previous open questions carried into the new session, so nothing is lost by
+  starting a second one
+- closed sessions immutable; `requirements.yaml` the merged current set, with
+  each requirement naming the session that confirmed it
+
+The reasoning: B is the only option consistent with how decisions already
+behave, and a founder coming back with a change is the normal case, not the
+exception. C is defensible but splits the discovery vocabulary in two before we
+know what the second mechanism needs. A is the current behaviour and is the one
+option I would argue against.
+
+**This is a recommendation, not a decision.** Per P2 it needs an explicit
+answer, and per the owner's instruction it should be recorded as a locked
+decision with an ADR before Phase 3 begins.
+
+#### What is deliberately not being done
+
+Phase 2's implementation is unchanged and stays that way until this is
+answered:
+
+- `discover close` still replaces `requirements.yaml` (behaviour A)
+- requirement ids are still allocated per session
+- `discover start` still does not refuse on a `SPECIFICATION`-stage project
+
+None of those are exercised by the Phase 2 tests, so the existing verification
+remains valid. A second `discover start` after `close` is **untested
+territory**, not supported behaviour.
 
 ### OQ-002 — npm package and binary names · **open, does not block Phase 1**
 
