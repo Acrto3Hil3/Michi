@@ -39,9 +39,9 @@ agent is building the right thing.
 
 ## Status
 
-**Phases 1 and 2 built.** MICHI can look at a project, hold a structured
-discovery with you through your AI agent, and record what you decided. Nothing
-is published yet.
+**Phases 1 to 3 built.** MICHI can look at a project, hold a structured
+discovery with you through your AI agent, record what you decided, and work out
+with you what actually ships first. Nothing is published yet.
 
 What exists right now is the specification:
 
@@ -59,6 +59,10 @@ listed [here](docs/specs/README.md#open).
 Requirements accumulate rather than being overwritten: come back in six months
 with a change and MICHI adds to what you already agreed, marking what the
 change replaced instead of quietly losing it.
+
+And the hard conversation — which four of your eighteen ideas are version one —
+happens with the cut written down. "Later" is recorded as a promise, not lost
+as a deletion, and MICHI will not decide it for you.
 
 What works today: point MICHI at a project and it writes down what is actually
 there, saying plainly which parts it could not establish rather than guessing.
@@ -78,7 +82,7 @@ The roadmap, in order:
 | 0 | Specification | **done** |
 | 1 | `michi init` · `scan` · `status` | **done** |
 | 2 | The `senior-engineer` skill · `michi discover` · `michi decide` | **done** |
-| 3 | Product planning — PRD, TRD, requirements | not started |
+| 3 | The `product-planner` skill · `michi plan` · the PRD | **done** |
 | 4 | Architecture and decision records | not started |
 | 5 | The context engine | not started |
 | 6 | Task graph and prompt compiler | not started |

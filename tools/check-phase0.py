@@ -216,6 +216,34 @@ check("honesty  skill tests are documented as structural, not behavioural",
       "verified structurally, not behaviourally" in sk
       and "never present skill fixture tests as evidence" in sk.lower())
 
+# --- Phase 3 contracts ----------------------------------------------------
+check("phase3  the product specification is documented",
+      "## The product specification" in sm
+      and "specification.yaml" in sm)
+check("phase3  requirements stay canonical, referenced not copied",
+      "Requirements stay canonical" in sm
+      and "references" in sm and "never copies" in sm)
+check("phase3  the two kinds of acceptance criteria are distinguished",
+      "Two kinds of acceptance criteria" in sm
+      and "not a duplicate source of truth" in sm)
+check("phase3  all four scope values are specified",
+      all(v in sm for v in ["MVP", "FUTURE", "OUT_OF_SCOPE", "UNKNOWN"])
+      and "FUTURE` is a promise, not a deletion" in sm)
+check("phase3  a confirmed scope call must name the human",
+      "refuses a `CONFIRMED` assignment with no `confirmed_by`" in sm)
+check("phase3  dropping a requirement a locked decision needs is refused",
+      "Contradictions with locked decisions" in sm and "is **refused**" in sm)
+check("phase3  michi plan separates product from implementation planning",
+      "michi plan status" in cli and "Product planning" in cli
+      and "Implementation planning" in cli)
+check("phase3  TRD is deferred to architecture rather than stubbed",
+      "`TRD.md` is **not** written in Phase 3" in sm
+      and "Not `TRD.md`" in spec("SKILL_CONTRACT.md"))
+check("phase3  product-planner does not create requirements",
+      "It does not create requirements" in spec("SKILL_CONTRACT.md"))
+check("phase3  the product-planner skill exists",
+      (ROOT / "packages" / "skills" / "product-planner" / "SKILL.md").is_file())
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

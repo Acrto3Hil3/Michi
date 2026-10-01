@@ -11,6 +11,7 @@ import {
   nextAdrId, nextDecisionId,
 } from "../schemas/decision.js";
 import type { Decision, DecisionRegistry } from "../schemas/decision.js";
+import { parseOrInvalid } from "../schemas/parse.js";
 import { requireInitialized } from "./scan.js";
 import { cmd } from "../identity.js";
 
@@ -150,7 +151,7 @@ export function decidePropose(options: ProposeOptions): Result<{ decision: Decis
     const registry = loadRegistry(root);
     const timestamp = now();
 
-    const decision = DecisionSchema.parse({
+    const decision = parseOrInvalid(DecisionSchema, {
       id: nextDecisionId(registry),
       title: proposal.title,
       type: proposal.type,
@@ -171,7 +172,7 @@ export function decidePropose(options: ProposeOptions): Result<{ decision: Decis
       rejected_reason: null,
       created_at: timestamp,
       updated_at: timestamp,
-    });
+    }, "that proposal");
 
     registry.decisions.push(decision);
     registry.next_decision_id += 1;

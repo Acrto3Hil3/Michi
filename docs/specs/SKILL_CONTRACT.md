@@ -151,9 +151,28 @@ Turns a rough business idea into structured product requirements.
 MVP boundary · future scope · functional and non-functional requirements ·
 assumptions · constraints · acceptance criteria · PRD · TRD.
 
-**Output.** `REQ-*` records with stable ids and acceptance criteria; `PRD.md`
-and `TRD.md`; an explicit scope table — `IN SCOPE` / `OUT OF SCOPE` / `FUTURE` /
-`UNKNOWN` (§76).
+**It does not create requirements.** Discovery does, and those `REQ-*` records
+are canonical. This skill **references** them: personas, use cases, a scope
+call and acceptance criteria, all pointing at requirements the user already
+confirmed. A requirement that planning reveals is missing goes back to
+discovery, never in through the side door.
+
+**Output.** `requirements/specification.yaml` — personas, use cases, `AC-*`
+criteria and a scope assignment per requirement (`MVP` / `FUTURE` /
+`OUT_OF_SCOPE` / `UNKNOWN`, §76) — and the generated `PRD.md`.
+
+**Not `TRD.md`.** A technical requirements document is assembled from locked
+architectural decisions, which are the `architecture` skill's output. Writing an
+empty one here would be scaffolding for later.
+
+**Order matters, and it is not negotiable.** Who it is for, then what they
+actually do, then what ships. A scope call made before the personas exist is a
+guess, and MICHI's own `plan status` will say so rather than letting it happen
+quietly.
+
+**Acceptance criteria must be runnable.** Prefer Given/When/Then. "The
+inventory should work correctly" cannot pass or fail, so it is not a criterion.
+`plan close` refuses while any first-version requirement has none.
 
 **The hardest part is the MVP boundary**, and it is the most valuable thing this
 skill does. A founder will describe eighteen features. Cutting fourteen of them

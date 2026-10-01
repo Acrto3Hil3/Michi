@@ -56,3 +56,21 @@ export {
 export type {
   DecideOptions, ProposeOptions, ConfirmOptions, RejectOptions, SupersedeOptions,
 } from "./commands/decide.js";
+
+export {
+  SCOPE_VALUES, SPECIFICATION_STATES, ScopeSchema, PersonaSchema, UseCaseSchema,
+  AcceptanceCriterionSchema, ScopeAssignmentSchema, OutOfScopeItemSchema,
+  SpecificationSchema, newSpecification, effectiveScope, scopeAssignment,
+  personaId, useCaseId, criterionId, outOfScopeId,
+} from "./schemas/product.js";
+export type {
+  AcceptanceCriterion, OutOfScopeItem, Persona, ProductSpecification, Scope,
+  ScopeAssignment, UseCase,
+} from "./schemas/product.js";
+export { parseOrInvalid } from "./schemas/parse.js";
+
+export { planStatus, planUpdate, planExport, planClose } from "./commands/plan.js";
+export type {
+  PlanOptions, PlanUpdateOptions, PlanStatusData, PlanUpdateData, PlanCloseData,
+  PlanGaps, PlanUpdateDocument,
+} from "./commands/plan.js";

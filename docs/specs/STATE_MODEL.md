@@ -222,6 +222,155 @@ updated_at: 2026-09-28T10:14:00Z
 anything relevant changed since we last did expensive work here?" — see
 `CONTEXT_MODEL.md`.
 
+## The product specification
+
+*Added in Phase 3. `MICHI.md` §22, §60 and §76 describe product planning and
+scope but specify no structure, so it is defined here.*
+
+Discovery answers *what the user wants*. The specification answers *what we are
+building first, for whom, and how we will know it works.*
+
+```text
+requirements.yaml          the requirements, canonical, confirmed by the user
+        ▲
+        │ references, never copies
+        │
+specification.yaml         personas · use cases · scope · acceptance criteria
+        │
+        ▼
+PRD.md                     the whole thing in plain language, generated
+```
+
+`requirements/specification.yaml`. One per project — not a session. It evolves
+in place, the way the decision registry does.
+
+### Requirements stay canonical
+
+The specification **references** requirements by id and never copies their
+content. There is exactly one requirement store, and Phase 2 owns it. A
+specification that mentions a requirement which is not active is invalid.
+
+### Two kinds of acceptance criteria, and why both exist
+
+| | Lives on | Authored | Authority on |
+|---|---|---|---|
+| `acceptance_criteria: string[]` | the requirement | discovery, confirmed by the user | what was **agreed** |
+| `AC-*` criterion | the specification | product planning | how it will be **checked** |
+
+This is not a duplicate source of truth. The first is a promise in the user's
+words — "a store owner can add a product". The second is a test a later phase
+can execute — "given a product with 5 units, when 1 is sold, then stock shows
+4". `MICHI.md` §50 already uses `AC-*` for exactly this testable form.
+
+Each `AC-*` names the requirement it checks. A requirement in the MVP with no
+`AC-*` is a **coverage gap**, and `plan close` refuses while any exists.
+
+### The record
+
+```yaml
+schema_version: 1
+status: DRAFT                  # DRAFT | CONFIRMED | PUBLISHED
+next_persona_id: 2
+next_use_case_id: 3
+next_criterion_id: 4
+next_out_of_scope_id: 2
+updated_at: 2026-10-01T11:00:00Z
+
+personas:
+  - id: PER-001
+    name: Store owner
+    description: Runs a single shop and does the stock counting themselves.
+    goals: [Know what is actually on the shelf, Never run out unexpectedly]
+
+use_cases:
+  - id: UC-001
+    title: Correct a stock count after a delivery
+    persona: PER-001
+    trigger: A delivery arrives and the recorded quantity is now wrong.
+    steps:
+      - The owner finds the product
+      - The owner records how many arrived
+      - The new quantity is shown
+    requirements: [REQ-001, REQ-003]
+
+criteria:
+  - id: AC-001
+    requirement: REQ-004
+    kind: GWT
+    given: [a product has 5 units in stock]
+    when: 1 unit is recorded as sold
+    then: [the current stock shows 4 units]
+
+scope:
+  - requirement: REQ-001
+    scope: MVP                 # MVP | FUTURE | OUT_OF_SCOPE | UNKNOWN
+    reason: Nothing else works without products existing.
+    confirmed_by: user
+    confirmed_at: 2026-10-01T11:00:00Z
+
+out_of_scope:
+  - id: OOS-001
+    title: Accounting and bookkeeping
+    reason: The owner already uses a separate accountant.
+
+confirmed_by: null
+confirmed_at: null
+```
+
+Every id is project-wide, sequential, allocated by Core, and never reused — the
+same rule requirements follow.
+
+### Scope
+
+Four values, from `MICHI.md` §76: `MVP` · `FUTURE` · `OUT_OF_SCOPE` ·
+`UNKNOWN`. A requirement with no scope assignment is `UNKNOWN`.
+
+A scope assignment carries a status of its own:
+
+```text
+PROPOSED ──► CONFIRMED        the human agreed to the scope call
+```
+
+Whether a feature ships in the first version is the most consequential product
+call a founder makes, and MICHI may not make it for them (P2). Schema
+validation refuses a `CONFIRMED` assignment with no `confirmed_by` and
+`confirmed_at` — the same mechanism that protects requirement confirmation.
+
+`FUTURE` is a promise, not a deletion. `OUT_OF_SCOPE` means never. The two are
+kept distinct because conflating them is how a founder loses track of what they
+were told would come later.
+
+`out_of_scope` entries are for things that are **not** requirements at all —
+whole areas the product deliberately will not cover. They need no requirement
+to point at.
+
+### Contradictions with locked decisions
+
+Marking a requirement `OUT_OF_SCOPE` while a `LOCKED` decision names it in
+`affects_requirements` is **refused**. The decision was made for work that is
+now being dropped, and silently leaving it locked would strand it. The fix is
+to supersede the decision first, deliberately.
+
+This is the only mechanical contradiction MICHI can detect between scope and
+decisions. It cannot tell that a use case implies multi-location when a locked
+decision assumed one shop, and the contract does not pretend otherwise.
+
+### What `plan close` produces
+
+`close` requires `status: CONFIRMED` — which requires a human — and refuses
+while:
+
+- any active requirement's scope is `UNKNOWN` or still only `PROPOSED`
+- any `MVP` requirement has no `AC-*` criterion
+- the specification references a requirement that is not active
+
+It then writes `requirements/PRD.md` and advances the project
+`SPECIFICATION → ARCHITECTURE`.
+
+`TRD.md` is **not** written in Phase 3. A technical requirements document is
+assembled from locked architectural decisions, and those are Phase 4's output.
+Writing an empty one now would be scaffolding for later.
+
 ## Discovery sessions
 
 *Added in Phase 2. `MICHI.md` §59 and §86 describe discovery and the intent

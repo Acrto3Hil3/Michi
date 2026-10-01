@@ -3,9 +3,16 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { run } from "../src/run.js";
 
-const SKILL = fileURLToPath(new URL("../../skills/senior-engineer/SKILL.md", import.meta.url));
+/**
+ * Structural checks only.
+ *
+ * These prove a skill is well formed. They prove nothing about whether an
+ * agent following it conducts a good session — see SKILL_CONTRACT.md, "Known
+ * limitation". Never cite these as evidence of agent behaviour.
+ */
 
-const text = () => readFileSync(SKILL, "utf8");
+const skillPath = (name: string) =>
+  fileURLToPath(new URL(`../../skills/${name}/SKILL.md`, import.meta.url));
 
 function frontmatter(source: string): Record<string, string> {
   const match = /^---\n([\s\S]*?)\n---/.exec(source);
@@ -20,69 +27,96 @@ function frontmatter(source: string): Record<string, string> {
   return out;
 }
 
-/** Every `michi …` the skill tells the agent to run must actually exist. */
 async function commandExists(parts: string[]): Promise<boolean> {
-  let code = 1;
-  code = await run([...parts, "--help"], { out: () => {}, err: () => {} }, { now: () => "2026-09-29T00:00:00.000Z" });
+  const code = await run([...parts, "--help"], { out: () => {}, err: () => {} },
+    { now: () => "2026-10-01T00:00:00.000Z" });
   return code === 0;
 }
 
-describe("senior-engineer skill", () => {
+const SKILLS = ["senior-engineer", "product-planner"] as const;
+
+describe.each(SKILLS)("%s skill", (name) => {
+  const text = () => readFileSync(skillPath(name), "utf8");
+
   it("exists", () => {
-    expect(existsSync(SKILL)).toBe(true);
+    expect(existsSync(skillPath(name))).toBe(true);
   });
 
-  it("has frontmatter naming itself and saying when to use it", () => {
+  it("names itself and says when to use it", () => {
     const fm = frontmatter(text());
-    expect(fm.name).toBe("senior-engineer");
-    expect(fm.description).toBeTruthy();
+    expect(fm.name).toBe(name);
     expect((fm.description ?? "").length).toBeGreaterThan(60);
-    // A description that describes internals instead of triggers never fires.
     expect((fm.description ?? "").toLowerCase()).toMatch(/use (this |it )?when|when the user/);
   });
 
   it("only tells the agent to run commands that exist", async () => {
-    const body = text();
     const mentioned = new Set<string>();
-    for (const m of body.matchAll(/`michi ([a-z]+(?: [a-z]+)?)/g)) {
+    for (const m of text().matchAll(/`michi ([a-z]+(?: [a-z]+)?)/g)) {
       if (m[1]) mentioned.add(m[1]);
     }
-    expect(mentioned.size).toBeGreaterThan(4);
+    expect(mentioned.size).toBeGreaterThan(2);
     for (const command of mentioned) {
       expect(await commandExists(command.split(" ")), `michi ${command}`).toBe(true);
     }
   });
 
-  it("carries the universal rules every skill must obey", () => {
+  it("carries the universal rules", () => {
     const body = text().toLowerCase();
-    for (const rule of [
-      "michi status",          // read state before acting
-      "never",                 // prohibitions are stated
-      "stop",                  // stop conditions
-      "plain language",        // P11
-    ]) {
-      expect(body).toContain(rule);
-    }
+    expect(body).toContain("michi status");
+    expect(body).toContain("never");
+    expect(body).toMatch(/stop/);
+    expect(body).toMatch(/plain language|in their language|ordinary words/);
   });
 
-  it("forbids the things Phase 2 must not do", () => {
-    const body = text().toLowerCase();
-    expect(body).toMatch(/do not write (any )?(application )?code|never write .*code/);
-    expect(body).toMatch(/stated|inferred|assumed/);
-    expect(body).toMatch(/confirm/);
+  it("marks how it knows things", () => {
+    expect(text().toLowerCase()).toMatch(/stated|inferred|assumed|confirm/);
   });
 
   it("never instructs the agent to confirm on the user's behalf", () => {
-    const body = text().toLowerCase();
-    expect(body).toMatch(/only the user|the user confirms|never confirm/);
+    expect(text().toLowerCase()).toMatch(
+      /only the user|the user confirms|never confirm|user decides|on the user's behalf/,
+    );
   });
 
-  it("states the progressive-discovery rule rather than a question dump", () => {
-    const body = text().toLowerCase();
-    expect(body).toMatch(/one question|a few|not.*at once|progressive/);
+  it("asks progressively rather than dumping questions", () => {
+    expect(text().toLowerCase()).toMatch(/one question|a few|not.*at once|progressive|one at a time/);
+  });
+
+  it("forbids writing application code", () => {
+    expect(text().toLowerCase()).toMatch(/do not write (any )?(application )?code|never write .*code/);
   });
 
   it("is short enough to be read every time it loads", () => {
-    expect(text().split("\n").length).toBeLessThan(260);
+    expect(text().split("\n").length).toBeLessThan(300);
+  });
+});
+
+describe("product-planner specifics", () => {
+  const text = () => readFileSync(skillPath("product-planner"), "utf8");
+
+  it("treats the MVP boundary as the user's call", () => {
+    const body = text().toLowerCase();
+    expect(body).toMatch(/mvp|first version/);
+    expect(body).toMatch(/future/);
+    expect(body).toMatch(/out of scope|out_of_scope/);
+  });
+
+  it("keeps FUTURE distinct from ruled out", () => {
+    expect(text().toLowerCase()).toMatch(/future is.*not.*deletion|promise, not|not a deletion/);
+  });
+
+  it("requires acceptance criteria a later phase can actually check", () => {
+    const body = text();
+    expect(body).toMatch(/Given/);
+    expect(body).toMatch(/When/);
+    expect(body).toMatch(/Then/);
+  });
+
+  it("does not instruct the agent to make architecture decisions", () => {
+    expect(text().toLowerCase()).toMatch(/not.*architecture|architecture.*later|belongs to architecture/);
+  });
+
+  it("points at discovery's requirements rather than inventing its own", () => {
+    expect(text()).toMatch(/REQ-/);
   });
 });

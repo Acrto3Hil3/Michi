@@ -78,13 +78,14 @@ Do not report work as done without running it (P3).
 
 ## Current state (2026-09-28)
 
-Phase 0 complete and internally consistent. **Phases 1 and 2 complete**:
+Phase 0 complete and internally consistent. **Phases 1, 2 and 3 complete**:
 `michi init`, `scan`, `status`, `discover` (start/status/answer/export/close),
-`decide` (list/show/propose/confirm/reject/supersede), and the
-`senior-engineer` skill. 186 tests, TypeScript build clean. Nothing published.
+`decide` (list/show/propose/confirm/reject/supersede), `plan`
+(status/update/export/close), and the `senior-engineer` and `product-planner`
+skills. 254 tests, TypeScript build clean. Nothing published.
 
-Still deliberately absent: the graph engine, the context engine, the other six
-skills, agent adapters and the verification executor. Those are Phases 3–8;
+Still deliberately absent: the graph engine, the context engine, the other five
+skills, agent adapters and the verification executor. Those are Phases 4–8;
 building their abstractions now would be the premature scaffolding the product
 exists to prevent (P4).
 
@@ -123,9 +124,18 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-Next: **Phase 3** — the `product-planner` skill, PRD and TRD, and the
-scope table (`IN SCOPE` / `OUT OF SCOPE` / `FUTURE` / `UNKNOWN`), building on
-the confirmed requirements discovery now produces.
+Next: **Phase 4** — the `architecture` skill: options, tradeoffs, ADRs, and the
+`TRD.md` that Phase 3 deliberately did not write. It builds on the MVP scope
+the specification now fixes.
+
+Three Phase 3 rules that later phases depend on:
+
+- **Requirements are canonical and belong to discovery.** The specification
+  references `REQ-*` and never copies or invents them.
+- **A scope call needs a named human**, like a requirement confirmation and a
+  locked decision. There is no bypass; do not add one.
+- **Dropping a requirement a locked decision was made for is refused.** The fix
+  is to supersede the decision, deliberately.
 
 Two rules that Phase 2 established and that everything after it depends on:
 

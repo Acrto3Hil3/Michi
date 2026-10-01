@@ -15,6 +15,7 @@ import type {
   DiscoverySession, Intent, IntentFieldName, Requirement, RequirementsRegistry,
   SessionState,
 } from "../schemas/discovery.js";
+import { parseOrInvalid } from "../schemas/parse.js";
 import { requireInitialized } from "./scan.js";
 import { cmd } from "../identity.js";
 
@@ -434,7 +435,7 @@ export function discoverAnswer(options: AnswerOptions): Result<AnswerData> {
       const id = requirementId(registry.next_requirement_id + allocated);
       allocated += 1;
       next.requirements.push(
-        RequirementSchema.parse({
+        parseOrInvalid(RequirementSchema, {
           ...draft,
           supersedes: draft.supersedes ?? null,
           id,
@@ -446,7 +447,7 @@ export function discoverAnswer(options: AnswerOptions): Result<AnswerData> {
           rejected_reason: null,
           created_at: timestamp,
           updated_at: timestamp,
-        }),
+        }, "that requirement"),
       );
       applied.requirements_added.push(id);
     }

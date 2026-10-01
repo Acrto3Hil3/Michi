@@ -273,11 +273,11 @@ and context quality is the product (P6).
 Per §133 and §134 — a working vertical slice beats twenty disconnected commands.
 
 ```text
-Phase 0   these specifications                                      ← we are here
-Phase 1   michi init · scan · status        filesystem foundation
-Phase 2   senior-engineer skill             intent, clarification, decision recording
-Phase 3   product-planner skill             discovery, PRD, TRD, requirements
-Phase 4   architecture skill                options, tradeoffs, ADRs, locking
+Phase 0   these specifications                                      done
+Phase 1   michi init · scan · status        filesystem foundation     done
+Phase 2   senior-engineer skill             discovery, decisions      done
+Phase 3   product-planner skill             personas, scope, PRD      done  ← we are here
+Phase 4   architecture skill                options, tradeoffs, ADRs, TRD
 Phase 5   context engine                    graph, selection, ranking, packets, hashing
 Phase 6   implementer                       task DAG, prompt compiler, handoff
 Phase 7   reviewer · tester · debugger      verification

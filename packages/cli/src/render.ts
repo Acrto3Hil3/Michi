@@ -8,6 +8,7 @@
 import type {
   InitData, ScanData, StatusData, Detection,
   StartData, AnswerData, CloseData, DiscoverStatusData, Decision,
+  PlanStatusData, PlanUpdateData, PlanCloseData,
 } from "@michi/core";
 import { cmd } from "@michi/core";
 
@@ -256,4 +257,85 @@ export function renderSupersede(data: { superseded: Decision; replacement: Decis
     bullet(`${data.superseded.id} is now SUPERSEDED. It was not deleted — the history is the point.`),
     bullet(`Its written record (${data.superseded.adr}) is unchanged; it is an accurate account of what was decided then.`),
   ];
+}
+
+
+// ---------------------------------------------------------------------------
+// Product planning
+// ---------------------------------------------------------------------------
+
+export function renderPlanStatus(data: PlanStatusData): string[] {
+  const spec = data.specification;
+  const lines = [`PRODUCT SPECIFICATION — ${spec.status}`, ""];
+
+  if (spec.personas.length === 0) {
+    lines.push("Who it is for: not established yet.");
+  } else {
+    lines.push("Who it is for:");
+    for (const p of spec.personas) lines.push(bullet(`${p.id}  ${p.name} — ${p.description}`));
+  }
+
+  const label: Record<string, string> = {
+    MVP: "In the first version",
+    FUTURE: "Later",
+    OUT_OF_SCOPE: "Ruled out",
+    UNKNOWN: "Not placed yet",
+  };
+  const titleOf = (id: string) => data.requirements.find((r) => r.id === id)?.title ?? id;
+  for (const scope of ["MVP", "FUTURE", "OUT_OF_SCOPE", "UNKNOWN"] as const) {
+    const ids = data.by_scope[scope];
+    if (ids.length === 0) continue;
+    lines.push("", `${label[scope]}:`);
+    for (const id of ids) lines.push(bullet(`${id}  ${titleOf(id)}`));
+  }
+
+  if (spec.use_cases.length > 0) {
+    lines.push("", `Use cases: ${spec.use_cases.length}`);
+  }
+  lines.push("", `Acceptance criteria: ${spec.criteria.length}`);
+
+  const g = data.gaps;
+  const outstanding: string[] = [];
+  if (g.dangling_references.length) outstanding.push(`${g.dangling_references.length} reference(s) point at requirements that no longer exist`);
+  if (g.unplaced.length) outstanding.push(`${g.unplaced.length} requirement(s) not yet placed in or out of the first version`);
+  if (g.unconfirmed_scope.length) outstanding.push(`${g.unconfirmed_scope.length} scope decision(s) the user has not confirmed`);
+  if (g.mvp_without_criteria.length) outstanding.push(`${g.mvp_without_criteria.length} first-version requirement(s) with no way to check them`);
+  if (outstanding.length > 0) {
+    lines.push("", "Outstanding:");
+    for (const item of outstanding) lines.push(bullet(item));
+  }
+
+  lines.push("", "Next:", bullet(data.next_step));
+  return lines;
+}
+
+export function renderPlanUpdate(data: PlanUpdateData): string[] {
+  const a = data.applied;
+  const lines = [`Recorded. The specification is ${data.specification.status}.`, ""];
+  const did: string[] = [];
+  if (a.personas_added.length) did.push(`added ${a.personas_added.join(", ")}`);
+  if (a.use_cases_added.length) did.push(`added ${a.use_cases_added.join(", ")}`);
+  if (a.criteria_added.length) did.push(`added ${a.criteria_added.join(", ")}`);
+  if (a.scope_proposed.length) did.push(`proposed scope for ${a.scope_proposed.join(", ")}`);
+  if (a.scope_confirmed.length) did.push(`the user confirmed scope for ${a.scope_confirmed.join(", ")}`);
+  if (a.out_of_scope_added.length) did.push(`ruled out ${a.out_of_scope_added.join(", ")}`);
+  if (a.specification_confirmed) did.push("the user confirmed the whole specification");
+  for (const item of did) lines.push(bullet(item));
+  return lines;
+}
+
+export function renderPlanClose(data: PlanCloseData): string[] {
+  const lines = [
+    "The product specification is published.",
+    "",
+    bullet(`In the first version: ${data.mvp.length} requirement(s)`),
+    bullet(`Later: ${data.future.length}`),
+    bullet(`Ruled out: ${data.out_of_scope.length}`),
+    "",
+    "Written:",
+    ...data.artifacts.map((f) => bullet(f)),
+    "",
+    `The project has moved to ${data.stage}.`,
+  ];
+  return lines;
 }

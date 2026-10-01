@@ -3,12 +3,14 @@ import {
   ExitCode, IDENTITY, MichiError, errorPayload, exitCodeFor, init, scan, status,
   discoverStart, discoverStatus, discoverAnswer, discoverExport, discoverClose,
   decideList, decideShow, decidePropose, decideConfirm, decideReject, decideSupersede,
+  planStatus, planUpdate, planExport, planClose,
 } from "@michi/core";
 import type { Result } from "@michi/core";
 import {
   renderInit, renderScan, renderStatus,
   renderDiscoverStart, renderDiscoverAnswer, renderDiscoverStatus, renderDiscoverClose,
   renderDecideList, renderDecision, renderDecideShow, renderSupersede,
+  renderPlanStatus, renderPlanUpdate, renderPlanClose,
 } from "./render.js";
 
 export interface Io {
@@ -154,6 +156,47 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .description("write the confirmed requirements and move on to specification")
     .action(() => {
       code = emit(discoverClose({ root: root(), now }), opts(), io, renderDiscoverClose);
+    });
+
+  // -------------------------------------------------------------------------
+  // plan — product planning. The task DAG arrives in a later phase.
+  // -------------------------------------------------------------------------
+  const plan = program
+    .command("plan")
+    .description("decide what gets built first, for whom, and how we will know it works")
+    .action(() => {
+      code = emit(planStatus({ root: root(), now }), opts(), io, renderPlanStatus);
+    });
+
+  plan
+    .command("status")
+    .description("what the specification has, what it lacks, and what needs the user")
+    .action(() => {
+      code = emit(planStatus({ root: root(), now }), opts(), io, renderPlanStatus);
+    });
+
+  plan
+    .command("update")
+    .description("record what a turn of product planning established")
+    .requiredOption("--file <path>", "the planning update, as JSON")
+    .action((local: { file: string }) => {
+      code = emit(
+        planUpdate({ root: root(), now, file: local.file }), opts(), io, renderPlanUpdate,
+      );
+    });
+
+  plan
+    .command("export")
+    .description("emit the specification; writes nothing")
+    .action(() => {
+      code = emit(planExport({ root: root(), now }), opts(), io, renderPlanStatus);
+    });
+
+  plan
+    .command("close")
+    .description("write the PRD and move on to architecture")
+    .action(() => {
+      code = emit(planClose({ root: root(), now }), opts(), io, renderPlanClose);
     });
 
   // -------------------------------------------------------------------------

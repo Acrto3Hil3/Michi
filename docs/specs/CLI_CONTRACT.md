@@ -278,13 +278,60 @@ across separate calls would let a crash land half a turn.
 ### `michi plan`
 
 ```bash
-michi plan [--json] [--milestone <name>]
-michi plan tasks     --from-requirements
+michi plan                                 same as `plan status`
+michi plan status  [--json]
+michi plan update  --file <update.json>
+michi plan export  [--json]
+michi plan close
+
+michi plan tasks   --from-requirements     Phase 5/6 — the task DAG
 michi plan validate
 ```
 
-Produces the planning artifacts and the task DAG from approved requirements and
-locked architecture.
+`plan` covers planning in both senses `MICHI.md` uses it, separated by
+subcommand. The first group is **product** planning (§22, §60, §76): personas,
+use cases, scope and acceptance criteria, ending in `PRD.md`. The second is
+**implementation** planning — the task DAG — and belongs to Phase 5/6.
+
+### Product planning
+
+| | |
+|---|---|
+| `status` | what the specification has, what it lacks, and what needs the user |
+| `update` | one product-planning update, from a file |
+| `export` | the specification; read-only |
+| `close` | writes `PRD.md` and advances `SPECIFICATION → ARCHITECTURE` |
+
+There is no `plan start`: a project has one specification, not a series of
+sessions. It evolves in place like the decision registry.
+
+The update file carries whatever one turn of planning established — any field
+may be omitted:
+
+```json
+{
+  "personas":  [{ "name": "Store owner", "description": "…", "goals": ["…"] }],
+  "use_cases": [{ "title": "Correct a stock count", "persona": "PER-001",
+                  "trigger": "…", "steps": ["…"], "requirements": ["REQ-001"] }],
+  "criteria":  [{ "requirement": "REQ-004", "kind": "GWT",
+                  "given": ["a product has 5 units"], "when": "1 unit is sold",
+                  "then": ["the stock shows 4"] }],
+  "scope":     [{ "requirement": "REQ-001", "scope": "MVP", "reason": "…" }],
+  "out_of_scope": [{ "title": "Accounting", "reason": "…" }],
+  "confirm":   { "scope": ["REQ-001"], "by": "user" },
+  "confirm_specification": { "by": "user" }
+}
+```
+
+A scope assignment arrives `UNKNOWN`-confirmed — recorded, but not agreed —
+and becomes agreed only through `confirm`, which **requires `by`**. There is no
+path to a confirmed scope decision that does not name the human who made it
+(P2). Marking a requirement `OUT_OF_SCOPE` that a `LOCKED` decision depends on
+is refused with exit `7`.
+
+### Implementation planning
+
+Produces the task DAG from approved requirements and locked architecture.
 
 `plan validate` checks the plan before anyone builds against it: every task
 reaches `READY` eventually, no dependency cycles, every requirement has at least
