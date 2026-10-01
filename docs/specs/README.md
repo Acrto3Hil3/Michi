@@ -214,43 +214,170 @@ completed session has no open questions.
 
 ## Open
 
-### OQ-008 — How does a published specification change? · **open, blocks nothing yet**
+### OQ-008 — How does a published specification change? · **open, DECISION GATE**
 
-**Found while building Phase 3.** Not decided.
+**Found while building Phase 3. Not decided. Implementation deliberately
+untouched.**
 
-Requirements accumulate and supersede (OQ-007). Decisions supersede. The
-product specification does neither: once `plan close` publishes it,
-`plan update` is **refused outright**, with a message telling the agent to raise
-it with the user. That is a dead end, and it is the same question OQ-007 asked,
-one level up.
+#### 1. The exact problem
 
-It will be reached the first time a founder comes back wanting a different MVP —
-which is the normal case, not an edge one.
+`plan close` publishes the specification. After that, `plan update` is refused
+outright and there is no path back. A founder returning with "low-stock alerts
+shouldn't be in the first version any more — we want barcode scanning instead"
+has no route through MICHI.
 
-**A — Re-open.** An update on a `PUBLISHED` specification moves it back to
-`DRAFT` and `close` runs again. Simplest. Loses any record of what was published
-when, and therefore what the architecture phase was working from.
+Worse, and verified on the built binary rather than reasoned about: **the
+project can already be driven into a state it cannot leave.**
 
-**B — Versioned.** Each `close` produces a numbered specification version;
-`PRD.md` is regenerated and the previous version archived. Matches
-supersede-don't-delete most literally, but needs a versioning mechanism nothing
-else in `.michi/` has yet.
+```text
+discover close   →  REQ-001 confirmed, stage SPECIFICATION
+plan close       →  specification PUBLISHED, stage ARCHITECTURE
+discover start   →  permitted (OQ-007: discovery is cumulative)
+discover close   →  REQ-002 confirmed, stage dragged back to SPECIFICATION
+plan update      →  REFUSED. REQ-002 can never be placed in or out of scope.
+```
 
-**C — Cumulative, like requirements.** One evolving specification. Scope
-assignments already replace in place; `close` becomes re-runnable, regenerates
-`PRD.md`, and appends to a list of publication records (when, confirmed by whom,
-what the scope was at that moment).
+`plan status` in that state contradicts itself: *"1 requirement not yet placed"*
+under Outstanding, and *"The specification is published. Architecture comes
+next"* under Next.
 
-**Recommendation: C.** It is what the data model already does — scope
-assignments replace rather than accumulate — so it is the smallest honest
-change, and the publication records give the audit trail B was reaching for
-without inventing document versioning. B becomes worth it only if someone needs
-to read the PRD *as it was*, and nobody has asked for that.
+This corrects the Phase 3 report, which said OQ-008 blocked nothing. Phase 4's
+implementation is unaffected — architecture reads the published specification
+and does not change it — but the state above is reachable now, and no option
+below can be chosen without also deciding it.
 
-**Current behaviour is a hard refusal**, named here rather than left to be
-discovered. It blocks nothing in Phase 4: architecture consumes the published
-specification and does not change it. It becomes urgent the first time scope
-needs revisiting.
+A second, smaller interaction surfaced alongside it: `discover close`
+unconditionally sets the stage to `SPECIFICATION`, so a second discovery drags
+an `ARCHITECTURE`-stage project backwards. Defensible (the requirements changed,
+so re-specify) but nobody decided it.
+
+#### 2. Current behaviour
+
+`plan update` on a `PUBLISHED` specification raises `CONFLICT` (exit 7) with
+"This specification has already been published. Nothing was changed." The
+specification is frozen permanently. This is behaviour nobody chose; it is what
+falls out of having no change path.
+
+#### 3. The options
+
+**A — Re-open.** An update on a published specification returns it to `DRAFT`.
+`close` runs again and regenerates `PRD.md` over the top.
+
+**B — Versioned.** Each `close` mints a specification version (`SPEC-001`,
+`SPEC-002`). The previous version and its PRD are kept. Downstream artifacts can
+cite the version they were decided against.
+
+**C — Cumulative.** One specification that keeps evolving, the way the decision
+registry does. `close` becomes re-runnable and appends a publication record
+(when, confirmed by whom, the scope at that moment).
+
+**D — Cumulative with revisions.** C, plus: changing a published specification
+requires a reason, recorded as a revision (`REV-001`) naming what changed and
+who asked for it.
+
+#### 4. Effects
+
+| | A — Re-open | B — Versioned | C — Cumulative | D — C + revisions |
+|---|---|---|---|---|
+| **Lifecycle** | `PUBLISHED → DRAFT → … → PUBLISHED`, cyclic, no trace | new version starts `DRAFT`, inherits content, closes | one document, `close` re-runnable | as C, each post-publication change recorded |
+| **Requirements** | untouched — canonical, Phase 2's | untouched | untouched | untouched |
+| **MVP / FUTURE / OUT_OF_SCOPE** | assignment replaced in place; prior call lost | scope is per version; "MVP as of SPEC-002" is answerable | replaced in place; publication records capture scope at each publish | as C, plus why it moved |
+| **Acceptance criteria** | accumulate; no removal path exists | per version; a criterion can be dropped without losing the record | accumulate; no removal path | accumulate; removal would be a recorded revision |
+| **PRD** | overwritten, previous content gone | one PRD per version, all kept | regenerated; prior state derivable from publication records | same as C |
+| **TRD** | not written yet (Phase 4) | Phase 4 would likely cite a spec version | Phase 4 reads the current specification | same as C |
+| **Architecture** | an ADR locked against the old MVP is silently stranded | an ADR can name the version it answered | coarse: an ADR can cite a publication date | as C, and the revision says what moved under it |
+| **Traceability** | current state only | strongest — every artifact can name a version | current state + publication timeline | current state + timeline + reasons |
+| **Future tasks** | a task built for a now-`FUTURE` requirement is undetectable | a task can record its authorising version; staleness becomes detectable | a task can cite a publication | same as C |
+| **History / audit** | none beyond git | complete | publication-level | publication- and change-level |
+
+#### 5. Recommendation: **D**
+
+C's cost plus one required field and one id space, and it keeps the thing MICHI
+exists to keep: **why**.
+
+A is rejected outright. Overwriting a published PRD with no record is the
+silent-loss failure this product is built to prevent, and it is the same mistake
+OQ-007 corrected for requirements — choosing it here would make the two
+inconsistent.
+
+B is the strongest consistency story and the wrong amount of machinery today.
+Nothing else in `.michi/` is versioned; building document versioning for one
+user is the premature generality P4 forbids. It becomes right the moment someone
+needs to read a PRD *as it was*, and nobody has asked for that.
+
+C over B because the specification already behaves cumulatively — scope
+assignments replace in place rather than accumulating — so C is what the data
+model is already shaped for. D over C because a changelog of *what* without
+*why* is the artifact everyone stops reading.
+
+#### 6. Risks of the recommendation
+
+- **The published PRD is still overwritten.** Only `git log` recovers the old
+  document, and that is outside MICHI's model. If reading a past PRD verbatim
+  ever matters, D does not provide it and B must be revisited.
+- **Reasons can rot.** A required field invites "updated scope" as the reason.
+  Mitigation is in the skill, not the schema, and the skill cannot be tested
+  behaviourally — the limitation already recorded in `SKILL_CONTRACT.md`.
+- **It does not fix downstream staleness.** An architecture decision or task
+  made against the earlier scope is not invalidated by a revision. B would make
+  that *detectable*; nothing here makes it *handled*. See §9.
+- **Re-runnable `close` needs its own gate.** Re-publishing must re-check the
+  same conditions (no unplaced requirement, every MVP requirement covered), or
+  the second publication can be weaker than the first.
+
+#### 7. What D requires
+
+| | |
+|---|---|
+| New state | `publications[]` and `revisions[]` on the specification |
+| New ids | `REV-*`, project-wide, sequential, never reused |
+| Versioning | no |
+| Supersession | no — scope assignments already replace in place |
+| Revision history | yes, and that is the point |
+| New CLI behaviour | `plan update` accepts a published specification when given a reason; `plan close` becomes re-runnable and re-checks its gates |
+| New contracts | `STATE_MODEL.md` (the two arrays, the re-publication rules), `CLI_CONTRACT.md` (the reason requirement), `SKILL_CONTRACT.md` (telling the planner to carry the user's actual words into the reason) |
+
+Also required under **any** option: a decision on the stage interaction in §1,
+and a fix for `plan status`'s contradictory output in that state.
+
+#### 8. Least complexity without future consistency problems
+
+**C**, narrowly — it adds one array and no id space. But it buys that saving by
+discarding the reason for every change, and the first time anyone asks "why
+isn't barcode scanning in version one any more?" the answer is "nobody wrote it
+down." **D** is the least complexity that does not create a *known* future
+problem. A is cheaper still and creates several. B creates none and costs the
+most.
+
+#### 9. New questions each option creates
+
+- **A, C, D** all leave downstream staleness unaddressed: an architecture
+  decision or a task created under an earlier scope stays silently valid. **How
+  downstream artifacts are invalidated when scope changes** needs its own
+  question, raised once OQ-008 is settled — its wording depends on the answer,
+  so no number is reserved for it here. B enables detection but still needs the
+  policy, so it narrows that question rather than removing it.
+- **All options**: there is no way to remove an `AC-*`, a use case or a persona
+  once added. Smaller than an OQ, but it needs settling as part of whichever
+  option is chosen, because "change the specification" will mean deleting a
+  criterion eventually.
+- **B only**: what reads "the current version", and what happens to a
+  half-finished newer version — which is a second lifecycle on top of the one
+  that already exists.
+
+#### 10. Unchanged under every option
+
+- Requirements stay canonical and belong to discovery. `requirements.yaml` is
+  not touched by any option.
+- A scope call still needs a named human; the specification still needs a human
+  to sign it off. No option adds a bypass.
+- Dropping a requirement a `LOCKED` decision depends on is still refused.
+- `plan status` and `plan export` stay read-only and deterministic.
+- The two kinds of acceptance criteria, and the division between them.
+- `MVP` / `FUTURE` / `OUT_OF_SCOPE` / `UNKNOWN`, and `FUTURE` as a promise
+  rather than a deletion.
+- `PRD.md` stays generated and never hand-edited.
+- Core stays deterministic: no LLM, no database, no network, no service.
 
 ### OQ-002 — npm package and binary names · **open, does not block Phase 1**
 

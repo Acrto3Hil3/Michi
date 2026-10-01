@@ -241,10 +241,19 @@ check("phase3  TRD is deferred to architecture rather than stubbed",
       and "Not `TRD.md`" in spec("SKILL_CONTRACT.md"))
 check("phase3  product-planner does not create requirements",
       "It does not create requirements" in spec("SKILL_CONTRACT.md"))
-check("OQ-008  the frozen-specification dead end is raised, not hidden",
+check("OQ-008  is an open decision gate, with the dead end evidenced",
       "### OQ-008" in rd
       and rd.index("## Open") < rd.index("### OQ-008")
-      and "Current behaviour is a hard refusal" in rd)
+      and "DECISION GATE" in rd
+      and "frozen permanently" in rd
+      and "verified on the built binary" in rd)
+check("OQ-008  presents every option with its effects and what stays unchanged",
+      all(o in rd for o in ["A — Re-open", "B — Versioned", "C — Cumulative",
+                            "D — Cumulative with revisions"])
+      and "Unchanged under every option" in rd
+      and "Recommendation: **D**" in rd)
+check("OQ-008  corrects the Phase 3 report rather than leaving it standing",
+      "corrects the Phase 3 report" in rd)
 check("phase3  the product-planner skill exists",
       (ROOT / "packages" / "skills" / "product-planner" / "SKILL.md").is_file())
 
