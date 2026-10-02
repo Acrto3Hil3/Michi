@@ -60,12 +60,13 @@ export type {
 export {
   SCOPE_VALUES, SPECIFICATION_STATES, ScopeSchema, PersonaSchema, UseCaseSchema,
   AcceptanceCriterionSchema, ScopeAssignmentSchema, OutOfScopeItemSchema,
-  SpecificationSchema, newSpecification, effectiveScope, scopeAssignment,
-  personaId, useCaseId, criterionId, outOfScopeId,
+  SpecificationSchema, RevisionSchema, PublicationSchema, ArtifactStateSchema,
+  ARTIFACT_STATES, newSpecification, effectiveScope, scopeAssignment, isLive,
+  personaId, useCaseId, criterionId, outOfScopeId, revisionId,
 } from "./schemas/product.js";
 export type {
-  AcceptanceCriterion, OutOfScopeItem, Persona, ProductSpecification, Scope,
-  ScopeAssignment, UseCase,
+  AcceptanceCriterion, ArtifactState, OutOfScopeItem, Persona,
+  ProductSpecification, Publication, Revision, Scope, ScopeAssignment, UseCase,
 } from "./schemas/product.js";
 export { parseOrInvalid } from "./schemas/parse.js";
 

@@ -120,6 +120,69 @@ No table names, no endpoints, no function names.
 `michi plan close` refuses while any first-version requirement has no criterion,
 and it is right to.
 
+## Coming back after the specification is published
+
+A published specification can be changed. It cannot be changed quietly.
+
+Send the change with a revision:
+
+```json
+{
+  "revision": { "reason": "<the user's actual reason>", "by": "user" },
+  "scope": [{ "requirement": "REQ-003", "scope": "FUTURE", "reason": "…" }]
+}
+```
+
+The reason is the only part nobody can reconstruct later. Carry their words,
+not a summary of the mechanics:
+
+> good: "The owner realised alerts are noise until the counts are trusted."
+> bad:  "Updated scope."
+
+MICHI works out *what* changed by itself and refuses a revision that changed
+nothing. A revision also drops the previous sign-off, so read the specification
+back and get their confirmation again — a changed scope call needs confirming
+again too. That is not bureaucracy: they agreed to something else last time.
+
+Then `michi plan close` publishes again. Every publication re-runs the same
+gates, so a revision that leaves a first-version requirement uncovered will be
+refused — correctly.
+
+## Nothing gets deleted
+
+If a persona, use case or acceptance criterion no longer applies, remove it
+explicitly:
+
+```json
+{
+  "revision": { "reason": "…", "by": "user" },
+  "remove": { "criteria": ["AC-003"], "by": "user", "reason": "…" }
+}
+```
+
+It becomes a removal on the record, not a deletion — still readable, still
+pointing at the requirement it belonged to. Tell the user that:
+
+> "I've marked that one removed rather than deleting it, so we can see later
+>  that it was there and why it went."
+
+People change their minds far more readily when they can see nothing is being
+destroyed.
+
+**`REMOVED` is not `FUTURE`.** "We want this later" is a scope call.
+"This was here and the user took it out" is a removal. Never use one to mean
+the other.
+
+## When requirements change under you
+
+If new requirements are confirmed after you published, MICHI moves the project
+back to specification and flags the specification as no longer checked against
+the latest requirements. That is correct, not a fault: something upstream
+changed and the scope call has to be revisited.
+
+Place the new requirement with a revision, get the confirmations, and publish
+again.
+
 ## Contradictions
 
 If dropping a requirement would strand a locked decision, MICHI refuses and

@@ -11,11 +11,14 @@ import type { Requirement } from "../schemas/discovery.js";
 import { RegistrySchema } from "../schemas/decision.js";
 import type { Decision } from "../schemas/decision.js";
 import {
-  AcceptanceCriterionSchema, OutOfScopeItemSchema, PersonaSchema, SCOPE_VALUES,
-  ScopeAssignmentSchema, ScopeSchema, SpecificationSchema, UseCaseSchema,
-  criterionId, effectiveScope, newSpecification, outOfScopeId, personaId, useCaseId,
+  AcceptanceCriterionSchema, OutOfScopeItemSchema, PersonaSchema, PublicationSchema,
+  RevisionSchema, SCOPE_VALUES, ScopeAssignmentSchema, ScopeSchema, SpecificationSchema,
+  UseCaseSchema, criterionId, effectiveScope, isLive, newSpecification, outOfScopeId,
+  personaId, revisionId, useCaseId,
 } from "../schemas/product.js";
-import type { ProductSpecification, Scope, ScopeAssignment } from "../schemas/product.js";
+import type {
+  ProductSpecification, Revision, Scope, ScopeAssignment,
+} from "../schemas/product.js";
 import { parseOrInvalid } from "../schemas/parse.js";
 import { requireInitialized } from "./scan.js";
 import { cmd } from "../identity.js";
@@ -65,10 +68,14 @@ function saveSpec(root: string, spec: ProductSpecification, now: string): void {
  * The requirements this specification may reference: confirmed and not
  * superseded. Phase 2 owns this store; nothing here copies its content.
  */
-function activeRequirements(root: string): Requirement[] {
+function allRequirements(root: string): Requirement[] {
   const file = join(brainDir(root), REQUIREMENTS_FILE);
   if (!existsSync(file)) return [];
-  return readYaml(file, RequirementsRegistrySchema).requirements.filter(isActive);
+  return readYaml(file, RequirementsRegistrySchema).requirements;
+}
+
+function activeRequirements(root: string): Requirement[] {
+  return allRequirements(root).filter(isActive);
 }
 
 function lockedDecisions(root: string): Decision[] {
@@ -128,9 +135,46 @@ const UpdateSchema = z
       by: z.string().min(1).optional(),
     }).optional(),
     confirm_specification: z.object({ by: z.string().min(1).optional() }).optional(),
+    /**
+     * Required to change an already-published specification (OQ-008). Core
+     * derives *what* changed; the caller supplies *why* and who asked.
+     */
+    revision: z.object({
+      reason: z.string().min(1),
+      by: z.string().min(1).optional(),
+    }).optional(),
+    /** Nothing is hard-deleted: these become tombstones (OQ-008). */
+    remove: z.object({
+      personas: z.array(z.string().min(1)).default([]),
+      use_cases: z.array(z.string().min(1)).default([]),
+      criteria: z.array(z.string().min(1)).default([]),
+      by: z.string().min(1).optional(),
+      reason: z.string().min(1).optional(),
+    }).optional(),
   })
   .strict()
   .superRefine((u, ctx) => {
+    if (u.revision && !u.revision.by) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom, path: ["revision", "by"],
+        message: "a revision requires `by` — a change to an agreed specification is attributable",
+      });
+    }
+    if (u.remove) {
+      const count = u.remove.personas.length + u.remove.use_cases.length + u.remove.criteria.length;
+      if (count > 0 && !u.remove.by) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom, path: ["remove", "by"],
+          message: "remove requires `by` — nothing is taken out of a specification anonymously",
+        });
+      }
+      if (count > 0 && !u.remove.reason) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom, path: ["remove", "reason"],
+          message: "remove requires `reason` — the record has to say why it went",
+        });
+      }
+    }
     // P2: whether a feature ships is the user's call, never MICHI's.
     if (u.confirm && u.confirm.scope.length > 0 && !u.confirm.by) {
       ctx.addIssue({
@@ -204,7 +248,9 @@ export interface PlanUpdateData {
     scope_proposed: string[];
     scope_confirmed: string[];
     out_of_scope_added: string[];
+    removed: string[];
     specification_confirmed: boolean;
+    revision: string | null;
   };
 }
 
@@ -217,11 +263,16 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
     const timestamp = now();
     const spec = loadSpec(root);
 
-    if (spec.status === "PUBLISHED") {
+    // OQ-008: a published specification may be changed, but never silently.
+    if (spec.status === "PUBLISHED" && !update.revision) {
       throw new MichiError({
-        class: "INVALID", code: "CONFLICT",
-        message: "This specification has already been published. Nothing was changed.",
-        next: "Changing it now means superseding decisions made against it — raise that with the user.",
+        class: "BLOCKED", code: "CONFLICT",
+        message:
+          "This specification has already been agreed and published. Changing it now needs a reason on the record.",
+        detail: { status: spec.status, published: spec.publications.length },
+        next:
+          'Send the change with a revision: { "reason": "why the user wants this", "by": "user" }. ' +
+          "Nothing is deleted — the change is recorded as a revision.",
       });
     }
 
@@ -237,8 +288,13 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
     const applied: PlanUpdateData["applied"] = {
       personas_added: [], use_cases_added: [], criteria_added: [],
       scope_proposed: [], scope_confirmed: [], out_of_scope_added: [],
-      specification_confirmed: false,
+      removed: [], specification_confirmed: false, revision: null,
     };
+
+    // What the specification said before this update, for deriving the
+    // revision's `changes` from observed fact rather than a supplied summary.
+    const scopeBefore = new Map(next.scope.map((a) => [a.requirement, a.scope]));
+    const changes: string[] = [];
 
     for (const persona of update.personas ?? []) {
       const id = personaId(next.next_persona_id);
@@ -247,14 +303,16 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
       }, "that persona"));
       next.next_persona_id += 1;
       applied.personas_added.push(id);
+      changes.push(`${id} added (${persona.name})`);
     }
 
     for (const useCase of update.use_cases ?? []) {
-      if (!next.personas.some((p) => p.id === useCase.persona)) {
+      if (!next.personas.some((p) => p.id === useCase.persona && isLive(p))) {
         throw new MichiError({
           class: "UNKNOWN", code: "NOT_FOUND",
-          message: `"${useCase.title}" names ${useCase.persona}, which is not a persona on this project.`,
-          detail: { known: next.personas.map((p) => p.id) },
+          message:
+            `"${useCase.title}" names ${useCase.persona}, which is not an active persona on this project.`,
+          detail: { active: next.personas.filter(isLive).map((p) => p.id) },
         });
       }
       for (const id of useCase.requirements) {
@@ -266,6 +324,7 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
       }, "that use case"));
       next.next_use_case_id += 1;
       applied.use_cases_added.push(id);
+      changes.push(`${id} added (${useCase.title})`);
     }
 
     for (const criterion of update.criteria ?? []) {
@@ -284,6 +343,7 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
       }, "that acceptance criterion"));
       next.next_criterion_id += 1;
       applied.criteria_added.push(id);
+      changes.push(`${id} added for ${criterion.requirement}`);
     }
 
     const locked = lockedDecisions(root);
@@ -317,6 +377,13 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
       if (existing >= 0) next.scope[existing] = parsed;
       else next.scope.push(parsed);
       applied.scope_proposed.push(assignment.requirement);
+
+      const was = scopeBefore.get(assignment.requirement);
+      if (was === undefined) {
+        changes.push(`${assignment.requirement} scope set to ${assignment.scope}`);
+      } else if (was !== assignment.scope) {
+        changes.push(`${assignment.requirement} scope ${was} → ${assignment.scope}`);
+      }
     }
 
     for (const item of update.out_of_scope ?? []) {
@@ -326,6 +393,50 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
       }, "that out-of-scope item"));
       next.next_out_of_scope_id += 1;
       applied.out_of_scope_added.push(id);
+      changes.push(`${id} ruled out (${item.title})`);
+    }
+
+    if (update.remove) {
+      const by = update.remove.by as string;
+      const reason = update.remove.reason as string;
+
+      const tombstone = (
+        collection: { id: string; status: string; removed_by: string | null;
+                      removed_at: string | null; removal_reason: string | null }[],
+        id: string,
+        what: string,
+      ): void => {
+        const artifact = collection.find((a) => a.id === id);
+        if (!artifact) {
+          throw new MichiError({
+            class: "UNKNOWN", code: "NOT_FOUND",
+            message: `${id} is not ${what} on this project.`,
+            detail: { known: collection.map((a) => a.id) },
+          });
+        }
+        if (artifact.status === "REMOVED") {
+          throw new MichiError({
+            class: "INVALID", code: "CONFLICT",
+            message: `${id} was already removed.`,
+            detail: { removed_by: artifact.removed_by, removed_at: artifact.removed_at },
+          });
+        }
+        // Never deleted: the engineering history of a product includes the
+        // parts that were taken out, and why (OQ-008).
+        artifact.status = "REMOVED";
+        artifact.removed_by = by;
+        artifact.removed_at = timestamp;
+        artifact.removal_reason = reason;
+        applied.removed.push(id);
+        changes.push(`${id} removed (${reason})`);
+      };
+
+      next.personas = next.personas.map((p) => ({ ...p }));
+      next.use_cases = next.use_cases.map((u) => ({ ...u }));
+      next.criteria = next.criteria.map((c) => ({ ...c }));
+      for (const id of update.remove.personas) tombstone(next.personas, id, "a persona");
+      for (const id of update.remove.use_cases) tombstone(next.use_cases, id, "a use case");
+      for (const id of update.remove.criteria) tombstone(next.criteria, id, "an acceptance criterion");
     }
 
     if (update.confirm) {
@@ -351,6 +462,34 @@ export function planUpdate(options: PlanUpdateOptions): Result<PlanUpdateData> {
       next.confirmed_by = update.confirm_specification.by as string;
       next.confirmed_at = timestamp;
       applied.specification_confirmed = true;
+    }
+
+    if (update.revision) {
+      if (changes.length === 0) {
+        throw new MichiError({
+          class: "INVALID", code: "VALIDATION_ERROR",
+          message: "That revision changes nothing. Nothing was written.",
+          next: "Send the change itself alongside the revision.",
+        });
+      }
+      const revision: Revision = parseOrInvalid(RevisionSchema, {
+        id: revisionId(next.next_revision_id),
+        reason: update.revision.reason,
+        confirmed_by: update.revision.by as string,
+        created_at: timestamp,
+        changes,
+      }, "that revision");
+      next.revisions = [...next.revisions, revision];
+      next.next_revision_id += 1;
+      applied.revision = revision.id;
+
+      // The previous sign-off was for the previous content, so it no longer
+      // stands. `plan close` remains a deliberate boundary.
+      if (next.status === "PUBLISHED" || next.status === "CONFIRMED") {
+        next.status = "DRAFT";
+        next.confirmed_by = null;
+        next.confirmed_at = null;
+      }
     }
 
     saveSpec(root, next, timestamp);
@@ -380,21 +519,31 @@ export interface PlanStatusData {
   next_step: string;
 }
 
-function gapsOf(spec: ProductSpecification, requirements: Requirement[]): PlanGaps {
-  const ids = new Set(requirements.map((r) => r.id));
+function gapsOf(
+  spec: ProductSpecification,
+  requirements: Requirement[],
+  known: Requirement[],
+): PlanGaps {
+  // Dangling means "names an id this project has never had". A reference to a
+  // requirement that was superseded is history, not breakage.
+  const ids = new Set(known.map((r) => r.id));
+  const active = new Set(requirements.map((r) => r.id));
   const unplaced = requirements
     .filter((r) => effectiveScope(spec.scope, r.id) === "UNKNOWN")
     .map((r) => r.id);
-  const unconfirmed = spec.scope.filter((a) => a.status !== "CONFIRMED").map((a) => a.requirement);
-  const withCriteria = new Set(spec.criteria.map((c) => c.requirement));
+  const unconfirmed = spec.scope
+    .filter((a) => a.status !== "CONFIRMED" && active.has(a.requirement))
+    .map((a) => a.requirement);
+  // A removed criterion covers nothing.
+  const withCriteria = new Set(spec.criteria.filter(isLive).map((c) => c.requirement));
   const mvpWithout = requirements
     .filter((r) => effectiveScope(spec.scope, r.id) === "MVP" && !withCriteria.has(r.id))
     .map((r) => r.id);
 
   const dangling = [
     ...spec.scope.map((a) => a.requirement),
-    ...spec.criteria.map((c) => c.requirement),
-    ...spec.use_cases.flatMap((u) => u.requirements),
+    ...spec.criteria.filter(isLive).map((c) => c.requirement),
+    ...spec.use_cases.filter(isLive).flatMap((u) => u.requirements),
   ].filter((id) => !ids.has(id));
 
   return {
@@ -408,22 +557,39 @@ function gapsOf(spec: ProductSpecification, requirements: Requirement[]): PlanGa
 function summarise(root: string): PlanStatusData {
   const requirements = requireRequirements(root);
   const spec = loadSpec(root);
-  const gaps = gapsOf(spec, requirements);
+  const gaps = gapsOf(spec, requirements, allRequirements(root));
 
   const by_scope = Object.fromEntries(SCOPE_VALUES.map((s) => [s, [] as string[]])) as Record<Scope, string[]>;
   for (const r of requirements) by_scope[effectiveScope(spec.scope, r.id)].push(r.id);
 
+  /**
+   * Advice is derived from what is actually outstanding, never from the
+   * published flag. A published specification with a requirement nobody has
+   * placed is not ready for architecture, and saying so was the OQ-008
+   * contradiction.
+   */
   const nextStep = (): string => {
-    if (spec.status === "PUBLISHED") return "The specification is published. Architecture comes next.";
-    if (gaps.dangling_references.length > 0) return "Fix the references to requirements that no longer exist.";
-    if (spec.personas.length === 0) return "Establish who this is for before deciding what ships.";
+    const published = spec.status === "PUBLISHED";
+    const needsRevision = published
+      ? ' Send it with a revision: { "reason": "…", "by": "user" }.'
+      : "";
+
+    if (gaps.dangling_references.length > 0) {
+      return `Fix the references to requirements this project has never had.${needsRevision}`;
+    }
+    if (spec.personas.filter(isLive).length === 0) {
+      return `Establish who this is for before deciding what ships.${needsRevision}`;
+    }
     if (gaps.unplaced.length > 0) {
-      return `Ask the user what ships first: ${gaps.unplaced.length} requirement(s) have no scope yet.`;
+      return `Ask the user what ships first: ${gaps.unplaced.length} requirement(s) have no scope yet.` +
+        needsRevision;
     }
     if (gaps.unconfirmed_scope.length > 0) return "Ask the user to confirm the scope calls.";
     if (gaps.mvp_without_criteria.length > 0) {
-      return "Write acceptance criteria for the MVP requirements, so they can be checked later.";
+      return `Write acceptance criteria for the MVP requirements, so they can be checked later.` +
+        needsRevision;
     }
+    if (spec.status === "PUBLISHED") return "The specification is published. Architecture comes next.";
     if (spec.status !== "CONFIRMED") return "Read the specification back to the user and ask them to confirm it.";
     return `Everything is agreed — run: ${cmd("plan close")}`;
   };
@@ -457,6 +623,10 @@ export const planExport = planStatus;
 
 export interface PlanCloseData {
   specification: ProductSpecification;
+  /** How many times this specification has now been published. */
+  publication: number;
+  /** The revision this publication carries, if it followed one. */
+  revision: string | null;
   mvp: string[];
   future: string[];
   out_of_scope: string[];
@@ -475,12 +645,15 @@ export function planClose(options: PlanOptions): Result<PlanCloseData> {
     if (spec.status === "PUBLISHED") {
       throw new MichiError({
         class: "INVALID", code: "CONFLICT",
-        message: "This specification has already been published.",
-        next: `See where the project stands: ${cmd("status")}`,
+        message: "Nothing has changed since this specification was last published.",
+        detail: { publications: spec.publications.length },
+        next: `See where the project stands: ${cmd("plan status")}`,
       });
     }
 
-    const gaps = gapsOf(spec, requirements);
+    // Every publication re-runs the gates. Published once is not valid
+    // forever (OQ-008).
+    const gaps = gapsOf(spec, requirements, allRequirements(root));
     const blocking =
       gaps.dangling_references.length > 0 ||
       gaps.unplaced.length > 0 ||
@@ -512,19 +685,45 @@ export function planClose(options: PlanOptions): Result<PlanCloseData> {
     const outOfScope = scopeOf("OUT_OF_SCOPE");
 
     const brain = brainDir(root);
-    writeText(join(brain, PRD_FILE), renderPrd(root, spec, requirements, timestamp));
 
-    const published: ProductSpecification = { ...spec, status: "PUBLISHED" };
+    // The revision this publication carries, if it followed one that has not
+    // been published yet.
+    const latestRevision = spec.revisions[spec.revisions.length - 1]?.id ?? null;
+    const alreadyPublished = new Set(spec.publications.map((pub) => pub.revision));
+    const carrying = alreadyPublished.has(latestRevision) ? null : latestRevision;
+
+    const publication = parseOrInvalid(PublicationSchema, {
+      at: timestamp,
+      confirmed_by: spec.confirmed_by,
+      revision: carrying,
+      mvp, future, out_of_scope: outOfScope,
+    }, "that publication");
+
+    const published: ProductSpecification = {
+      ...spec,
+      status: "PUBLISHED",
+      publications: [...spec.publications, publication],
+    };
+
+    writeText(join(brain, PRD_FILE), renderPrd(root, published, requirements, timestamp));
     saveSpec(root, published, timestamp);
 
     const statePath = join(brain, STATE_FILE);
     const state = readYaml(statePath, StateSchema);
     writeYaml(statePath, {
-      ...state, stage: "ARCHITECTURE", stage_entered_at: timestamp, updated_at: timestamp,
+      ...state,
+      stage: "ARCHITECTURE",
+      stage_entered_at: timestamp,
+      stage_reason: "The product specification was published.",
+      // The specification is now validated against the current requirements.
+      needs_review: state.needs_review.filter((a) => a !== "specification"),
+      updated_at: timestamp,
     });
 
     return ok({
       specification: published,
+      publication: published.publications.length,
+      revision: carrying,
       mvp, future, out_of_scope: outOfScope,
       artifacts: ["requirements/PRD.md"],
       stage: "ARCHITECTURE",
@@ -582,8 +781,11 @@ function renderPrd(
     "",
   ];
 
-  if (spec.personas.length === 0) lines.push("Not recorded.", "");
-  for (const persona of spec.personas) {
+  const personas = spec.personas.filter(isLive);
+  const useCases = spec.use_cases.filter(isLive);
+
+  if (personas.length === 0) lines.push("Not recorded.", "");
+  for (const persona of personas) {
     lines.push(`### ${persona.name}`, "", persona.description, "");
     if (persona.goals.length > 0) {
       lines.push("What they are trying to do:", "");
@@ -592,9 +794,9 @@ function renderPrd(
     }
   }
 
-  if (spec.use_cases.length > 0) {
+  if (useCases.length > 0) {
     lines.push("## How it gets used", "");
-    for (const useCase of spec.use_cases) {
+    for (const useCase of useCases) {
       const who = spec.personas.find((p) => p.id === useCase.persona)?.name ?? useCase.persona;
       lines.push(`### ${useCase.id} — ${useCase.title}`, "",
         `**Who:** ${who}`, `**When:** ${useCase.trigger}`, "");
@@ -614,7 +816,7 @@ function renderPrd(
       lines.push(`### ${r.id} — ${r.title}`, "", r.description, "");
       const reason = reasonFor(r.id);
       if (reason) lines.push(`_Why here: ${reason}_`, "");
-      const criteria = spec.criteria.filter((c) => c.requirement === r.id);
+      const criteria = spec.criteria.filter((c) => c.requirement === r.id && isLive(c));
       if (criteria.length > 0) {
         lines.push("How we will know it works:", "");
         for (const c of criteria) {
@@ -642,9 +844,27 @@ function renderPrd(
     lines.push("");
   }
 
+  // A founder who agreed to something three months ago is entitled to see what
+  // has moved since, and why (OQ-008).
+  if (spec.revisions.length > 0) {
+    lines.push("## What changed since this was first agreed", "");
+    for (const revision of spec.revisions) {
+      lines.push(
+        `### ${revision.id} — ${revision.created_at.slice(0, 10)}`, "",
+        revision.reason, "",
+      );
+      for (const change of revision.changes) lines.push(`- ${change}`);
+      lines.push("", `_Asked for by ${revision.confirmed_by}._`, "");
+    }
+  }
+
   lines.push("---", "",
     `${scoped("MVP").length} requirement(s) in the first version · ` +
     `${scoped("FUTURE").length} later · ` +
     `${dropped.length + spec.out_of_scope.length} ruled out`, "");
+  if (spec.publications.length > 0) {
+    lines.push("", `Published ${spec.publications.length} time(s). ` +
+      `This is publication ${spec.publications.length}.`, "");
+  }
   return lines.join("\n");
 }

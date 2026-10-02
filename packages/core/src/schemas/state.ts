@@ -42,6 +42,17 @@ export const StateSchema = z.object({
   project_id: z.string().min(1),
   stage: ProjectStageSchema,
   stage_entered_at: z.string().datetime(),
+  /**
+   * Why the stage is where it is — required reading when it moved backwards.
+   * The stage is current readiness, never maximum historical progress.
+   */
+  stage_reason: z.string().min(1).nullable().default(null),
+  /**
+   * Artifacts that still exist but are no longer validated against the latest
+   * upstream state. OQ-008: nothing is destroyed when the stage moves back; it
+   * becomes identifiable as needing review.
+   */
+  needs_review: z.array(z.string().min(1)).default([]),
   initialized_at: z.string().datetime(),
   current_milestone: z.string().min(1).nullable(),
   active_task: z.string().min(1).nullable(),
@@ -59,6 +70,8 @@ export function newState(input: { projectId: string; now: string }): ProjectStat
     project_id: input.projectId,
     stage: "DISCOVERY",
     stage_entered_at: input.now,
+    stage_reason: null,
+    needs_review: [],
     initialized_at: input.now,
     current_milestone: null,
     active_task: null,

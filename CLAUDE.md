@@ -82,7 +82,7 @@ Phase 0 complete and internally consistent. **Phases 1, 2 and 3 complete**:
 `michi init`, `scan`, `status`, `discover` (start/status/answer/export/close),
 `decide` (list/show/propose/confirm/reject/supersede), `plan`
 (status/update/export/close), and the `senior-engineer` and `product-planner`
-skills. 254 tests, TypeScript build clean. Nothing published.
+skills. 308 tests, TypeScript build clean. Nothing published.
 
 Still deliberately absent: the graph engine, the context engine, the other five
 skills, agent adapters and the verification executor. Those are Phases 4–8;
@@ -111,15 +111,15 @@ behaviour. See
   tagged `produced_by: MICHI` or `produced_by: AGENT` and the two are never
   merged. Executor lands in Phase 7.
 
+- **OQ-008** a published specification may be changed, but only through a
+  revision (`REV-*`) recording what, why, who and when. Core derives *what*
+  changed and refuses a revision that changed nothing. Product artifacts are
+  tombstoned, never deleted. The stage is current readiness, not high-water
+  progress, so new requirements move a project back and flag what needs review.
+
 **Open — needs the owner, don't decide these unasked:**
 
-1. **OQ-008** — how does a *published* specification change? Right now
-   `plan update` on a published specification is refused outright, which is a
-   dead end the first time a founder wants a different MVP. Three options and a
-   recommendation are in
-   [`docs/specs/README.md`](docs/specs/README.md#open). Blocks nothing in
-   Phase 4; architecture reads the specification and does not change it.
-2. **OQ-002** — npm package and binary names are unverified. Doesn't block
+1. **OQ-002** — npm package and binary names are unverified. Doesn't block
    implementation; package identity is read from configuration.
 3. `npm login` — the user must run it themselves.
 4. No GitHub repository exists, and `gh` is not installed.
@@ -131,7 +131,10 @@ repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
 Next: **Phase 4** — the `architecture` skill: options, tradeoffs, ADRs, and the
-`TRD.md` that Phase 3 deliberately did not write. It builds on the MVP scope
+`TRD.md` that Phase 3 deliberately did not write. Phase 4 produces the first
+real downstream artifact, which is when the deferred question needs raising:
+how downstream artifacts are invalidated when scope changes. `needs_review`
+currently marks only the specification. It builds on the MVP scope
 the specification now fixes.
 
 Three Phase 3 rules that later phases depend on:
@@ -150,3 +153,7 @@ Two rules that Phase 2 established and that everything after it depends on:
   no approval, no rationale or no ADR. Do not add a bypass.
 - **A locked decision is superseded, never edited.** `decide confirm` on a
   locked decision exits 7 and points at `decide supersede`.
+- **Nothing important disappears, and nothing important changes silently.**
+  Requirements supersede, specifications revise, decisions supersede, product
+  artifacts are tombstoned. There is no delete anywhere, and every change names
+  the human who asked for it.

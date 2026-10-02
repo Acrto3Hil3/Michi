@@ -16,6 +16,7 @@ import type {
   SessionState,
 } from "../schemas/discovery.js";
 import { parseOrInvalid } from "../schemas/parse.js";
+import { SpecificationSchema } from "../schemas/product.js";
 import { requireInitialized } from "./scan.js";
 import { cmd } from "../identity.js";
 
@@ -652,10 +653,31 @@ export function discoverClose(options: DiscoverOptions): Result<CloseData> {
 
     const statePath = join(brain, STATE_FILE);
     const state = readYaml(statePath, StateSchema);
+
+    /*
+     * The stage is current readiness, never maximum historical progress
+     * (OQ-008). New requirements mean the specification must be reconsidered,
+     * so a project past SPECIFICATION moves back to it — and anything
+     * downstream that still exists is marked as no longer validated against
+     * the latest requirements. Nothing is destroyed.
+     */
+    const movedBack = state.stage !== "DISCOVERY" && state.stage !== "SPECIFICATION";
+    const specFile = join(brain, "requirements", "specification.yaml");
+    const specPublished =
+      existsSync(specFile) && readYaml(specFile, SpecificationSchema).status === "PUBLISHED";
+
+    const needsReview = new Set(state.needs_review);
+    if (movedBack && specPublished) needsReview.add("specification");
+
     writeYaml(statePath, {
       ...state,
       stage: "SPECIFICATION",
       stage_entered_at: timestamp,
+      stage_reason: movedBack
+        ? `${confirmed.length} requirement(s) were confirmed in ${session.session_id} after the ` +
+          `project reached ${state.stage}, so the specification has to be reconsidered.`
+        : `Discovery closed with ${confirmed.length} confirmed requirement(s).`,
+      needs_review: [...needsReview].sort(),
       // The count is of requirements still in force, not of everything ever
       // written: a superseded requirement is kept but no longer counted.
       counts: { ...state.counts, requirements: merged.filter(isActive).length },

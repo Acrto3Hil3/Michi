@@ -355,17 +355,124 @@ This is the only mechanical contradiction MICHI can detect between scope and
 decisions. It cannot tell that a use case implies multi-location when a locked
 decision assumed one shop, and the contract does not pretend otherwise.
 
+### Revising a published specification
+
+*OQ-008, locked 2026-10-02.* A published specification may be changed, and a
+change to an already-published one must create a revision.
+
+```yaml
+next_revision_id: 2
+revisions:
+  - id: REV-001
+    reason: The owner realised alerts are noise until the counts are trusted.
+    confirmed_by: user
+    created_at: 2026-10-02T10:14:00Z
+    changes:
+      - REQ-003 scope MVP → FUTURE
+      - AC-003 removed (Described behaviour no longer in version one.)
+
+publications:
+  - at: 2026-10-01T11:00:00Z
+    confirmed_by: user
+    revision: null
+    mvp: [REQ-001, REQ-002, REQ-003]
+    future: []
+    out_of_scope: []
+  - at: 2026-10-02T10:20:00Z
+    confirmed_by: user
+    revision: REV-001
+    mvp: [REQ-001, REQ-002]
+    future: [REQ-003]
+    out_of_scope: []
+```
+
+`REV-*` ids are project-wide, sequential and never reused.
+
+**Core computes `changes`; it does not accept them.** The caller supplies the
+reason and the name; the diff is derived from what the update actually did. An
+agent's summary of its own edit is a claim, and the same distinction that
+separates evidence from assertion in verification applies here. A revision that
+changes nothing is refused.
+
+`reason` must be a sentence rather than a word. Core checks that much and no
+more — judging prose belongs to the skill.
+
+**A revision drops the sign-off.** The previous confirmation was for the
+previous content, so the specification returns to `DRAFT` and the user must
+confirm again. A changed scope call likewise needs confirming again: a revision
+inherits nothing.
+
+### Removing a product artifact
+
+A persona, use case or acceptance criterion is **never physically deleted** once
+persisted. It becomes a tombstone:
+
+```yaml
+- id: AC-003
+  requirement: REQ-003        # still traceable to what it belonged to
+  status: REMOVED
+  removed_by: user
+  removed_at: 2026-10-02T10:14:00Z
+  removal_reason: Described behaviour that is no longer in version one.
+```
+
+`ACTIVE` / `REMOVED` is the lifecycle of a product artifact. It is **not** a
+scope value: `FUTURE` means "we want this later", `REMOVED` means "this was in
+the specification and the user took it out". Both facts matter and collapsing
+them loses the one that explains the history.
+
+A removal requires `removed_by` and a reason — schema-enforced, like every
+other consequential act. A removed criterion covers nothing, and a removed
+persona cannot be named by a new use case.
+
+Requirements are **not** removed this way. They accumulate and supersede
+(OQ-007). There is one requirement lifecycle and one product-artifact
+lifecycle, and no third system.
+
+### The stage is readiness, not progress
+
+`stage` is where the project currently stands, never how far it has ever got.
+New confirmed requirements move a project past `SPECIFICATION` back to it, with
+`stage_reason` saying why:
+
+```yaml
+stage: SPECIFICATION
+stage_reason: >
+  1 requirement(s) were confirmed in SESSION-002 after the project reached
+  ARCHITECTURE, so the specification has to be reconsidered.
+needs_review: [specification]
+```
+
+Nothing downstream is deleted when this happens. It is listed in
+`needs_review` — "still exists, no longer validated against the latest
+requirements" — and `plan close` clears the entry when the specification is
+published again.
+
+This is deliberately the smallest marker that preserves the distinction. It is
+not a staleness engine, and it does not yet invalidate anything beyond the
+specification.
+
 ### What `plan close` produces
 
-`close` requires `status: CONFIRMED` — which requires a human — and refuses
-while:
+`close` is **re-runnable**, and every publication re-runs the gates. Published
+once is not valid forever.
+
+It requires `status: CONFIRMED` — which requires a human — and refuses while:
 
 - any active requirement's scope is `UNKNOWN` or still only `PROPOSED`
 - any `MVP` requirement has no `AC-*` criterion
 - the specification references a requirement that is not active
 
-It then writes `requirements/PRD.md` and advances the project
-`SPECIFICATION → ARCHITECTURE`.
+When a gate fails, **nothing is written** — not the specification, not the PRD,
+not the state.
+
+Otherwise it appends a publication record, regenerates
+`requirements/PRD.md` from the current specification, clears the specification
+from `needs_review`, and advances the project `SPECIFICATION → ARCHITECTURE`.
+
+There is one `PRD.md`, always current. No `PRD-v1.md`. The revision history is
+what records the change, and the PRD renders it under *What changed since this
+was first agreed* so the founder can see what moved and why.
 
 `TRD.md` is **not** written in Phase 3. A technical requirements document is
 assembled from locked architectural decisions, and those are Phase 4's output.

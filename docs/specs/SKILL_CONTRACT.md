@@ -170,6 +170,18 @@ actually do, then what ships. A scope call made before the personas exist is a
 guess, and MICHI's own `plan status` will say so rather than letting it happen
 quietly.
 
+**Changing an agreed specification is a first-class act, not an edit.** Once
+published, a change needs a revision: the user's actual words for why, and their
+name. Core derives what changed. The skill's job is to carry the real reason
+across — "the owner realised alerts are noise until the counts are trusted",
+not "updated scope" — because the reason is the only part a future reader cannot
+reconstruct.
+
+**Nothing is deleted.** A persona, use case or criterion that no longer applies
+is removed explicitly, with a reason and the user's name, and the record stays.
+Say so to the user: being told "that's recorded as removed, not lost" is what
+makes them willing to change their mind.
+
 **Acceptance criteria must be runnable.** Prefer Given/When/Then. "The
 inventory should work correctly" cannot pass or fail, so it is not a criterion.
 `plan close` refuses while any first-version requirement has none.

@@ -73,7 +73,7 @@ export function renderScan(data: ScanData): string[] {
 }
 
 export function renderStatus(data: StatusData): string[] {
-  const lines = [
+  const lines: string[] = [
     `MICHI PROJECT STATUS`,
     "",
     bullet(`Project           ${data.project.name}`),
@@ -84,10 +84,17 @@ export function renderStatus(data: StatusData): string[] {
     bullet(
       `Last look at code ${data.last_scan ? data.last_scan.at : "never"}`,
     ),
+  ];
+  if (data.stage_reason) lines.push(bullet(`Why this stage     ${data.stage_reason}`));
+  if (data.needs_review.length > 0) {
+    lines.push("", "No longer checked against the latest requirements:");
+    for (const artifact of data.needs_review) lines.push(bullet(artifact));
+  }
+  lines.push(
     "",
     "What MICHI knows about your project:",
     ...detectionLines(data.detected),
-  ];
+  );
   if (data.needs_you.length > 0) {
     lines.push("", "Needs you:");
     for (const item of data.needs_you) lines.push(bullet(item));
@@ -305,6 +312,16 @@ export function renderPlanStatus(data: PlanStatusData): string[] {
     for (const item of outstanding) lines.push(bullet(item));
   }
 
+  if (spec.revisions.length > 0) {
+    lines.push("", "Changes since it was first agreed:");
+    for (const revision of spec.revisions) {
+      lines.push(bullet(`${revision.id}  ${revision.reason}  (${revision.confirmed_by})`));
+    }
+  }
+  if (spec.publications.length > 0) {
+    lines.push("", `Published ${spec.publications.length} time(s).`);
+  }
+
   lines.push("", "Next:", bullet(data.next_step));
   return lines;
 }
@@ -319,14 +336,28 @@ export function renderPlanUpdate(data: PlanUpdateData): string[] {
   if (a.scope_proposed.length) did.push(`proposed scope for ${a.scope_proposed.join(", ")}`);
   if (a.scope_confirmed.length) did.push(`the user confirmed scope for ${a.scope_confirmed.join(", ")}`);
   if (a.out_of_scope_added.length) did.push(`ruled out ${a.out_of_scope_added.join(", ")}`);
+  if (a.removed.length) {
+    did.push(`removed ${a.removed.join(", ")} — kept on the record, not deleted`);
+  }
   if (a.specification_confirmed) did.push("the user confirmed the whole specification");
   for (const item of did) lines.push(bullet(item));
+
+  if (a.revision) {
+    lines.push(
+      "",
+      `Recorded as ${a.revision}. The specification needs the user's sign-off again ` +
+        `before it can be published.`,
+    );
+  }
   return lines;
 }
 
 export function renderPlanClose(data: PlanCloseData): string[] {
   const lines = [
-    "The product specification is published.",
+    data.publication === 1
+      ? "The product specification is published."
+      : `The product specification is published again — publication ${data.publication}` +
+        (data.revision ? `, carrying ${data.revision}.` : "."),
     "",
     bullet(`In the first version: ${data.mvp.length} requirement(s)`),
     bullet(`Later: ${data.future.length}`),

@@ -64,6 +64,10 @@ And the hard conversation — which four of your eighteen ideas are version one 
 happens with the cut written down. "Later" is recorded as a promise, not lost
 as a deletion, and MICHI will not decide it for you.
 
+Change your mind in six months and that works too: MICHI records what changed,
+why, and that you asked for it, then regenerates the document. Nothing is ever
+deleted, and nothing changes without your name on it.
+
 What works today: point MICHI at a project and it writes down what is actually
 there, saying plainly which parts it could not establish rather than guessing.
 Then describe what you want to build, and your AI agent — following MICHI's

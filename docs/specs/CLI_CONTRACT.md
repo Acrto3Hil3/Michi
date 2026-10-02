@@ -323,6 +323,26 @@ may be omitted:
 }
 ```
 
+Changing an **already-published** specification additionally requires a
+revision, and removing anything requires an attributed reason (OQ-008):
+
+```json
+{
+  "revision": { "reason": "Alerts are noise until the counts are trusted.", "by": "user" },
+  "scope":    [{ "requirement": "REQ-003", "scope": "FUTURE", "reason": "…" }],
+  "remove":   { "criteria": ["AC-003"], "by": "user", "reason": "Describes behaviour no longer in version one." }
+}
+```
+
+Without a revision, a change to a published specification is refused with exit
+`7` and a message naming what to send. `revision.by` and `remove.by`/`reason`
+are required; Core derives *what* changed and refuses a revision that changed
+nothing. A revision returns the specification to `DRAFT`, so the user must
+confirm it again before `plan close` will publish.
+
+`plan close` is re-runnable and re-runs every gate. On failure nothing is
+written.
+
 A scope assignment arrives `UNKNOWN`-confirmed — recorded, but not agreed —
 and becomes agreed only through `confirm`, which **requires `by`**. There is no
 path to a confirmed scope decision that does not name the human who made it

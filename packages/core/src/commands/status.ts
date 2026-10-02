@@ -24,6 +24,10 @@ export interface StatusData {
   project: { id: string; name: string };
   stage: ProjectStage;
   stage_entered_at: string;
+  /** Why the stage is where it is — the reading that matters when it moved back. */
+  stage_reason: string | null;
+  /** Artifacts that still exist but are no longer validated against the latest upstream state. */
+  needs_review: string[];
   architecture_status: "UNSET" | "PROPOSED" | "LOCKED";
   current_milestone: string | null;
   active_task: string | null;
@@ -39,7 +43,7 @@ export interface StatusData {
  * numbers (CLI_CONTRACT.md).
  */
 function needsYou(
-  state: { stage: ProjectStage; counts: StatusData["counts"] },
+  state: { stage: ProjectStage; counts: StatusData["counts"]; needs_review: string[] },
   hasMap: boolean,
   discovery: StatusData["discovery"],
 ): string[] {
@@ -66,6 +70,13 @@ function needsYou(
       );
     }
   }
+  for (const artifact of state.needs_review) {
+    items.push(
+      `The ${artifact} is no longer validated against the latest requirements — ` +
+        `run: ${cmd("plan status")}`,
+    );
+  }
+
   const open = state.counts.decisions_open ?? 0;
   if (open > 0) {
     items.push(
@@ -114,6 +125,8 @@ export function status(options: StatusOptions): Result<StatusData> {
       project: { id: config.project.id, name: config.project.name },
       stage: state.stage,
       stage_entered_at: state.stage_entered_at,
+      stage_reason: state.stage_reason,
+      needs_review: state.needs_review,
       architecture_status: state.architecture_status,
       current_milestone: state.current_milestone,
       active_task: state.active_task,

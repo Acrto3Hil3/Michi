@@ -241,12 +241,46 @@ check("phase3  TRD is deferred to architecture rather than stubbed",
       and "Not `TRD.md`" in spec("SKILL_CONTRACT.md"))
 check("phase3  product-planner does not create requirements",
       "It does not create requirements" in spec("SKILL_CONTRACT.md"))
-check("OQ-008  is an open decision gate, with the dead end evidenced",
+check("OQ-008  is locked in the locked section, with the gate kept",
       "### OQ-008" in rd
-      and rd.index("## Open") < rd.index("### OQ-008")
-      and "DECISION GATE" in rd
-      and "frozen permanently" in rd
-      and "verified on the built binary" in rd)
+      and rd.index("## Locked decisions") < rd.index("### OQ-008") < rd.index("## Open")
+      and "LOCKED: cumulative with revisions" in rd
+      and "Appendix — the OQ-008 gate" in rd)
+check("OQ-008  revisions are documented, with Core deriving the changes",
+      "### Revising a published specification" in sm
+      and "Core computes `changes`; it does not accept them" in sm
+      and "A revision drops the sign-off" in sm)
+check("OQ-008  revision ids are project-wide and never reused",
+      "project-wide, sequential and never reused" in sm)
+check("OQ-008  product artifacts are tombstoned, never deleted",
+      "### Removing a product artifact" in sm
+      and "never physically deleted" in sm
+      and "requires `removed_by` and a reason" in sm)
+check("OQ-008  REMOVED is kept distinct from FUTURE",
+      "not** a\nscope value" in sm.replace("\r", "")
+      and "REMOVED is not a scope value" in rd)
+check("OQ-008  requirements keep their own lifecycle",
+      "Requirements are **not** removed this way" in sm
+      and "no third system" in sm)
+check("OQ-008  the stage is readiness, not progress",
+      "### The stage is readiness, not progress" in sm
+      and "never how far it has ever got" in sm
+      and "needs_review" in sm)
+check("OQ-008  downstream artifacts are preserved, not deleted",
+      "Nothing downstream is deleted" in sm
+      and "not a staleness engine" in sm)
+check("OQ-008  plan close is re-runnable and writes nothing on failure",
+      "re-runnable**, and every publication re-runs the gates" in sm
+      and "**nothing is written**" in sm)
+check("OQ-008  one PRD, always current",
+      "There is one `PRD.md`, always current" in sm
+      and "No `PRD-v1.md`" in sm)
+check("OQ-008  no document versioning was introduced",
+      "no `SPEC-*`" in rd
+      and not any("SPEC-001" in t for f, t in text.items() if f.name != "README.md"))
+check("OQ-008  the deferred staleness question is named, not silently dropped",
+      "What this does not solve" in rd
+      and "do not build a staleness engine" in rd)
 check("OQ-008  presents every option with its effects and what stays unchanged",
       all(o in rd for o in ["A — Re-open", "B — Versioned", "C — Cumulative",
                             "D — Cumulative with revisions"])
