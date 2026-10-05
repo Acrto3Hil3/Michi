@@ -97,6 +97,8 @@ export interface ArchitectureStatusData {
   governing: Record<string, string[]>;
   /** Decisions proposed and still waiting on the user. */
   open_decisions: string[];
+  /** Locked decisions a later specification change has called into question (OQ-009). */
+  decisions_needing_review: string[];
   locked_decisions: { id: string; title: string; category: string; choice: string }[];
   next_step: string;
 }
@@ -118,7 +120,8 @@ function summarise(root: string): ArchitectureStatusData {
 
   const decided = mvp.filter((r) => (governing[r.id] ?? []).length > 0).map((r) => r.id);
   const undecided = mvp.filter((r) => (governing[r.id] ?? []).length === 0).map((r) => r.id);
-  const needsReview = state.needs_review.includes("architecture");
+  const flagged = locked.filter((d) => d.needs_review).map((d) => d.id).sort();
+  const needsReview = state.needs_review.includes("architecture") || flagged.length > 0;
   const specNeedsReview = state.needs_review.includes("specification");
 
   const nextStep = (): string => {
@@ -126,7 +129,8 @@ function summarise(root: string): ArchitectureStatusData {
       return `What the project is building changed. Settle the specification first — run: ${cmd("plan status")}`;
     }
     if (needsReview) {
-      return `The specification changed since this architecture was agreed. Check the decisions still hold, then run: ${cmd("architecture close")}`;
+      const which = flagged.length > 0 ? flagged.join(", ") : "the decisions";
+      return `The specification changed after this was agreed. Check ${which} still holds, then run: ${cmd("architecture close")}`;
     }
     if (open.length > 0) {
       return `${open.length} decision(s) are waiting on the user — run: ${cmd("decide")}`;
@@ -145,6 +149,7 @@ function summarise(root: string): ArchitectureStatusData {
     undecided,
     governing,
     open_decisions: open,
+    decisions_needing_review: flagged,
     locked_decisions: locked.map((d) => ({
       id: d.id,
       title: d.title,
@@ -216,6 +221,20 @@ export function architectureClose(options: ArchitectureOptions): Result<Architec
     const timestamp = now();
     writeText(join(brain, SYSTEM_FILE), renderSystem(root, ground, timestamp));
     writeText(join(brain, TRD_FILE), renderTrd(root, ground, timestamp));
+
+    // Agreeing the architecture again is the act of having reviewed it, so the
+    // per-decision flags come off (OQ-009). Nothing else about the decisions
+    // changes — they were never unlocked.
+    if (summary.decisions_needing_review.length > 0) {
+      const decisionsPath = join(brain, DECISIONS_FILE);
+      const registry = readYaml(decisionsPath, RegistrySchema);
+      writeYaml(decisionsPath, RegistrySchema.parse({
+        ...registry,
+        decisions: registry.decisions.map((d) =>
+          d.needs_review ? { ...d, needs_review: false, review_reason: null, updated_at: timestamp } : d,
+        ),
+      }));
+    }
 
     writeYaml(statePath, {
       ...state,

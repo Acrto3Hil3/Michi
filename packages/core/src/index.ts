@@ -82,3 +82,12 @@ export {
 export type {
   ArchitectureOptions, ArchitectureStatusData, ArchitectureCloseData,
 } from "./commands/architecture.js";
+
+export { buildGraph, NODE_TYPES, EDGE_TYPES } from "./graph/build.js";
+export type { ProjectGraph, GraphNode, GraphEdge, NodeType, EdgeType } from "./graph/build.js";
+export { node as graphNode, neighbors, withinHops, orphans, coverage } from "./graph/query.js";
+
+export { CONTEXT_TIERS, TierSchema, ContextRequestSchema } from "./schemas/context.js";
+export type { ContextTier, ContextRequest, ContextItem, ContextPacket } from "./schemas/context.js";
+export { resolveContext, estimateTokens } from "./commands/context.js";
+export type { ResolveOptions } from "./commands/context.js";

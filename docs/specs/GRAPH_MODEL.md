@@ -77,6 +77,71 @@ usable for ranking and never for impact analysis: telling a user that changing
 a decision breaks nine things, when three of them were guesses, is a P9
 violation.
 
+## What Phase 5 built
+
+The node and edge types above were written in Phase 0, before Phases 3 and 4
+existed. Phase 5 implements the subset that has a canonical source **today**,
+and states the differences rather than quietly diverging.
+
+### Nodes implemented
+
+```text
+REQUIREMENT  REQ-001   requirements/requirements.yaml
+DECISION     D001      decisions/index.yaml
+USE_CASE     UC-001    requirements/specification.yaml
+ACCEPTANCE   AC-001    requirements/specification.yaml
+PERSONA      PER-001   requirements/specification.yaml   ← not in the list above
+FILE         path      project/map.json
+```
+
+`PERSONA` was missing because Phase 0 predates the product specification.
+
+**Not implemented:** `COMPONENT`, `ENTITY`, `API`, `SYMBOL`, `TASK`,
+`MILESTONE`, `FEATURE`, `DOMAIN`, `TEST`. Nothing in `.michi/` produces them
+yet. A node type with no source is a claim the project cannot support, so they
+wait for the phases that create them.
+
+### Edges implemented
+
+Each is backed by one field. An edge with no field behind it is an invention.
+
+```text
+GOVERNS       DECISION   → REQUIREMENT   decision.affects_requirements
+VERIFIES      ACCEPTANCE → REQUIREMENT   criterion.requirement
+SERVES        USE_CASE   → REQUIREMENT   use_case.requirements
+PERFORMED_BY  USE_CASE   → PERSONA       use_case.persona
+SUPERSEDES    DECISION   → DECISION      decision.supersedes
+              REQUIREMENT → REQUIREMENT  requirement.supersedes
+```
+
+`GOVERNS` is listed above as `DECISION → COMPONENT`. Components do not exist;
+the edge that does exist, and that the architecture gate already depends on, is
+decision → requirement. Redefined to match canonical state.
+
+`VERIFIES` and `SERVES` are new. `PERFORMED_BY` is new. `SATISFIES`
+(`TEST → ACCEPTANCE`) is not built: there are no test nodes yet.
+
+`ADR` is **not** a node, as the list above says. The packet draws ADR text from
+the decision record instead, carrying it as an item with the reason
+*"documents D003"*.
+
+### It is not persisted
+
+`graph/nodes.json` and `graph/edges.json` are described below and are **not
+written** in Phase 5. The graph is derived on every call.
+
+That is deliberate. Persisting pays off when building the graph is expensive —
+structural parsing of a large repository, which does not exist yet. Until then
+a stored copy is a staleness bug waiting to happen, and rebuilding costs
+nothing. The `graph/` directory stays empty, and the files arrive with the
+scanner work that makes them worth having.
+
+### Dropped references are reported, not hidden
+
+An edge naming a node this project does not have is dropped and recorded in the
+graph's `dropped` list with the field it came from. The graph never contains a
+half-edge, and `michi graph` prints anything dropped.
+
 ## Storage
 
 `graph/nodes.json`:

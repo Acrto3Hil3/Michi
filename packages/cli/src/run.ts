@@ -5,6 +5,7 @@ import {
   decideList, decideShow, decidePropose, decideConfirm, decideReject, decideSupersede,
   planStatus, planUpdate, planExport, planClose,
   architectureStatus, architectureExport, architectureClose,
+  resolveContext, buildGraph, orphans, coverage,
 } from "@michi/core";
 import type { Result } from "@michi/core";
 import {
@@ -13,6 +14,7 @@ import {
   renderDecideList, renderDecision, renderDecideShow, renderSupersede,
   renderPlanStatus, renderPlanUpdate, renderPlanClose,
   renderArchitectureStatus, renderArchitectureClose,
+  renderContext, renderGraph, renderGraphMermaid, renderOrphans,
 } from "./render.js";
 
 export interface Io {
@@ -199,6 +201,97 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .description("write the PRD and move on to architecture")
     .action(() => {
       code = emit(planClose({ root: root(), now }), opts(), io, renderPlanClose);
+    });
+
+  // -------------------------------------------------------------------------
+  // context — what an agent actually needs for one piece of work
+  // -------------------------------------------------------------------------
+  program
+    .command("context <focus>")
+    .description("resolve the project knowledge needed to work on one requirement")
+    .option("--budget <tokens>", "cap the estimated context size")
+    .option("--explain", "list everything that was left out, and why")
+    .option("--include <ids>", "comma-separated ids to pull in regardless")
+    .option("--exclude <ids>", "comma-separated ids to withhold")
+    .action((focus: string, local: {
+      budget?: string; explain?: boolean; include?: string; exclude?: string;
+    }) => {
+      const list = (value?: string) =>
+        value ? value.split(",").map((x) => x.trim()).filter((x) => x.length > 0) : [];
+      const request: Record<string, unknown> = {
+        focus: { type: "requirement", id: focus },
+        include: list(local.include),
+        exclude: list(local.exclude),
+      };
+      if (local.budget !== undefined) request.budget_tokens = Number(local.budget);
+
+      code = emit(
+        resolveContext({ root: root(), now, request }), opts(), io,
+        (packet) => renderContext(packet, local.explain ?? false),
+      );
+    });
+
+  // -------------------------------------------------------------------------
+  // graph — a read-only view over canonical state
+  // -------------------------------------------------------------------------
+  const graph = program
+    .command("graph")
+    .description("how this project's requirements, decisions and criteria connect")
+    .argument("[node]", "focus on one node")
+    .option("--format <kind>", "text, json or mermaid", "text")
+    .action((nodeId: string | undefined, local: { format: string }) => {
+      try {
+        const g = buildGraph(root());
+        if (opts().json || local.format === "json") {
+          io.out(JSON.stringify(g, null, 2));
+        } else if (local.format === "mermaid") {
+          for (const line of renderGraphMermaid(g)) io.out(line);
+        } else {
+          for (const line of renderGraph(g, nodeId)) io.out(line);
+        }
+        code = ExitCode.SUCCESS;
+      } catch (e) {
+        const err = MichiError.from(e);
+        if (opts().json) io.out(JSON.stringify(errorPayload(err), null, 2));
+        else io.err(err.payload.message);
+        code = err.exitCode;
+      }
+    });
+
+  graph
+    .command("orphans")
+    .description("requirements with no decided approach, and none with a way to check them")
+    .action(() => {
+      try {
+        const g = buildGraph(root());
+        const data = { ungoverned: orphans(g, "REQUIREMENT", "GOVERNS"), uncovered: coverage(g) };
+        if (opts().json) io.out(JSON.stringify({ ok: true, data }, null, 2));
+        else for (const line of renderOrphans(data)) io.out(line);
+        code = ExitCode.SUCCESS;
+      } catch (e) {
+        const err = MichiError.from(e);
+        if (opts().json) io.out(JSON.stringify(errorPayload(err), null, 2));
+        else io.err(err.payload.message);
+        code = err.exitCode;
+      }
+    });
+
+  graph
+    .command("coverage")
+    .description("requirements with no acceptance criterion proving them")
+    .action(() => {
+      try {
+        const g = buildGraph(root());
+        const data = { ungoverned: [] as string[], uncovered: coverage(g) };
+        if (opts().json) io.out(JSON.stringify({ ok: true, data }, null, 2));
+        else for (const line of renderOrphans(data)) io.out(line);
+        code = ExitCode.SUCCESS;
+      } catch (e) {
+        const err = MichiError.from(e);
+        if (opts().json) io.out(JSON.stringify(errorPayload(err), null, 2));
+        else io.err(err.payload.message);
+        code = err.exitCode;
+      }
     });
 
   // -------------------------------------------------------------------------

@@ -242,6 +242,93 @@ The compiler is deterministic: same packet, same instruction, byte for byte.
 compiled prompt to fix a problem is always wrong — the fix belongs in the state
 the prompt was compiled from, or in the compiler.
 
+## What Phase 5 built
+
+This document was written in Phase 0 around a **task** focus. Tasks arrive in
+Phase 6, so Phase 5 implements the same machinery with a **requirement** focus
+and states the differences.
+
+### The request
+
+```json
+{
+  "focus": { "type": "requirement", "id": "REQ-003" },
+  "budget_tokens": 18000,
+  "include": ["D001"],
+  "exclude": ["UC-002"]
+}
+```
+
+Structured, never prose. The skill decides what the user is trying to do; Core
+resolves which canonical artifacts answer it. `focus.type` is a discriminated
+union with one member today and room for `task` later.
+
+`include` pulls in something the graph would not reach, recorded as *"asked for
+by the request"*. `exclude` withholds something it would, recorded as
+*"withheld by the request"*. Neither is a silent override.
+
+### Tiering, straight off the graph
+
+Relevance is graph distance and edge type. No similarity, no embeddings, no
+model — nothing to tune and nothing to explain away.
+
+| Tier | What lands there |
+|---|---|
+| `MUST_INCLUDE` | the focus; `LOCKED` decisions that `GOVERNS` it; live criteria that `VERIFIES` it; the ADR of each of those decisions |
+| `PREFERRED` | live use cases that `SERVES` it; the persona `PERFORMED_BY` each; anything the request asked for |
+| `OPTIONAL` | other requirements sharing one of those use cases |
+| `EXCLUDED` | everything else, each with its reason |
+
+A `PROPOSED` decision governs nothing — it is waiting on the user, and the
+packet says so rather than presenting it as settled. A `REMOVED` criterion or
+use case is excluded with *"was removed from the specification"*.
+
+### Ranking
+
+`(tier, −rank, id)`. `rank` is an integer assigned per relationship kind, so
+closer things sort first and ties break on id — never on traversal order. The
+same state and request give the same ordering, always.
+
+### The packet
+
+Every item carries `id`, `type`, `tier`, `reason`, `rank`, `estimated_tokens`
+and `content`. A decision item also carries `needs_review` and `review_reason`
+(OQ-009), so a decision the specification has moved under is **visible, neither
+hidden nor treated as valid**.
+
+`revisions` carries only the revisions whose `changes` name the focus — the
+relevant history, not all of it.
+
+`packet_id` is `CTX-` plus the first eight characters of the content hash, not
+a sequential number. Reproducibility is the point: the same state and request
+must give the same packet, and a counter would not. It also means resolving
+context writes nothing.
+
+### Budget
+
+`MUST_INCLUDE` is summed first. If it exceeds the budget the request **fails**
+rather than truncating — reported as `BLOCKED` (exit 5), since what it needs is
+a human decision: raise the budget or split the work. `TASK_TOO_LARGE` above is
+that condition; it surfaces through the existing error vocabulary rather than a
+new exit code.
+
+Otherwise `PREFERRED` then `OPTIONAL` are added by rank while budget remains,
+and everything dropped appears in `dropped_for_budget` and in `excluded` with
+the reason `budget`. The reduction is never silent.
+
+### Resolving context writes nothing
+
+`michi context` is read-only and deterministic: no packet file, no counter, no
+timestamp in the hash. `context/packets/` stays empty until there is an agent
+run to correlate a stored packet with, which is Phase 6.
+
+### Files
+
+`FILE` nodes exist in the graph but no artifact reaches them: the
+`IMPLEMENTS` edge is written when a task reports what it touched, and tasks are
+Phase 6. Until then the detected stack and the project's stated constraints
+travel as **project-level** context on every packet, which is where they belong.
+
 ## Six ways to spend fewer tokens
 
 1. **Prompt compression** — a precise instruction instead of a vague one that

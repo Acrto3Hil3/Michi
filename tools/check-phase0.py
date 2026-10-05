@@ -116,7 +116,8 @@ check("non-goals  MICHI's own storage is text files, not a database",
 check("non-goals  no vector store or embeddings anywhere",
       not (bad := [str(f.relative_to(ROOT)) for f, t in text.items()
                    if re.search(r"\b(pinecone|weaviate|chroma|embeddings?)\b", t, re.I)
-                   and not re.search(r"should not|not introduce|no vector|only be introduced", t, re.I)]),
+                   and not re.search(r"should not|not introduce|no vector|no embeddings|only be introduced",
+                                     t, re.I)]),
       "; ".join(bad))
 check("non-goals  no hosted service or web dashboard proposed",
       not (bad := [str(f.relative_to(ROOT)) for f, t in text.items()
@@ -317,12 +318,54 @@ check("phase4  the fifteenth command is justified, not slipped in",
       and "fifteenth command" in cli)
 check("phase4  the architecture skill exists",
       (ROOT / "packages" / "skills" / "architecture" / "SKILL.md").is_file())
-check("OQ-009  the invalidation question is raised, not hidden",
+check("OQ-009  is locked in the locked section, with its options kept",
       "### OQ-009" in rd
-      and rd.index("## Open") < rd.index("### OQ-009")
-      and "Current behaviour is A" in rd
-      and all(o in rd for o in ["A — Keep the coarse marker", "B — Per-decision review flags",
-                                "C — A dependency graph"]))
+      and rd.index("## Locked decisions") < rd.index("### OQ-009") < rd.index("## Open")
+      and "LOCKED: per-decision review flags" in rd
+      and "Appendix — the OQ-009 options" in rd)
+check("OQ-009  corrects the record about what was implemented",
+      "A correction to the record first" in rd
+      and "It was neither" in rd)
+check("OQ-009  flags decisions without unlocking them",
+      "unchanged — nothing is unlocked" in rd
+      and "needs_review" in spec("GRAPH_MODEL.md") + rd)
+check("OQ-009  names what is still not built",
+      "What is still not built" in rd and "Phase 6" in rd)
+
+# --- Phase 5 contracts ----------------------------------------------------
+gm = spec("GRAPH_MODEL.md")
+check("phase5  the graph states which node types it actually built",
+      "## What Phase 5 built" in gm
+      and "Not implemented:" in gm
+      and "a claim the project cannot support" in gm)
+check("phase5  PERSONA was added and GOVERNS redefined, both stated",
+      "not in the list above" in gm
+      and "Redefined to match canonical state" in gm)
+check("phase5  the graph is deliberately not persisted, with the reason",
+      "It is not persisted" in gm
+      and "staleness bug waiting to happen" in gm)
+check("phase5  dropped references are reported rather than hidden",
+      "Dropped references are reported, not hidden" in gm)
+check("phase5  the context request is structured, with a requirement focus",
+      "## What Phase 5 built" in cm
+      and "Structured, never prose" in cm
+      and '"type": "requirement"' in cm)
+check("phase5  tiering comes off the graph, with no model",
+      "straight off the graph" in cm
+      and "no embeddings" in cm
+      and "nothing to tune" in cm)
+check("phase5  ranking is deterministic and ties break on id",
+      "never on traversal order" in cm)
+check("phase5  a decision needing review is visible, not hidden or trusted",
+      "neither\nhidden nor treated as valid" in cm.replace("\r", "")
+      or "neither hidden nor treated as valid" in cm)
+check("phase5  the packet id comes from content, not a counter",
+      "not\na sequential number" in cm.replace("\r", "") or "not a sequential number" in cm)
+check("phase5  an over-budget required set fails rather than truncating",
+      "fails**\nrather than truncating" in cm.replace("\r", "")
+      or "rather than truncating" in cm)
+check("phase5  resolving context writes nothing",
+      "Resolving context writes nothing" in cm)
 check("phase4  per-decision invalidation is named as not built",
       "Per-decision invalidation is not built" in sm)
 

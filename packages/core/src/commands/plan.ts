@@ -715,9 +715,20 @@ export function planClose(options: PlanOptions): Result<PlanCloseData> {
     // But a locked architecture was agreed against the *previous* one, so it
     // is no longer known to hold (OQ-008). It is flagged, never unlocked and
     // never deleted — the decisions stand until someone looks at them again.
+    //
+    // OQ-009 narrows that: only the decisions governing a requirement this
+    // publication actually moved are flagged. Core can compute that — the
+    // revisions name the requirements that changed, and each decision names
+    // the requirements it governs — so "review the architecture" becomes
+    // "review these two decisions", which is the difference between a review
+    // happening and not.
     const needsReview = new Set(state.needs_review);
     needsReview.delete("specification");
-    if (state.architecture_status === "LOCKED" && spec.publications.length > 0) {
+
+    const movedRequirements = requirementsTouchedSince(spec);
+    const flagged = flagDecisions(root, movedRequirements, timestamp);
+
+    if (state.architecture_status === "LOCKED" && flagged.length > 0) {
       needsReview.add("architecture");
     }
 
@@ -877,4 +888,47 @@ function renderPrd(
       `This is publication ${spec.publications.length}.`, "");
   }
   return lines.join("\n");
+}
+
+/**
+ * Requirements named by revisions that have not been published yet.
+ *
+ * A revision's `changes` are derived by Core, not supplied, so the ids in them
+ * are trustworthy (OQ-008).
+ */
+function requirementsTouchedSince(spec: ProductSpecification): string[] {
+  const published = new Set(spec.publications.map((p) => p.revision).filter((r) => r !== null));
+  const touched = new Set<string>();
+  for (const revision of spec.revisions) {
+    if (published.has(revision.id)) continue;
+    for (const change of revision.changes) {
+      for (const match of change.matchAll(/\bREQ-\d{3,}\b/g)) touched.add(match[0]);
+    }
+  }
+  return [...touched].sort();
+}
+
+/** Flag the locked decisions governing any of `moved`; clear none. */
+function flagDecisions(root: string, moved: string[], now: string): string[] {
+  if (moved.length === 0) return [];
+  const file = join(brainDir(root), DECISIONS_FILE);
+  if (!existsSync(file)) return [];
+
+  const registry = readYaml(file, RegistrySchema);
+  const flagged: string[] = [];
+  const decisions = registry.decisions.map((d) => {
+    if (d.status !== "LOCKED") return d;
+    const overlap = d.affects_requirements.filter((id) => moved.includes(id));
+    if (overlap.length === 0) return d;
+    flagged.push(d.id);
+    return {
+      ...d,
+      needs_review: true,
+      review_reason: `${overlap.join(", ")} changed after this was agreed.`,
+      updated_at: now,
+    };
+  });
+
+  if (flagged.length > 0) writeYaml(file, RegistrySchema.parse({ ...registry, decisions }));
+  return flagged.sort();
 }

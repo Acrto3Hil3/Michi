@@ -78,15 +78,15 @@ Do not report work as done without running it (P3).
 
 ## Current state (2026-09-28)
 
-Phase 0 complete and internally consistent. **Phases 1 to 4 complete**:
+Phase 0 complete and internally consistent. **Phases 1 to 5 complete**:
 `michi init`, `scan`, `status`, `discover` (start/status/answer/export/close),
 `decide` (list/show/propose/confirm/reject/supersede), `plan`
-(status/update/export/close), and the `architecture` (status/export/close), and the `senior-engineer`,
-`product-planner` and `architecture` skills. 354 tests, TypeScript build clean.
-Nothing published.
+(status/update/export/close), and the `architecture` (status/export/close), `context`, `graph`, and the
+`senior-engineer`, `product-planner` and `architecture` skills. 424 tests,
+TypeScript build clean. Nothing published.
 
-Still deliberately absent: the graph engine, the context engine, the other four
-skills, agent adapters and the verification executor. Those are Phases 5–8;
+Still deliberately absent: the task DAG, the prompt compiler, the other four
+skills, agent adapters and the verification executor. Those are Phases 6–8;
 building their abstractions now would be the premature scaffolding the product
 exists to prevent (P4).
 
@@ -112,6 +112,10 @@ behaviour. See
   tagged `produced_by: MICHI` or `produced_by: AGENT` and the two are never
   merged. Executor lands in Phase 7.
 
+- **OQ-009** a specification revision flags the individual locked decisions
+  governing the requirements it moved (`needs_review`, `review_reason`), never
+  unlocking them. `architecture close` clears the flags. Context packets show a
+  flagged decision rather than hiding it or treating it as valid.
 - **OQ-008** a published specification may be changed, but only through a
   revision (`REV-*`) recording what, why, who and when. Core derives *what*
   changed and refuses a revision that changed nothing. Product artifacts are
@@ -131,9 +135,17 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-Next: **Phase 5** — the context engine: the project graph, context selection
-and ranking, packets and hashing. That is the phase `CONTEXT_MODEL.md` has been
-waiting for, and the one that makes OQ-009 answerable.
+Next: **Phase 6** — the task DAG and the prompt compiler: turning a context
+packet into the precise instruction an agent acts on. That is the step the
+whole product exists for.
+
+Phase 5's shape, before extending it: **the graph is derived, never stored.**
+It is rebuilt from `requirements.yaml`, `specification.yaml`,
+`decisions/index.yaml` and the project map on every call, and
+`graph/nodes.json` stays unwritten until structural parsing makes building it
+expensive. Resolving context writes nothing at all — no packet file, no
+counter, no timestamp in the hash — so the same state and request always give
+the same packet. Do not add a cache.
 
 Phase 4's shape is worth knowing before extending it: **architecture adds no
 state file.** Architecture *is* the locked decisions, and `michi decide`
@@ -159,6 +171,10 @@ Two rules that Phase 2 established and that everything after it depends on:
   no approval, no rationale or no ADR. Do not add a bypass.
 - **A locked decision is superseded, never edited.** `decide confirm` on a
   locked decision exits 7 and points at `decide supersede`.
+- **Relevance is a graph relationship, not a similarity score.** There are
+  no embeddings and no model in the context engine — nothing to tune. Every
+  inclusion in a packet carries a reason a person can check, because when an
+  agent does something strange the packet is the first place to look.
 - **A gate Core can enforce beats an agenda an agent declares.** The
   architecture gate is "every first-version requirement is governed by a locked
   decision", not "the skill says it is done". Prefer the checkable version

@@ -50,6 +50,13 @@ export const DecisionSchema = z
     supersedes: z.string().regex(/^D\d{3,}$/).nullable(),
     superseded_by: z.string().regex(/^D\d{3,}$/).nullable(),
     rejected_reason: z.string().min(1).nullable().default(null),
+    /**
+     * OQ-009: set when a specification revision moved a requirement this
+     * decision governs. The decision is NOT unlocked — it is flagged, so the
+     * review list is short enough to actually be read.
+     */
+    needs_review: z.boolean().default(false),
+    review_reason: z.string().min(1).nullable().default(null),
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
   })

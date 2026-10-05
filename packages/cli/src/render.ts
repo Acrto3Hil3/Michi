@@ -10,6 +10,7 @@ import type {
   StartData, AnswerData, CloseData, DiscoverStatusData, Decision,
   PlanStatusData, PlanUpdateData, PlanCloseData,
   ArchitectureStatusData, ArchitectureCloseData,
+  ContextPacket, ProjectGraph,
 } from "@michi/core";
 import { cmd } from "@michi/core";
 
@@ -425,4 +426,124 @@ export function renderArchitectureClose(data: ArchitectureCloseData): string[] {
     "",
     `The project has moved to ${data.stage}.`,
   ];
+}
+
+
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
+
+const thousands = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+
+export function renderContext(data: ContextPacket, explain = false): string[] {
+  const lines = [
+    `CONTEXT FOR ${data.focus.id} — ${data.packet_id}`,
+    "",
+    bullet(`Estimated context size  ~${thousands(data.estimated_tokens)} tokens`),
+    bullet(`Estimation method       ${data.estimation_method}`),
+  ];
+  if (data.budget_tokens !== null) {
+    lines.push(bullet(`Budget                  ~${thousands(data.budget_tokens)} tokens`));
+  }
+
+  const groups: [ContextPacket["items"][number]["tier"], string][] = [
+    ["MUST_INCLUDE", "Cannot be done without"],
+    ["PREFERRED", "Materially helps"],
+    ["OPTIONAL", "Useful if there is room"],
+  ];
+  for (const [tier, heading] of groups) {
+    const items = data.items.filter((i) => i.tier === tier);
+    if (items.length === 0) continue;
+    lines.push("", `${heading}:`);
+    for (const item of items) {
+      lines.push(bullet(`${item.id.padEnd(10)} ${item.reason}`));
+      if (item.needs_review) {
+        lines.push(`      ⚠ needs review: ${item.review_reason ?? "the specification changed"}`);
+      }
+    }
+  }
+
+  if (data.revisions.length > 0) {
+    lines.push("", "Changes that moved this:");
+    for (const r of data.revisions) lines.push(bullet(`${r.id}  ${r.reason}`));
+  }
+
+  if (data.dropped_for_budget.length > 0) {
+    lines.push("", `Dropped to fit the budget: ${data.dropped_for_budget.join(", ")}`);
+  }
+
+  if (explain && data.excluded.length > 0) {
+    lines.push("", "Left out:");
+    for (const x of data.excluded) lines.push(bullet(`${x.id.padEnd(10)} ${x.reason}`));
+  } else if (data.excluded.length > 0) {
+    lines.push("", `${data.excluded.length} item(s) left out — pass --explain to see why.`);
+  }
+
+  if (data.warnings.length > 0) {
+    lines.push("", "Warnings:");
+    for (const w of data.warnings) lines.push(bullet(w));
+  }
+
+  lines.push("", `Content hash: ${data.context_hash}`);
+  return lines;
+}
+
+// ---------------------------------------------------------------------------
+// Graph
+// ---------------------------------------------------------------------------
+
+const EDGE_WORDS: Record<string, string> = {
+  GOVERNS: "governs", VERIFIES: "verifies", SERVES: "serves",
+  PERFORMED_BY: "performed by", SUPERSEDES: "supersedes",
+};
+
+export function renderGraph(graph: ProjectGraph, focus?: string): string[] {
+  const nodes = focus
+    ? graph.nodes.filter((n) =>
+        n.id === focus || graph.edges.some((e) =>
+          (e.from === focus && e.to === n.id) || (e.to === focus && e.from === n.id)))
+    : graph.nodes;
+
+  const lines = [focus ? `GRAPH AROUND ${focus}` : "PROJECT GRAPH", ""];
+  for (const n of nodes) {
+    lines.push(bullet(`${n.id.padEnd(12)} ${n.type.padEnd(11)} ${n.label}`));
+    for (const e of graph.edges.filter((x) => x.from === n.id)) {
+      lines.push(`      ${EDGE_WORDS[e.type] ?? e.type} → ${e.to}`);
+    }
+  }
+  lines.push("", `${nodes.length} node(s), ${graph.edges.length} relationship(s)`);
+  if (graph.dropped.length > 0) {
+    lines.push("", "References that point at nothing:");
+    for (const d of graph.dropped) lines.push(bullet(`${d.from} → ${d.to}: ${d.reason}`));
+  }
+  return lines;
+}
+
+export function renderGraphMermaid(graph: ProjectGraph): string[] {
+  const lines = ["flowchart LR"];
+  for (const n of graph.nodes) {
+    lines.push(`  ${n.id.replace(/[^A-Za-z0-9_]/g, "_")}["${n.id}: ${n.label.replace(/"/g, "'")}"]`);
+  }
+  for (const e of graph.edges) {
+    const a = e.from.replace(/[^A-Za-z0-9_]/g, "_");
+    const b = e.to.replace(/[^A-Za-z0-9_]/g, "_");
+    lines.push(`  ${a} -->|${EDGE_WORDS[e.type] ?? e.type}| ${b}`);
+  }
+  return lines;
+}
+
+export function renderOrphans(data: { ungoverned: string[]; uncovered: string[] }): string[] {
+  const lines = ["HYGIENE", ""];
+  lines.push(data.ungoverned.length === 0
+    ? "Every requirement has a decided approach."
+    : "Requirements with no decided approach:");
+  for (const id of data.ungoverned) lines.push(bullet(id));
+  lines.push("", data.uncovered.length === 0
+    ? "Every requirement has a way to check it."
+    : "Requirements with no acceptance criterion:");
+  for (const id of data.uncovered) lines.push(bullet(id));
+  if (data.ungoverned.length + data.uncovered.length > 0) {
+    lines.push("", "A young project is legitimately full of these. They are warnings, not errors.");
+  }
+  return lines;
 }

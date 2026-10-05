@@ -429,10 +429,15 @@ cheapest shape it could have taken.
 ### `michi graph`
 
 ```bash
-michi graph [<node-id>] [--format text|mermaid|json] [--depth <n>]
+michi graph [<node>] [--format text|mermaid|json]
 michi graph orphans
 michi graph coverage
 ```
+
+The graph is derived from canonical state on every call and never written —
+see `GRAPH_MODEL.md`. `--depth` is not implemented: a focused view is the node
+and what directly touches it, which is what "what touches this?" means, and
+deeper traversal is what `michi context` exists for.
 
 Read-only. `orphans` lists requirements with no implementation and code with no
 requirement; `coverage` lists acceptance criteria with no test. Both are
@@ -441,8 +446,13 @@ warnings — a young project is legitimately full of them.
 ### `michi context`
 
 ```bash
-michi context <task-id> [--json] [--budget <tokens>] [--explain]
+michi context <focus> [--json] [--budget <tokens>] [--explain]
+                      [--include <ids>] [--exclude <ids>]
 ```
+
+`<focus>` is a requirement id (`REQ-003`). It becomes a task id once tasks
+exist; `CONTEXT_MODEL.md` describes the task focus and Phase 5 implements the
+requirement one.
 
 Resolves and prints the context packet: what is included, at which tier, and —
 importantly — what was excluded and why (§63). `--explain` adds the ranking
@@ -460,8 +470,21 @@ PREFERRED      4 items
 EXCLUDED       3 items + 12 more over budget
 ```
 
-Sizes are always reported as estimates with the method named (OQ-005). Fails
-with `TASK_TOO_LARGE` rather than truncating mandatory context.
+Sizes are always reported as estimates with the method named (OQ-005).
+
+`--explain` lists everything left out and why; without it the count is shown
+and the detail is one flag away. `--include` pulls in something the graph would
+not reach, `--exclude` withholds something it would, and both are recorded in
+the packet rather than applied silently.
+
+When the required context alone exceeds the budget the command **fails** rather
+than truncating — exit `5`, because the fix is a human decision: raise the
+budget or split the work. Anything dropped to fit a budget is listed; the
+reduction is never silent.
+
+Read-only: resolving context writes nothing, allocates no id, and puts no
+timestamp in the hash. The same state and the same request give the same
+packet, down to its `packet_id`.
 
 ### `michi task`
 

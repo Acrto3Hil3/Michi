@@ -145,8 +145,8 @@ describe("michi architecture — cli", () => {
     const b = await ok(["architecture", "export", "--json"], root);
     expect(a.out).toBe(b.out);
     expect(Object.keys(json(a).data).sort()).toEqual([
-      "decided", "governing", "locked_decisions", "needs_review", "next_step",
-      "open_decisions", "status", "undecided",
+      "decided", "decisions_needing_review", "governing", "locked_decisions",
+      "needs_review", "next_step", "open_decisions", "status", "undecided",
     ]);
   });
 

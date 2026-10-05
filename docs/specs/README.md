@@ -287,53 +287,49 @@ will need raising when Phase 4 produces the first real downstream artifact.
 
 ---
 
-## Open
+### OQ-009 — Stale downstream artifacts · **LOCKED: per-decision review flags**
 
-### OQ-009 — How is a stale downstream artifact invalidated? · **open, blocks nothing in Phase 5 yet**
+*Raised in Phase 4; decided by the owner 2026-10-06.*
 
-**Deferred from OQ-008; raised now because Phase 4 has produced the first real
-downstream artifact.** Not decided.
+**A correction to the record first:** the Phase 5 brief described OQ-009 as
+"locked and implemented". It was neither. The repository had it open with a
+recommendation, and only the coarse project-level `needs_review` existed. The
+decision was named in that brief — per-decision `NEEDS_REVIEW` — and is
+implemented now, in Phase 5.
 
-A republished specification marks the architecture `needs_review` — the minimal
-marker OQ-008 asked for, and it works. What it says is *"the architecture as a
-whole may no longer fit"*. What it cannot say is **which decision broke**.
+A locked decision gains two fields:
 
-```text
-specification revised
-        ↓
-needs_review: [architecture]        ← what exists today
-        ↓
-??? which of D001..D009 is now wrong?
-??? what happens to a task that was generated from one of them?
+```yaml
+- id: D002
+  status: LOCKED              # unchanged — nothing is unlocked
+  needs_review: true
+  review_reason: REQ-003 changed after this was agreed.
 ```
 
-Today the skill re-reads every locked decision and judges. That is tolerable at
-one decision and useless at thirty — and in Phase 6 a task will have been
-generated from a decision, so the question stops being cosmetic.
+`plan close` sets them on exactly the decisions whose `affects_requirements`
+intersect the requirements a revision moved. Core computes that intersection
+from state that is already canonical: a revision's `changes` are derived by
+Core (OQ-008), and each decision names what it governs. Nothing is guessed.
 
-**A — Keep the coarse marker.** One flag per artifact kind. The skill reviews
-everything. Cheapest, and the review becomes performative once there are enough
-decisions to skim.
+`architecture close` clears the flags — agreeing the architecture again *is*
+the act of having reviewed it.
 
-**B — Per-decision review flags.** A decision whose `affects_requirements`
-intersect what changed is marked `needs_review`; the rest are untouched. Core
-can compute this: it already knows which requirements moved in a revision's
-`changes`, and which decisions name them. Narrow, mechanical, and it makes the
-review list short enough to actually be read.
+**Why this over the coarse marker.** "Review the architecture" is a review that
+happens at two decisions and does not happen at thirty. "Review D002" is a
+review that happens. The project-level `needs_review: [architecture]` stays as
+the summary, now set only when at least one decision is actually flagged.
 
-**C — A dependency graph.** `GRAPH_MODEL.md` already specifies the edges
-(`GOVERNS`, `CONSTRAINS`, `IMPLEMENTS`), and Phase 5 builds the graph engine.
-Invalidation becomes a traversal. Most capable, and it ties this question to a
-phase that has not been built.
+**What is still not built.** Only *decisions* are flagged. When Phase 6
+generates a task from a decision, the task will need the same treatment, and
+the full dependency traversal that `GRAPH_MODEL.md` describes becomes the
+natural mechanism — the graph exists now. That is a Phase 6 question, not a new
+one here.
 
-**Recommendation: B**, with C arriving naturally once Phase 5 exists. B is
-computable from state that is already canonical, needs no new infrastructure,
-and turns "review the architecture" into "review these two decisions" — which
-is the difference between a review happening and not.
+---
 
-**Current behaviour is A**, named here rather than left to be found. It satisfies
-the OQ-008 rule and blocks nothing in Phase 5's early work. It becomes urgent
-when tasks exist that were built on a decision that has since moved.
+---
+
+## Open
 
 ### OQ-002 — npm package and binary names · **open, does not block Phase 1**
 
@@ -640,3 +636,53 @@ most.
   rather than a deletion.
 - `PRD.md` stays generated and never hand-edited.
 - Core stays deterministic: no LLM, no database, no network, no service.
+
+---
+
+## Appendix — the OQ-009 options
+
+### The options as they stood before OQ-009 was answered
+
+**Deferred from OQ-008; raised now because Phase 4 has produced the first real
+downstream artifact.** Not decided.
+
+A republished specification marks the architecture `needs_review` — the minimal
+marker OQ-008 asked for, and it works. What it says is *"the architecture as a
+whole may no longer fit"*. What it cannot say is **which decision broke**.
+
+```text
+specification revised
+        ↓
+needs_review: [architecture]        ← what exists today
+        ↓
+??? which of D001..D009 is now wrong?
+??? what happens to a task that was generated from one of them?
+```
+
+Today the skill re-reads every locked decision and judges. That is tolerable at
+one decision and useless at thirty — and in Phase 6 a task will have been
+generated from a decision, so the question stops being cosmetic.
+
+**A — Keep the coarse marker.** One flag per artifact kind. The skill reviews
+everything. Cheapest, and the review becomes performative once there are enough
+decisions to skim.
+
+**B — Per-decision review flags.** A decision whose `affects_requirements`
+intersect what changed is marked `needs_review`; the rest are untouched. Core
+can compute this: it already knows which requirements moved in a revision's
+`changes`, and which decisions name them. Narrow, mechanical, and it makes the
+review list short enough to actually be read.
+
+**C — A dependency graph.** `GRAPH_MODEL.md` already specifies the edges
+(`GOVERNS`, `CONSTRAINS`, `IMPLEMENTS`), and Phase 5 builds the graph engine.
+Invalidation becomes a traversal. Most capable, and it ties this question to a
+phase that has not been built.
+
+**Recommendation: B**, with C arriving naturally once Phase 5 exists. B is
+computable from state that is already canonical, needs no new infrastructure,
+and turns "review the architecture" into "review these two decisions" — which
+is the difference between a review happening and not.
+
+**Current behaviour is A**, named here rather than left to be found. It satisfies
+the OQ-008 rule and blocks nothing in Phase 5's early work. It becomes urgent
+when tasks exist that were built on a decision that has since moved.
