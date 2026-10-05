@@ -33,7 +33,7 @@ async function commandExists(parts: string[]): Promise<boolean> {
   return code === 0;
 }
 
-const SKILLS = ["senior-engineer", "product-planner"] as const;
+const SKILLS = ["senior-engineer", "product-planner", "architecture"] as const;
 
 describe.each(SKILLS)("%s skill", (name) => {
   const text = () => readFileSync(skillPath(name), "utf8");
@@ -118,5 +118,44 @@ describe("product-planner specifics", () => {
 
   it("points at discovery's requirements rather than inventing its own", () => {
     expect(text()).toMatch(/REQ-/);
+  });
+});
+
+describe("architecture specifics", () => {
+  const text = () => readFileSync(skillPath("architecture"), "utf8");
+
+  it("insists architecture is proportional to the problem", () => {
+    expect(text().toLowerCase()).toMatch(/proportional|smallest thing that|not.*distributed/);
+  });
+
+  it("tells the agent to preserve what an existing project already uses", () => {
+    const body = text().toLowerCase();
+    expect(body).toMatch(/michi scan|already (uses|there)|existing project/);
+    expect(body).toMatch(/preserve|keep it/);
+  });
+
+  it("requires options with honest trade-offs and one recommendation", () => {
+    const body = text().toLowerCase();
+    expect(body).toMatch(/trade.?off/);
+    expect(body).toMatch(/recommend/);
+  });
+
+  it("routes decisions through michi decide rather than inventing a store", () => {
+    expect(text()).toMatch(/michi decide propose/);
+    expect(text()).toMatch(/michi decide confirm/);
+  });
+
+  it("ties each decision to the requirements it is for", () => {
+    expect(text()).toMatch(/affects_requirements/);
+    expect(text()).toMatch(/REQ-/);
+  });
+
+  it("says plainly that a locked decision is superseded, never edited", () => {
+    expect(text()).toMatch(/supersede/);
+  });
+
+  it("does not claim to write COMPONENTS.md or DATA.md", () => {
+    expect(text()).not.toMatch(/COMPONENTS\.md/);
+    expect(text()).not.toMatch(/DATA\.md/);
   });
 });

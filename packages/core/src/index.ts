@@ -75,3 +75,10 @@ export type {
   PlanOptions, PlanUpdateOptions, PlanStatusData, PlanUpdateData, PlanCloseData,
   PlanGaps, PlanUpdateDocument,
 } from "./commands/plan.js";
+
+export {
+  architectureStatus, architectureExport, architectureClose,
+} from "./commands/architecture.js";
+export type {
+  ArchitectureOptions, ArchitectureStatusData, ArchitectureCloseData,
+} from "./commands/architecture.js";

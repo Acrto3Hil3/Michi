@@ -6,6 +6,8 @@ import type { Result } from "../result.js";
 import { ok } from "../result.js";
 import { STATE_FILE, brainDir, readYaml, writeText, writeYaml } from "../fs/brain.js";
 import { StateSchema } from "../schemas/state.js";
+import { RequirementsRegistrySchema, isActive } from "../schemas/discovery.js";
+import { openSession } from "./discover.js";
 import {
   DecisionSchema, RegistrySchema, adrFileName, findDecision, newRegistry,
   nextAdrId, nextDecisionId,
@@ -148,6 +150,36 @@ export function decidePropose(options: ProposeOptions): Result<{ decision: Decis
     const { root, now, file } = options;
     requireInitialized(root);
     const proposal = readJsonFile(file, ProposalSchema, "proposal");
+
+    // A decision claiming to govern a requirement that does not exist breaks
+    // the traceability the architecture gate depends on.
+    //
+    // A decision may legitimately be proposed mid-discovery — the user agrees
+    // a requirement and the technical choice it forces in the same
+    // conversation — so a requirement confirmed in the open session counts,
+    // even though it has not been merged into the registry yet.
+    if (proposal.affects_requirements.length > 0) {
+      const registryFile = join(brainDir(root), "requirements", "requirements.yaml");
+      const known = new Set(
+        existsSync(registryFile)
+          ? readYaml(registryFile, RequirementsRegistrySchema).requirements.filter(isActive).map((r) => r.id)
+          : [],
+      );
+      for (const r of openSession(root)?.requirements ?? []) {
+        if (r.status === "CONFIRMED") known.add(r.id);
+      }
+      const unknown = proposal.affects_requirements.filter((id) => !known.has(id));
+      if (unknown.length > 0) {
+        throw new MichiError({
+          class: "UNKNOWN", code: "NOT_FOUND",
+          message:
+            `This decision says it is for ${unknown.join(", ")}, which ${unknown.length === 1 ? "is not a requirement" : "are not requirements"} in force on this project.`,
+          detail: { unknown, active: [...known].sort() },
+          next: "Name a requirement the user has confirmed, or leave the list empty.",
+        });
+      }
+    }
+
     const registry = loadRegistry(root);
     const timestamp = now();
 

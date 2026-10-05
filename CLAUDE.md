@@ -78,14 +78,15 @@ Do not report work as done without running it (P3).
 
 ## Current state (2026-09-28)
 
-Phase 0 complete and internally consistent. **Phases 1, 2 and 3 complete**:
+Phase 0 complete and internally consistent. **Phases 1 to 4 complete**:
 `michi init`, `scan`, `status`, `discover` (start/status/answer/export/close),
 `decide` (list/show/propose/confirm/reject/supersede), `plan`
-(status/update/export/close), and the `senior-engineer` and `product-planner`
-skills. 308 tests, TypeScript build clean. Nothing published.
+(status/update/export/close), and the `architecture` (status/export/close), and the `senior-engineer`,
+`product-planner` and `architecture` skills. 354 tests, TypeScript build clean.
+Nothing published.
 
-Still deliberately absent: the graph engine, the context engine, the other five
-skills, agent adapters and the verification executor. Those are Phases 4–8;
+Still deliberately absent: the graph engine, the context engine, the other four
+skills, agent adapters and the verification executor. Those are Phases 5–8;
 building their abstractions now would be the premature scaffolding the product
 exists to prevent (P4).
 
@@ -130,11 +131,16 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-Next: **Phase 4** — the `architecture` skill: options, tradeoffs, ADRs, and the
-`TRD.md` that Phase 3 deliberately did not write. Phase 4 produces the first
-real downstream artifact, which is when the deferred question needs raising:
-how downstream artifacts are invalidated when scope changes. `needs_review`
-currently marks only the specification. It builds on the MVP scope
+Next: **Phase 5** — the context engine: the project graph, context selection
+and ranking, packets and hashing. That is the phase `CONTEXT_MODEL.md` has been
+waiting for, and the one that makes OQ-009 answerable.
+
+Phase 4's shape is worth knowing before extending it: **architecture adds no
+state file.** Architecture *is* the locked decisions, and `michi decide`
+already records those. `michi architecture` reads across requirements,
+specification and the decision registry and answers one question — does
+everything in the first version have a decided approach? Do not add an
+`architecture.yaml`. It builds on the MVP scope
 the specification now fixes.
 
 Three Phase 3 rules that later phases depend on:
@@ -153,6 +159,10 @@ Two rules that Phase 2 established and that everything after it depends on:
   no approval, no rationale or no ADR. Do not add a bypass.
 - **A locked decision is superseded, never edited.** `decide confirm` on a
   locked decision exits 7 and points at `decide supersede`.
+- **A gate Core can enforce beats an agenda an agent declares.** The
+  architecture gate is "every first-version requirement is governed by a locked
+  decision", not "the skill says it is done". Prefer the checkable version
+  every time.
 - **Nothing important disappears, and nothing important changes silently.**
   Requirements supersede, specifications revise, decisions supersede, product
   artifacts are tombstoned. There is no delete anywhere, and every change names

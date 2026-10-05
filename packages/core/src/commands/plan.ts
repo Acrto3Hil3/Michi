@@ -710,13 +710,23 @@ export function planClose(options: PlanOptions): Result<PlanCloseData> {
 
     const statePath = join(brain, STATE_FILE);
     const state = readYaml(statePath, StateSchema);
+
+    // The specification is now validated against the current requirements.
+    // But a locked architecture was agreed against the *previous* one, so it
+    // is no longer known to hold (OQ-008). It is flagged, never unlocked and
+    // never deleted — the decisions stand until someone looks at them again.
+    const needsReview = new Set(state.needs_review);
+    needsReview.delete("specification");
+    if (state.architecture_status === "LOCKED" && spec.publications.length > 0) {
+      needsReview.add("architecture");
+    }
+
     writeYaml(statePath, {
       ...state,
       stage: "ARCHITECTURE",
       stage_entered_at: timestamp,
       stage_reason: "The product specification was published.",
-      // The specification is now validated against the current requirements.
-      needs_review: state.needs_review.filter((a) => a !== "specification"),
+      needs_review: [...needsReview].sort(),
       updated_at: timestamp,
     });
 

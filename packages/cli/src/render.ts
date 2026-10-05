@@ -9,6 +9,7 @@ import type {
   InitData, ScanData, StatusData, Detection,
   StartData, AnswerData, CloseData, DiscoverStatusData, Decision,
   PlanStatusData, PlanUpdateData, PlanCloseData,
+  ArchitectureStatusData, ArchitectureCloseData,
 } from "@michi/core";
 import { cmd } from "@michi/core";
 
@@ -369,4 +370,59 @@ export function renderPlanClose(data: PlanCloseData): string[] {
     `The project has moved to ${data.stage}.`,
   ];
   return lines;
+}
+
+
+// ---------------------------------------------------------------------------
+// Architecture
+// ---------------------------------------------------------------------------
+
+export function renderArchitectureStatus(data: ArchitectureStatusData): string[] {
+  const lines = [`HOW THIS GETS BUILT — ${data.status}`, ""];
+
+  if (data.needs_review) {
+    lines.push(
+      "What the project is building changed after these decisions were agreed.",
+      "Nothing was unlocked — they just need looking at again.",
+      "",
+    );
+  }
+
+  if (data.locked_decisions.length === 0) {
+    lines.push("Nothing has been decided yet.");
+  } else {
+    lines.push("Decided:");
+    for (const d of data.locked_decisions) {
+      lines.push(bullet(`${d.id}  ${d.title.padEnd(38)} ${d.choice}`));
+    }
+  }
+
+  if (data.open_decisions.length > 0) {
+    lines.push("", "Waiting on you:");
+    for (const id of data.open_decisions) lines.push(bullet(`${id} — run: ${cmd(`decide show ${id}`)}`));
+  }
+
+  if (data.undecided.length > 0) {
+    lines.push("", "In the first version, with no decided approach yet:");
+    for (const id of data.undecided) lines.push(bullet(id));
+  } else if (data.decided.length > 0) {
+    lines.push("", `Everything in the first version has a decided approach (${data.decided.length}).`);
+  }
+
+  lines.push("", "Next:", bullet(data.next_step));
+  return lines;
+}
+
+export function renderArchitectureClose(data: ArchitectureCloseData): string[] {
+  return [
+    "How this gets built is now agreed.",
+    "",
+    bullet(`Decisions in force: ${data.locked_decisions}`),
+    bullet(`First-version requirements covered: ${data.decided.length}`),
+    "",
+    "Written:",
+    ...data.artifacts.map((f) => bullet(f)),
+    "",
+    `The project has moved to ${data.stage}.`,
+  ];
 }

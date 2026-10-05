@@ -4,6 +4,7 @@ import {
   discoverStart, discoverStatus, discoverAnswer, discoverExport, discoverClose,
   decideList, decideShow, decidePropose, decideConfirm, decideReject, decideSupersede,
   planStatus, planUpdate, planExport, planClose,
+  architectureStatus, architectureExport, architectureClose,
 } from "@michi/core";
 import type { Result } from "@michi/core";
 import {
@@ -11,6 +12,7 @@ import {
   renderDiscoverStart, renderDiscoverAnswer, renderDiscoverStatus, renderDiscoverClose,
   renderDecideList, renderDecision, renderDecideShow, renderSupersede,
   renderPlanStatus, renderPlanUpdate, renderPlanClose,
+  renderArchitectureStatus, renderArchitectureClose,
 } from "./render.js";
 
 export interface Io {
@@ -197,6 +199,37 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .description("write the PRD and move on to architecture")
     .action(() => {
       code = emit(planClose({ root: root(), now }), opts(), io, renderPlanClose);
+    });
+
+  // -------------------------------------------------------------------------
+  // architecture — a gate over the decisions, not a second decision system
+  // -------------------------------------------------------------------------
+  const architecture = program
+    .command("architecture")
+    .description("check that everything being built first has a decided approach")
+    .action(() => {
+      code = emit(architectureStatus({ root: root(), now }), opts(), io, renderArchitectureStatus);
+    });
+
+  architecture
+    .command("status")
+    .description("what is decided, what is waiting on the user, what has no approach yet")
+    .action(() => {
+      code = emit(architectureStatus({ root: root(), now }), opts(), io, renderArchitectureStatus);
+    });
+
+  architecture
+    .command("export")
+    .description("emit the architecture position; writes nothing")
+    .action(() => {
+      code = emit(architectureExport({ root: root(), now }), opts(), io, renderArchitectureStatus);
+    });
+
+  architecture
+    .command("close")
+    .description("write up how this gets built and move on to design")
+    .action(() => {
+      code = emit(architectureClose({ root: root(), now }), opts(), io, renderArchitectureClose);
     });
 
   // -------------------------------------------------------------------------

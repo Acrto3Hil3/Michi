@@ -220,9 +220,28 @@ and the user approves.
 default. A repository using MongoDB and JWT gets "here is what I found — keep it
 or reconsider it?", never "I prefer PostgreSQL, so let's migrate."
 
+**It records nothing of its own.** Decisions go through `michi decide`, which
+already proposes options, records the user's choice and writes the ADR. There is
+no architecture store and no second decision system.
+
+**Each decision must name the requirements it is for** in
+`affects_requirements`. That is not bookkeeping: it is the edge
+`michi architecture close` checks, and it is how MICHI can tell that nothing in
+the first version was left with no decided approach.
+
 **Output.** Options with honest tradeoffs, one recommendation with a reason,
-and — after approval — ADRs via `michi decide`, plus `SYSTEM.md`,
-`COMPONENTS.md`, `DATA.md`.
+ADRs via `michi decide`, and — after `architecture close` — the generated
+`SYSTEM.md` and `TRD.md`.
+
+**Not `COMPONENTS.md` or `DATA.md`.** Component boundaries and the detailed data
+model are `DESIGN`, the stage after architecture. An earlier version of this
+contract listed them here and was wrong.
+
+**Proportional means asking what breaks.** Before proposing anything, ask what
+breaks if the simpler option is chosen. If the honest answer at this size is
+"nothing", propose the simpler option. A component with one caller, a queue
+with no measured load, or an abstraction over a provider nobody has switched is
+the failure this skill exists to prevent.
 
 ---
 

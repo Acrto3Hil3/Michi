@@ -276,8 +276,8 @@ Per §133 and §134 — a working vertical slice beats twenty disconnected comma
 Phase 0   these specifications                                      done
 Phase 1   michi init · scan · status        filesystem foundation     done
 Phase 2   senior-engineer skill             discovery, decisions      done
-Phase 3   product-planner skill             personas, scope, PRD      done  ← we are here
-Phase 4   architecture skill                options, tradeoffs, ADRs, TRD
+Phase 3   product-planner skill             personas, scope, PRD      done
+Phase 4   architecture skill                decisions, SYSTEM, TRD    done  ← we are here
 Phase 5   context engine                    graph, selection, ranking, packets, hashing
 Phase 6   implementer                       task DAG, prompt compiler, handoff
 Phase 7   reviewer · tester · debugger      verification

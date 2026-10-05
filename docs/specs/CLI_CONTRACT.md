@@ -398,6 +398,34 @@ enforced by the schema, not by convention.
 `impact` runs the blast-radius analysis from `DECISION_MODEL.md` before a change
 is made, and renders it as consequences rather than node ids.
 
+### `michi architecture`
+
+```bash
+michi architecture                 same as `architecture status`
+michi architecture status [--json]
+michi architecture export [--json]
+michi architecture close
+```
+
+| | |
+|---|---|
+| `status` | what has a decided approach, what is waiting on the user, what has none |
+| `export` | the same, read-only, for an agent |
+| `close` | writes `SYSTEM.md` and `TRD.md`, and advances `ARCHITECTURE → DESIGN` |
+
+There is no `architecture update` and no `architecture.yaml`. Architecture *is*
+the locked decisions, and `michi decide` already records those. This command
+reads across the requirements, the specification and the decision registry and
+answers one question: **does everything in the first version have a decided
+approach?** See `STATE_MODEL.md`.
+
+This is a fifteenth command on a surface that was described above as already
+generous, so the justification should be explicit. The alternative was a third
+subcommand group under `plan`, which already carries product planning and the
+task DAG; architecture is neither. The work is real, the question it answers is
+distinct, and it adds no state. A command that only reads and gates is the
+cheapest shape it could have taken.
+
 ### `michi graph`
 
 ```bash

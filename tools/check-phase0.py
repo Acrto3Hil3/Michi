@@ -291,6 +291,41 @@ check("OQ-008  corrects the Phase 3 report rather than leaving it standing",
 check("phase3  the product-planner skill exists",
       (ROOT / "packages" / "skills" / "product-planner" / "SKILL.md").is_file())
 
+# --- Phase 4 contracts ----------------------------------------------------
+sk = spec("SKILL_CONTRACT.md")
+check("phase4  the architecture gate is documented, and why that gate",
+      "## Architecture" in sm
+      and "The gate Core can actually enforce" in sm
+      and "must be governed by at least one" in sm)
+check("phase4  the gate is chosen over a skill-declared agenda, with the reason",
+      "unverifiable" in sm and "self-reported-completeness" in sm)
+check("phase4  architecture adds no state file",
+      "no decision mechanics and no\nnew state file" in sm.replace("\r", "")
+      and "there is no `architecture.yaml`" in sm
+      and not (ROOT / "packages" / "core" / "src" / "schemas" / "architecture.ts").exists())
+check("phase4  decisions must name requirements that exist",
+      "### Decisions must name requirements that exist" in sm
+      and "open discovery session" in sm)
+check("phase4  architecture goes stale rather than being unlocked",
+      "it does not get unlocked" in sm
+      and "Nothing is unlocked and nothing is deleted" in sm)
+check("phase4  COMPONENTS.md and DATA.md are deferred to DESIGN",
+      "`COMPONENTS.md` and `DATA.md` are **not** written here" in sm
+      and "Not `COMPONENTS.md` or `DATA.md`" in sk)
+check("phase4  the fifteenth command is justified, not slipped in",
+      "michi architecture status" in cli
+      and "fifteenth command" in cli)
+check("phase4  the architecture skill exists",
+      (ROOT / "packages" / "skills" / "architecture" / "SKILL.md").is_file())
+check("OQ-009  the invalidation question is raised, not hidden",
+      "### OQ-009" in rd
+      and rd.index("## Open") < rd.index("### OQ-009")
+      and "Current behaviour is A" in rd
+      and all(o in rd for o in ["A — Keep the coarse marker", "B — Per-decision review flags",
+                                "C — A dependency graph"]))
+check("phase4  per-decision invalidation is named as not built",
+      "Per-decision invalidation is not built" in sm)
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

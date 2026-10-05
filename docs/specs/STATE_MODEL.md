@@ -478,6 +478,98 @@ was first agreed* so the founder can see what moved and why.
 assembled from locked architectural decisions, and those are Phase 4's output.
 Writing an empty one now would be scaffolding for later.
 
+## Architecture
+
+*Added in Phase 4.*
+
+`MICHI.md` §23 and §44 describe how architecture should be arrived at. The
+machinery for it already existed: `michi decide` proposes options, records the
+user's choice and writes the ADR. Phase 4 adds **no decision mechanics and no
+new state file.**
+
+What it adds is a gate, and the choice of gate is the whole design.
+
+### The gate Core can actually enforce
+
+Core cannot know that a project needs an authentication decision. That is
+reasoning, and it belongs to the skill. A skill-declared agenda of "decisions
+this project needs" would be unverifiable — an agent could declare an empty one
+and lock the architecture instantly, which is the self-reported-completeness
+problem P3 exists to prevent.
+
+So the gate is something better:
+
+> **Every requirement in the first version must be governed by at least one
+> `LOCKED` decision.**
+
+A requirement nobody decided how to build is the hole that matters, and no
+agent can talk its way past it. The edge already exists — a decision's
+`affects_requirements` — so the check is a join across three files that are
+already canonical:
+
+```text
+requirements.yaml     which requirements are in force
+specification.yaml    which of those are MVP
+decisions/index.yaml  which locked decisions govern which
+```
+
+Nothing is stored. `michi architecture status` derives all of it, which is why
+there is no `architecture.yaml`.
+
+A `SUPERSEDED` decision governs nothing; its replacement does. A `PROPOSED`
+decision governs nothing either — it is waiting on the user.
+
+### Decisions must name requirements that exist
+
+`affects_requirements` is validated on proposal. A decision claiming to govern
+a requirement this project has never had would silently satisfy or break the
+gate, so it is refused.
+
+A requirement confirmed in the **open discovery session** counts, even though
+it has not been merged into the registry yet: a user often agrees a requirement
+and the technical choice it forces in the same conversation, and refusing that
+would push the agent into proposing decisions that govern nothing.
+
+### What `architecture close` produces
+
+`close` refuses while:
+
+- the specification itself is in `needs_review` — architecture cannot be agreed
+  on ground that is moving
+- any first-version requirement has no `LOCKED` decision governing it
+- any decision is still `PROPOSED` and waiting on the user
+- nothing has changed since the architecture was last agreed
+
+When a gate fails, nothing is written.
+
+Otherwise it writes `architecture/SYSTEM.md` and `requirements/TRD.md`, sets
+`architecture_status: LOCKED`, clears `architecture` from `needs_review`, and
+advances the project `ARCHITECTURE → DESIGN`.
+
+Both documents are **generated** from the locked decisions and never
+hand-edited. `SYSTEM.md` is what was chosen and why, in plain language, with
+what was not chosen kept alongside it. `TRD.md` is the same decisions grouped
+by category, with the constraints the user actually stated — not invented ones.
+
+`COMPONENTS.md` and `DATA.md` are **not** written here. Component boundaries and
+the detailed data model are `DESIGN`, the stage after this one, and
+`SKILL_CONTRACT.md` was wrong to list them as architecture output.
+
+### Architecture goes stale, it does not get unlocked
+
+A republished specification was agreed *after* the architecture was. The
+decisions are therefore no longer known to hold, so `plan close` adds
+`architecture` to `needs_review` when `architecture_status` is `LOCKED`.
+
+Nothing is unlocked and nothing is deleted (OQ-008). The decisions stand, the
+documents stay, and `architecture status` says plainly that they need looking at
+again. Running `architecture close` after reviewing them clears the flag.
+
+This is still the minimal marker, not a staleness engine: it says "the
+architecture as a whole may no longer fit", not which decision broke.
+Per-decision invalidation is not built, and needs its own question when
+something downstream of architecture exists to be invalidated.
+
 ## Discovery sessions
 
 *Added in Phase 2. `MICHI.md` §59 and §86 describe discovery and the intent
