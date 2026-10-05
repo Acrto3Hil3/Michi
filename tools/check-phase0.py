@@ -369,6 +369,37 @@ check("phase5  resolving context writes nothing",
 check("phase4  per-decision invalidation is named as not built",
       "Per-decision invalidation is not built" in sm)
 
+# --- Phase 6 contracts ----------------------------------------------------
+check("phase6  task planning has two inputs, and says why",
+      "## What Phase 6 built" in sm
+      and "### Who creates tasks" in sm
+      and "is judgement" in sm)
+check("phase6  an authored plan uses positions, not ids",
+      "**positions**, not ids" in sm and "self-contained" in sm)
+check("phase6  readiness is derived from the dependencies",
+      "### Readiness is derived" in sm
+      and "recomputed from the dependencies on every read" in sm)
+check("phase6  plan validate catches unexecutable plans",
+      "### `plan validate`" in sm and "cannot be executed in any order" in sm)
+check("phase6  the compiled instruction is deterministic and not stored",
+      "### The compiled instruction" in sm
+      and "seventeen sections" in sm
+      and "not written to disk" in sm)
+check("phase6  a report is a claim, never verification",
+      "### A report is a claim" in sm
+      and "Nothing in a report moves a task towards `VERIFIED`" in sm)
+check("phase6  stalling beats looping",
+      "Looping is not persistence" in sm)
+check("phase6  names what it did not build, including task split",
+      "### What Phase 6 does not build" in sm
+      and "`michi task split` is in" in sm
+      and "NOT IMPLEMENTED" in cli)
+check("phase6  the implementer skill exists and does not hand-write prompts",
+      (ROOT / "packages" / "skills" / "implementer" / "SKILL.md").is_file()
+      and "It does not hand-write prompts" in sk)
+check("phase6  one task at a time is in the contract",
+      "One task at a time" in sk)
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

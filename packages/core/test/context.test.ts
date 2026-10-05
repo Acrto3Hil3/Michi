@@ -324,13 +324,24 @@ describe("the packet follows the project, not a cache", () => {
 });
 
 describe("the budget", () => {
+  /** The exact cost of the required context, rather than a guessed number. */
+  const requiredCost = (root: string) =>
+    unwrap(ctx(root, { focus: { type: "requirement", id: "REQ-003" } }))
+      .items.filter((i) => i.tier === "MUST_INCLUDE")
+      .reduce((sum, i) => sum + i.estimated_tokens, 0);
+
   it("drops the lowest-priority context first, and says what it dropped", () => {
-    const p = unwrap(ctx(inventory(), {
-      focus: { type: "requirement", id: "REQ-003" }, budget_tokens: 220,
-    }));
-    expect(p.estimated_tokens).toBeLessThanOrEqual(220);
-    expect(p.items.every((i) => i.tier === "MUST_INCLUDE" || i.tier === "PREFERRED")).toBe(true);
+    const root = inventory();
+    const budget = requiredCost(root);
+    const p = unwrap(ctx(root, { focus: { type: "requirement", id: "REQ-003" }, budget_tokens: budget }));
+
+    expect(p.estimated_tokens).toBeLessThanOrEqual(budget);
+    expect(p.items.every((i) => i.tier === "MUST_INCLUDE")).toBe(true);
     expect(p.excluded.some((x) => x.reason === "budget")).toBe(true);
+    // Optional context goes before preferred context does.
+    const full = unwrap(ctx(root, { focus: { type: "requirement", id: "REQ-003" } }));
+    const optional = full.items.filter((i) => i.tier === "OPTIONAL").map((i) => i.id);
+    for (const id of optional) expect(p.dropped_for_budget).toContain(id);
   });
 
   it("keeps everything the target cannot do without, right down to the boundary", () => {
@@ -360,10 +371,13 @@ describe("the budget", () => {
   });
 
   it("makes the reduction visible rather than silent", () => {
-    const p = unwrap(ctx(inventory(), {
-      focus: { type: "requirement", id: "REQ-003" }, budget_tokens: 220,
-    }));
-    expect(p.budget_tokens).toBe(220);
+    const root = inventory();
+    const budget = requiredCost(root);
+    const p = unwrap(ctx(root, { focus: { type: "requirement", id: "REQ-003" }, budget_tokens: budget }));
+    expect(p.budget_tokens).toBe(budget);
     expect(p.dropped_for_budget.length).toBeGreaterThan(0);
+    for (const id of p.dropped_for_budget) {
+      expect(p.excluded.find((x) => x.id === id)?.reason).toBe("budget");
+    }
   });
 });

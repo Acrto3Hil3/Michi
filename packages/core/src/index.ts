@@ -91,3 +91,16 @@ export { CONTEXT_TIERS, TierSchema, ContextRequestSchema } from "./schemas/conte
 export type { ContextTier, ContextRequest, ContextItem, ContextPacket } from "./schemas/context.js";
 export { resolveContext, estimateTokens } from "./commands/context.js";
 export type { ResolveOptions } from "./commands/context.js";
+
+export {
+  TASK_STATES, TaskSchema, RoadmapSchema, RunRecordSchema, EvidenceSchema,
+  newRoadmap, taskId, runId, isTerminal, readyFrom,
+} from "./schemas/task.js";
+export type { Task, TaskState, Roadmap, RunRecord, Evidence } from "./schemas/task.js";
+export { INSTRUCTION_SECTIONS, compileInstruction } from "./prompt/compile.js";
+export { planTasks, planValidate, loadTasks, withDerivedReadiness } from "./commands/plan-tasks.js";
+export type { PlanTasksOptions, PlanTasksData, PlanValidateData } from "./commands/plan-tasks.js";
+export { taskList, taskShow, taskNext, taskStart, taskReport, taskBlock } from "./commands/task.js";
+export type {
+  TaskOptions, TaskListData, TaskShowData, TaskNextData, TaskStartData, TaskReportData,
+} from "./commands/task.js";

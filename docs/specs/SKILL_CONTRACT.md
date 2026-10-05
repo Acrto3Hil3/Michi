@@ -269,6 +269,21 @@ files changed · tests executed · results · verification evidence · remaining
 issues · any new decision it needs approved. An agent that hits an unlocked
 architectural decision stops and asks rather than inventing one.
 
+**It does not hand-write prompts.** `michi task start` compiles the instruction
+from the task and its resolved context, deterministically. Editing a compiled
+instruction is always wrong: it is a generated artifact, so a problem in it is a
+problem in the state it came from, and an edited one is a lie about what the
+project agreed.
+
+**One task at a time.** Never a batch. With a batch you lose which instruction
+produced which change, and a wrong decision under the first task gets built into
+all of them before anyone notices.
+
+**A report is a claim.** `michi task report` records what the agent said and
+moves the task to `CHANGES_DETECTED`. It never moves one towards `VERIFIED`.
+"The agent says the tests pass" and "the tests pass" are different sentences,
+and keeping them apart is most of this skill's value.
+
 ---
 
 ## `reviewer`

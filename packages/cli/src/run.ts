@@ -6,6 +6,7 @@ import {
   planStatus, planUpdate, planExport, planClose,
   architectureStatus, architectureExport, architectureClose,
   resolveContext, buildGraph, orphans, coverage,
+  planTasks, planValidate, taskList, taskShow, taskNext, taskStart, taskReport, taskBlock,
 } from "@michi/core";
 import type { Result } from "@michi/core";
 import {
@@ -15,6 +16,8 @@ import {
   renderPlanStatus, renderPlanUpdate, renderPlanClose,
   renderArchitectureStatus, renderArchitectureClose,
   renderContext, renderGraph, renderGraphMermaid, renderOrphans,
+  renderPlanTasks, renderPlanValidate, renderTaskList, renderTaskShow,
+  renderTaskNext, renderTaskStart, renderTaskReport, renderTaskBlock,
 } from "./render.js";
 
 export interface Io {
@@ -203,6 +206,36 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
       code = emit(planClose({ root: root(), now }), opts(), io, renderPlanClose);
     });
 
+  plan
+    .command("tasks")
+    .description("plan the work the agreed architecture now makes possible")
+    .option("--from-requirements", "seed one task per first-version requirement")
+    .option("--file <path>", "a task plan, as JSON")
+    .action((local: { fromRequirements?: boolean; file?: string }) => {
+      if (!local.fromRequirements && !local.file) {
+        io.err("Give either --from-requirements or --file <plan.json>.");
+        code = ExitCode.USAGE_ERROR;
+        return;
+      }
+      code = emit(
+        planTasks({
+          root: root(), now,
+          ...(local.file ? { file: local.file } : { fromRequirements: true }),
+        }),
+        opts(), io, renderPlanTasks,
+      );
+    });
+
+  plan
+    .command("validate")
+    .description("check the plan can actually be executed before anyone builds against it")
+    .action(() => {
+      const result = planValidate({ root: root(), now });
+      code = emit(result, opts(), io, renderPlanValidate);
+      // A plan with problems is a failure, even though reading it succeeded.
+      if (result.ok && !result.data.ok) code = ExitCode.CONFLICT;
+    });
+
   // -------------------------------------------------------------------------
   // context — what an agent actually needs for one piece of work
   // -------------------------------------------------------------------------
@@ -323,6 +356,68 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .description("write up how this gets built and move on to design")
     .action(() => {
       code = emit(architectureClose({ root: root(), now }), opts(), io, renderArchitectureClose);
+    });
+
+  // -------------------------------------------------------------------------
+  // task — the work, and the handoff to an agent
+  // -------------------------------------------------------------------------
+  const task = program
+    .command("task")
+    .description("the planned work, and handing a piece of it to a coding agent");
+
+  task
+    .command("list")
+    .description("every task and where it stands")
+    .option("--status <state>", "only tasks in this state")
+    .action((local: { status?: string }) => {
+      code = emit(
+        taskList({ root: root(), now, ...(local.status ? { status: local.status } : {}) }),
+        opts(), io, renderTaskList,
+      );
+    });
+
+  task
+    .command("show <id>")
+    .description("one task, its criteria and its handovers")
+    .action((id: string) => {
+      code = emit(taskShow({ root: root(), now, id }), opts(), io, renderTaskShow);
+    });
+
+  task
+    .command("next")
+    .description("the next piece of work whose dependencies are met and context resolves")
+    .action(() => {
+      code = emit(taskNext({ root: root(), now }), opts(), io, renderTaskNext);
+    });
+
+  task
+    .command("start <id>")
+    .description("hand a task to a coding agent, with the compiled instruction")
+    .requiredOption("--agent <name>", "which agent is taking it")
+    .action((id: string, local: { agent: string }) => {
+      code = emit(
+        taskStart({ root: root(), now, id, agent: local.agent }), opts(), io, renderTaskStart,
+      );
+    });
+
+  task
+    .command("report <id>")
+    .description("record what the agent said it did — a claim, not evidence")
+    .requiredOption("--from <path>", "the agent's report, as JSON")
+    .action((id: string, local: { from: string }) => {
+      code = emit(
+        taskReport({ root: root(), now, id, file: local.from }), opts(), io, renderTaskReport,
+      );
+    });
+
+  task
+    .command("block <id>")
+    .description("record that a task cannot proceed, and why")
+    .requiredOption("--reason <text>", "what is in the way")
+    .action((id: string, local: { reason: string }) => {
+      code = emit(
+        taskBlock({ root: root(), now, id, reason: local.reason }), opts(), io, renderTaskBlock,
+      );
     });
 
   // -------------------------------------------------------------------------

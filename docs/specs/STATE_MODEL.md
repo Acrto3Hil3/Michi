@@ -94,6 +94,102 @@ architectural drift.
 | `RELEASE` | review passed | shipped |
 | `OPERATIONS` | shipped | a new cycle begins |
 
+## What Phase 6 built
+
+The task record, states and transition rules below were specified in Phase 0.
+Phase 6 implements them as far as the handoff, and states where it stops.
+
+### Who creates tasks
+
+Core cannot decide that a requirement needs three tasks rather than one — that
+is judgement. Two inputs, therefore:
+
+```text
+michi plan tasks --from-requirements   one task per first-version requirement
+michi plan tasks --file <plan.json>    a plan the skill authored
+```
+
+The seed is deterministic and needs no judgement: a one-to-one mapping, each
+task inheriting the requirement's live `AC-*` criteria and the locked decisions
+that govern it. It is a real starting plan, not a placeholder. Re-running it
+skips requirements that already have work, so it is safe to repeat.
+
+An authored plan uses **positions**, not ids, in `depends_on` — a plan is
+self-contained and does not have to guess what Core will allocate. Core
+allocates the ids and resolves the positions.
+
+Either way, Core refuses a task for a requirement that is not in the first
+version. Work is planned for what ships now.
+
+### `tasks/roadmap.yaml`
+
+```yaml
+schema_version: 1
+next_task_id: 4
+next_run_id: 2
+milestone: null
+tasks: [TASK-001, TASK-002, TASK-003]
+updated_at: 2026-10-07T09:12:00Z
+```
+
+Task and run ids are project-wide, sequential and never reused. The DAG itself
+lives in each task's `dependencies`, not here.
+
+### Readiness is derived
+
+`PENDING` and `READY` are recomputed from the dependencies on every read, the
+way a discovery session's status is. A task is `READY` exactly when every task
+it depends on is `DONE`. Every other state is explicit, because every other
+state is something that happened rather than something that follows.
+
+### `plan validate`
+
+Catches the plans that cannot be executed in any order, before anyone builds
+against one: a dependency cycle, a dependency on a task that does not exist, a
+first-version requirement with no work planned for it. Exits `7` when the plan
+has problems — reading it succeeded, but the plan is not usable.
+
+### The compiled instruction
+
+`michi task start` resolves the task's context (Phase 5), compiles the
+instruction, opens a run record and moves the task to `RUNNING`.
+
+The instruction has the seventeen sections `CONTEXT_MODEL.md` §41 names, in that
+order, and compilation is deterministic — the same task and packet give the same
+bytes. That is what makes `instruction_hash` on the run record worth recording:
+it is proof of exactly what was handed over.
+
+It is **not written to disk**. A compiled prompt is a generated artifact, never
+a source of truth (§41), and it is reproducible from state at any time. What is
+recorded is its hash.
+
+### A report is a claim
+
+`michi task report` closes the run and moves the task to `CHANGES_DETECTED`. It
+records what the agent said: files touched, test counts, notes, and any decision
+it needed and did not have.
+
+**Nothing in a report moves a task towards `VERIFIED`.** The verification record
+is written by a separate act against observed results (P3). That is Phase 7, and
+until it exists `verification.status` stays `PENDING` no matter what an agent
+reports.
+
+Three attempts with no progress marks the task `STALLED`, and handing it over
+again is refused. Looping is not persistence.
+
+### What Phase 6 does not build
+
+`TESTING`, `REVIEWING`, `VERIFIED` and `DONE` are in the state table and no
+Phase 6 command drives a task into them: reaching them requires evidence, which
+is Phase 7's subject.
+
+`michi task split` is in `CLI_CONTRACT.md` and is **not implemented**. Splitting
+needs a decision about what happens to the original task — superseded, blocked,
+or deleted — and the contract does not say. Nothing drives it yet: the signal
+will be a `michi context --budget` failure on a real task, and inventing the
+lifecycle before then would be guessing. When it is needed, the options are
+the ones requirements and decisions already use.
+
 ## Task states
 
 ```text

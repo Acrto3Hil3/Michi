@@ -284,7 +284,8 @@ michi plan update  --file <update.json>
 michi plan export  [--json]
 michi plan close
 
-michi plan tasks   --from-requirements     Phase 5/6 — the task DAG
+michi plan tasks   --from-requirements     seed one task per MVP requirement
+michi plan tasks   --file <plan.json>      a plan the skill authored
 michi plan validate
 ```
 
@@ -352,6 +353,15 @@ is refused with exit `7`.
 ### Implementation planning
 
 Produces the task DAG from approved requirements and locked architecture.
+Refuses while the architecture is not `LOCKED` — exit `5`, because planning on
+an unsettled foundation wastes the user's tokens and their time.
+
+`--from-requirements` seeds the deterministic one-to-one mapping and is safe to
+repeat. `--file` takes a plan whose `depends_on` uses positions within the plan
+rather than ids, so a plan is self-contained. See `STATE_MODEL.md`.
+
+`plan validate` exits `7` when the plan has problems: reading it succeeded, the
+plan is not usable.
 
 `plan validate` checks the plan before anyone builds against it: every task
 reaches `READY` eventually, no dependency cycles, every requirement has at least
@@ -495,11 +505,20 @@ michi task next                          the next READY task, respecting the DAG
 michi task start <id>  --agent <name>    → RUNNING; opens a run record
 michi task report <id> --from <file>     record the agent's report → CHANGES_DETECTED
 michi task block <id>  --reason <text>
-michi task split <id>                    when context does not fit
+michi task split <id>                    NOT IMPLEMENTED — see STATE_MODEL.md
 ```
 
 `task next` is what a skill calls to find work, so it must respect dependencies
-and never return a task whose context cannot be resolved.
+and never return a task whose context cannot be resolved — a task that cannot be
+explained to an agent is not ready, whatever its dependencies say.
+
+`task start` prints the compiled instruction. It is not written to disk: a
+compiled prompt is a generated artifact and is reproducible from state, so the
+run record keeps its hash instead.
+
+`task report` records the agent's own account. It moves the task to
+`CHANGES_DETECTED` and never towards `VERIFIED` — that needs evidence, and
+evidence is Phase 7.
 
 ### `michi review` · `michi test` · `michi debug`
 

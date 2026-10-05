@@ -11,6 +11,8 @@ import type {
   PlanStatusData, PlanUpdateData, PlanCloseData,
   ArchitectureStatusData, ArchitectureCloseData,
   ContextPacket, ProjectGraph,
+  PlanTasksData, PlanValidateData, TaskListData, TaskShowData, TaskNextData,
+  TaskStartData, TaskReportData, Task,
 } from "@michi/core";
 import { cmd } from "@michi/core";
 
@@ -546,4 +548,156 @@ export function renderOrphans(data: { ungoverned: string[]; uncovered: string[] 
     lines.push("", "A young project is legitimately full of these. They are warnings, not errors.");
   }
   return lines;
+}
+
+
+// ---------------------------------------------------------------------------
+// Tasks
+// ---------------------------------------------------------------------------
+
+export function renderPlanTasks(data: PlanTasksData): string[] {
+  const lines: string[] = [];
+  if (data.created.length === 0) {
+    lines.push("Every first-version requirement already has work planned for it.");
+    if (data.skipped.length > 0) lines.push("", `Already planned: ${data.skipped.join(", ")}`);
+    return lines;
+  }
+  lines.push(`Planned ${data.created.length} piece(s) of work.`, "");
+  for (const id of data.created) lines.push(bullet(id));
+  if (data.skipped.length > 0) {
+    lines.push("", `Left alone, already planned: ${data.skipped.join(", ")}`);
+  }
+  lines.push("", "Next:", bullet(`Check the plan holds together — run: ${cmd("plan validate")}`));
+  return lines;
+}
+
+export function renderPlanValidate(data: PlanValidateData): string[] {
+  if (data.ok) {
+    return [
+      `The plan holds together: ${data.tasks} task(s), no problems.`,
+      "",
+      "It can be executed in dependency order, and every first-version",
+      "requirement has work planned for it.",
+    ];
+  }
+  return [
+    `The plan has ${data.problems.length} problem(s). Nothing was changed.`,
+    "",
+    ...data.problems.map((p) => bullet(p)),
+  ];
+}
+
+const taskRow = (t: Task) =>
+  bullet(`${t.task_id.padEnd(10)} ${t.status.padEnd(17)} ${t.title}`);
+
+export function renderTaskList(data: TaskListData): string[] {
+  if (data.tasks.length === 0) {
+    return ["No tasks match.", "", `Plan some work — run: ${cmd("plan tasks --from-requirements")}`];
+  }
+  const lines = ["WORK", ""];
+  for (const t of data.tasks) lines.push(taskRow(t));
+  const summary = Object.entries(data.by_status)
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([status, n]) => `${n} ${status.toLowerCase()}`)
+    .join(" · ");
+  lines.push("", summary);
+  return lines;
+}
+
+export function renderTaskShow(data: TaskShowData): string[] {
+  const t = data.task;
+  const lines = [
+    `${t.task_id} — ${t.title}`,
+    "",
+    bullet(`Status        ${t.status}`),
+    bullet(`Serves        ${t.requirements.join(", ")}`),
+    bullet(`Governed by   ${t.decisions.length > 0 ? t.decisions.join(", ") : "nothing"}`),
+    bullet(`Waiting on    ${t.dependencies.length > 0 ? t.dependencies.join(", ") : "nothing"}`),
+    bullet(`Attempts      ${t.attempt}`),
+    bullet(`Verification  ${t.verification.status}`),
+  ];
+  if (t.blocked_reason) lines.push(bullet(`Blocked       ${t.blocked_reason}`));
+  if (t.context) lines.push(bullet(`Context       ${t.context.packet}`));
+
+  lines.push("", "How we will know it is done:");
+  for (const c of t.acceptance_criteria) lines.push(bullet(`${c.id}  ${c.text}`));
+
+  if (t.files_touched.length > 0) {
+    lines.push("", "Files the agent reported changing:");
+    for (const file of t.files_touched) lines.push(bullet(file));
+    lines.push("", "Reported, not verified.");
+  }
+
+  if (data.runs.length > 0) {
+    lines.push("", "Handovers:");
+    for (const run of data.runs) {
+      lines.push(bullet(
+        `${run.run_id}  ${run.agent.padEnd(14)} ${run.result ?? "open"}` +
+        (run.tests ? `  tests ${run.tests.passed}/${run.tests.run}` : ""),
+      ));
+    }
+  }
+  return lines;
+}
+
+export function renderTaskNext(data: TaskNextData): string[] {
+  if (!data.task) return ["Nothing to pick up.", "", data.reason];
+  return [
+    `Next: ${data.task.task_id} — ${data.task.title}`,
+    "",
+    bullet(`Serves ${data.task.requirements.join(", ")}`),
+    bullet(data.reason),
+    "",
+    `Hand it over: ${cmd(`task start ${data.task.task_id} --agent <name>`)}`,
+  ];
+}
+
+export function renderTaskStart(data: TaskStartData): string[] {
+  return [
+    `${data.task.task_id} handed to ${data.run.agent} as ${data.run.run_id} ` +
+      `(attempt ${data.run.attempt}).`,
+    "",
+    "Give the agent everything below this line, verbatim.",
+    "",
+    "----------------------------------------------------------------------",
+    "",
+    data.instruction,
+    "----------------------------------------------------------------------",
+    "",
+    `When it reports back: ${cmd(`task report ${data.task.task_id} --from <report.json>`)}`,
+  ];
+}
+
+export function renderTaskReport(data: TaskReportData): string[] {
+  const lines = [
+    `Recorded. ${data.task.task_id} is now ${data.task.status}.`,
+    "",
+    bullet(`${data.run.run_id} closed as ${data.run.result}`),
+  ];
+  if (data.run.files_touched.length > 0) {
+    lines.push(bullet(`${data.run.files_touched.length} file(s) reported changed`));
+  }
+  if (data.run.tests) {
+    lines.push(bullet(`tests reported: ${data.run.tests.passed} passed, ${data.run.tests.failed} failed`));
+  }
+  lines.push(
+    "",
+    "That is the agent's own account — a claim, not evidence. Nothing is",
+    "verified until it has been checked independently.",
+  );
+  if (data.run.new_decisions_requested.length > 0) {
+    lines.push("", "The agent says these need your approval:");
+    for (const item of data.run.new_decisions_requested) lines.push(bullet(item));
+  }
+  return lines;
+}
+
+export function renderTaskBlock(data: { task: Task }): string[] {
+  return [
+    `${data.task.task_id} is BLOCKED.`,
+    "",
+    bullet(String(data.task.blocked_reason)),
+    "",
+    "It stays on the plan. Nothing was deleted.",
+  ];
 }

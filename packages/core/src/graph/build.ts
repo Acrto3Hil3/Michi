@@ -135,6 +135,10 @@ export function buildGraph(root: string): ProjectGraph {
         adr: d.adr,
         needs_review: d.needs_review ?? false,
         choice: d.options.find((o) => o.key === d.selected_option)?.label ?? null,
+        // Why, not just what. An instruction carrying the choice without the
+        // reasoning tells an agent what to build and nothing about the
+        // constraint it was built to satisfy.
+        rationale: d.rationale,
       },
     });
   }

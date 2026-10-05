@@ -33,7 +33,7 @@ async function commandExists(parts: string[]): Promise<boolean> {
   return code === 0;
 }
 
-const SKILLS = ["senior-engineer", "product-planner", "architecture"] as const;
+const SKILLS = ["senior-engineer", "product-planner", "architecture", "implementer"] as const;
 
 describe.each(SKILLS)("%s skill", (name) => {
   const text = () => readFileSync(skillPath(name), "utf8");
@@ -157,5 +157,41 @@ describe("architecture specifics", () => {
   it("does not claim to write COMPONENTS.md or DATA.md", () => {
     expect(text()).not.toMatch(/COMPONENTS\.md/);
     expect(text()).not.toMatch(/DATA\.md/);
+  });
+});
+
+describe("implementer specifics", () => {
+  const text = () => readFileSync(skillPath("implementer"), "utf8");
+
+  it("does not write application code itself", () => {
+    const body = text().toLowerCase();
+    expect(body).toMatch(/does not write|do not write/);
+    expect(body).toMatch(/compil|instruction/);
+  });
+
+  it("never hand-edits a compiled instruction", () => {
+    expect(text().toLowerCase()).toMatch(/do not edit|never edit|generated artifact/);
+  });
+
+  it("checks the handoff before handing over", () => {
+    const body = text();
+    expect(body).toMatch(/michi task next/);
+    expect(body).toMatch(/michi task start/);
+    expect(body).toMatch(/michi task report/);
+  });
+
+  it("treats the agent's report as a claim", () => {
+    expect(text().toLowerCase()).toMatch(/claim/);
+    expect(text().toLowerCase()).toMatch(/not evidence|evidence/);
+  });
+
+  it("stops rather than inventing a missing decision", () => {
+    const body = text().toLowerCase();
+    expect(body).toMatch(/stop/);
+    expect(body).toMatch(/locked decision|not been made|unlocked/);
+  });
+
+  it("knows verification is not its job", () => {
+    expect(text().toLowerCase()).toMatch(/verif/);
   });
 });

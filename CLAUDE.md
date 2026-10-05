@@ -78,15 +78,16 @@ Do not report work as done without running it (P3).
 
 ## Current state (2026-09-28)
 
-Phase 0 complete and internally consistent. **Phases 1 to 5 complete**:
+Phase 0 complete and internally consistent. **Phases 1 to 6 complete**:
 `michi init`, `scan`, `status`, `discover` (start/status/answer/export/close),
 `decide` (list/show/propose/confirm/reject/supersede), `plan`
-(status/update/export/close), and the `architecture` (status/export/close), `context`, `graph`, and the
-`senior-engineer`, `product-planner` and `architecture` skills. 424 tests,
-TypeScript build clean. Nothing published.
+(status/update/export/close), and the `architecture` (status/export/close), `context`, `graph`, `plan tasks`,
+`plan validate`, `task` (list/show/next/start/report/block), and the
+`senior-engineer`, `product-planner`, `architecture` and `implementer` skills.
+501 tests, TypeScript build clean. Nothing published.
 
-Still deliberately absent: the task DAG, the prompt compiler, the other four
-skills, agent adapters and the verification executor. Those are Phases 6–8;
+Still deliberately absent: the reviewer, tester and debugger skills, agent
+adapters and the verification executor. Those are Phases 7–8;
 building their abstractions now would be the premature scaffolding the product
 exists to prevent (P4).
 
@@ -135,17 +136,22 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-Next: **Phase 6** — the task DAG and the prompt compiler: turning a context
-packet into the precise instruction an agent acts on. That is the step the
-whole product exists for.
+Next: **Phase 7** — the `reviewer`, `tester` and `debugger` skills and the
+verification engine. That is where a reported task becomes a verified one, and
+where OQ-006's allow-listed executor finally gets built.
 
-Phase 5's shape, before extending it: **the graph is derived, never stored.**
-It is rebuilt from `requirements.yaml`, `specification.yaml`,
-`decisions/index.yaml` and the project map on every call, and
-`graph/nodes.json` stays unwritten until structural parsing makes building it
-expensive. Resolving context writes nothing at all — no packet file, no
-counter, no timestamp in the hash — so the same state and request always give
-the same packet. Do not add a cache.
+Phase 6's shape, before extending it:
+
+- **The compiled instruction is not stored.** It is a generated artifact,
+  reproducible from state; the run record keeps its `instruction_hash` as proof
+  of what was handed over. Do not write it to disk, and never edit one.
+- **A report is a claim.** `task report` moves a task to `CHANGES_DETECTED` and
+  nothing in it can move one towards `VERIFIED`. The verification record is
+  written from observed results, which is Phase 7's whole subject.
+- **Readiness is derived**, like a discovery session's status: `PENDING`/`READY`
+  is recomputed from dependencies on every read.
+- `michi task split` is deliberately **not implemented** — it needs a lifecycle
+  decision the contract does not make, and nothing drives it yet.
 
 Phase 4's shape is worth knowing before extending it: **architecture adds no
 state file.** Architecture *is* the locked decisions, and `michi decide`

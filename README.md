@@ -39,11 +39,10 @@ agent is building the right thing.
 
 ## Status
 
-**Phases 1 to 5 built.** MICHI can look at a project, hold a structured
+**Phases 1 to 6 built.** MICHI can look at a project, hold a structured
 discovery with you through your AI agent, record what you decided, work out
-with you what actually ships first, settle how it gets built, and work out
-exactly what your agent needs to know for one piece of it. Nothing is published
-yet.
+with you what actually ships first, settle how it gets built, plan the work, and
+hand your agent a precise brief for one piece of it. Nothing is published yet.
 
 What exists right now is the specification:
 
@@ -70,11 +69,12 @@ Then the technical choices, one at a time, in money and risk rather than
 architecture diagrams — and MICHI will not let the project move on while
 anything in the first version has no decided approach.
 
-And when it comes to building, MICHI hands your agent the small, relevant slice
-of all that — the requirement, the decisions that govern it, how it will be
-checked, who it is for — instead of your whole project. Every item comes with
-why it is there, so when the agent does something odd you can see what it was
-told.
+And when it comes to building, MICHI plans the work from what you agreed and
+compiles a brief for one piece of it: the requirement in your words, the
+decision you approved and the reason you approved it, the limits you set, and
+how anyone will know it worked — instead of your whole project. When your agent
+reports back, MICHI records that as what the agent *said*. "The agent says the
+tests pass" and "the tests pass" stay different sentences.
 
 Change your mind in six months and that works too: MICHI records what changed,
 why, and that you asked for it, then regenerates the document. Nothing is ever
@@ -101,7 +101,7 @@ The roadmap, in order:
 | 3 | The `product-planner` skill · `michi plan` · the PRD | **done** |
 | 4 | The `architecture` skill · `michi architecture` · SYSTEM and TRD | **done** |
 | 5 | The context engine · `michi context` · `michi graph` | **done** |
-| 6 | Task graph and prompt compiler | not started |
+| 6 | The `implementer` skill · the task DAG · the prompt compiler | **done** |
 | 7 | Review, test, debug, verification | not started |
 | 8 | Agent adapters | not started |
 | 9 | Open-source release | not started |

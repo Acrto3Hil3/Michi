@@ -1,5 +1,6 @@
 /**
- * The whole path, once: a founder's sentence becomes an agreed architecture.
+ * The whole path, once: a founder's sentence becomes an instruction an agent
+ * can act on.
  *
  * This is the only test that proves the four phases compose rather than merely
  * work alongside each other. Everything here is what the three skills would do
@@ -34,7 +35,7 @@ const put = (root: string, name: string, body: unknown): string => {
   return p;
 };
 
-describe("idea to agreed architecture", () => {
+describe("idea to a compiled instruction", () => {
   it("carries one sentence all the way through, losing nothing", async () => {
     const root = mkdtempSync(join(tmpdir(), "michi-life-"));
     made.push(root);
@@ -155,9 +156,71 @@ describe("idea to agreed architecture", () => {
     const decisions = readFileSync(join(root, ".michi/decisions/index.yaml"), "utf8");
     expect(decisions).toMatch(/by: user/);
 
+    // ---- the work, planned from what was agreed --------------------------
+    const planned = await michi(root, ["plan", "tasks", "--from-requirements"]);
+    expect(planned.out).toMatch(/TASK-001/);
+    expect(data(await michi(root, ["plan", "validate", "--json"])).ok).toBe(true);
+    expect(data(await michi(root, ["status", "--json"])).stage).toBe("PLANNING");
+
+    // Only the first version gets work planned for it.
+    const tasks = data(await michi(root, ["task", "list", "--json"])).tasks;
+    expect(tasks.flatMap((x: { requirements: string[] }) => x.requirements)).not.toContain("REQ-004");
+
+    // ---- handed over, with the instruction compiled from all of the above --
+    const next = data(await michi(root, ["task", "next", "--json"]));
+    expect(next.task.task_id).toBe("TASK-001");
+
+    const handover = data(await michi(root, ["task", "start", "TASK-001", "--agent", "claude-code", "--json"]));
+    const instruction: string = handover.instruction;
+
+    // Every section the contract names, in the order it names them.
+    let at = -1;
+    for (const heading of [
+      "ROLE", "PROJECT", "TASK", "USER REQUIREMENT", "ENGINEERING INTERPRETATION",
+      "APPROVED DECISIONS", "ARCHITECTURE", "SCOPE", "OUT OF SCOPE", "RELEVANT FILES",
+      "IMPLEMENTATION RULES", "SECURITY REQUIREMENTS", "ACCEPTANCE CRITERIA",
+      "TESTING", "VERIFICATION", "STOP CONDITIONS", "REPORT BACK",
+    ]) {
+      const found = instruction.indexOf(`## ${heading}`);
+      expect(found, heading).toBeGreaterThan(at);
+      at = found;
+    }
+
+    // The founder's own words, the decision they approved, its reasoning, the
+    // limit they stated, and how it will be checked — all four phases, in one
+    // instruction.
+    expect(instruction).toContain("Manage products");
+    expect(instruction).toContain("A proper database");
+    expect(instruction).toContain("Two people record movements at once");
+    expect(instruction).toContain("No budget for paid services yet");
+    expect(instruction).toContain("it appears in the list");
+
+    // Nothing about requirements that are not this task's business.
+    expect(instruction).not.toContain("Export a stock report");
+
+    // ---- what came back is a claim ---------------------------------------
+    const reported = data(await michi(root, ["task", "report", "TASK-001", "--from", put(root, "r.json", {
+      result: "REPORTED",
+      files_touched: ["src/products.ts", "src/products.test.ts"],
+      tests: { run: 4, passed: 4, failed: 0 },
+      notes: "Added the product table and its tests.",
+    }), "--json"]));
+
+    expect(reported.task.status).toBe("CHANGES_DETECTED");
+    expect(reported.task.verification.status).toBe("PENDING");
+    expect(reported.task.verification.evidence).toEqual([]);
+    expect(reported.run.result).toBe("REPORTED");
+    expect(reported.run.verification_status).toBe("PENDING");
+
+    // The handover is provable after the fact.
+    const shown = data(await michi(root, ["task", "show", "TASK-001", "--json"]));
+    expect(shown.runs[0].instruction_hash).toBe(handover.run.instruction_hash);
+    expect(shown.task.context.packet).toMatch(/^CTX-/);
+
     // And MICHI wrote no application code.
     expect(readdirSync(root).filter((x) => !x.startsWith(".michi") && x !== "package.json"
-      && !x.startsWith("t.json") && !x.startsWith("p.json") && !x.startsWith("d.json") && !x.startsWith("adr.md")))
+      && !x.startsWith("t.json") && !x.startsWith("p.json") && !x.startsWith("d.json")
+      && !x.startsWith("adr.md") && !x.startsWith("r.json")))
       .toEqual([]);
   });
 });
