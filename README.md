@@ -39,10 +39,11 @@ agent is building the right thing.
 
 ## Status
 
-**Phases 1 to 6 built.** MICHI can look at a project, hold a structured
+**Phases 1 to 7 built.** MICHI can look at a project, hold a structured
 discovery with you through your AI agent, record what you decided, work out
-with you what actually ships first, settle how it gets built, plan the work, and
-hand your agent a precise brief for one piece of it. Nothing is published yet.
+with you what actually ships first, settle how it gets built, plan the work,
+hand your agent a precise brief for one piece of it, and then check whether the
+work it reported actually happened. Nothing is published yet.
 
 What exists right now is the specification:
 
@@ -76,6 +77,13 @@ how anyone will know it worked — instead of your whole project. When your agen
 reports back, MICHI records that as what the agent *said*. "The agent says the
 tests pass" and "the tests pass" stay different sentences.
 
+Then it checks. You tell MICHI, once, which commands it is allowed to run on
+your project — your tests, your linter, nothing else. MICHI runs those itself
+and keeps what it saw apart from what it was told. Nothing is marked done on an
+agent's account of its own work, however confident; and when it is marked done,
+the verdict says plainly which parts rest on something MICHI watched and which
+parts rest on somebody's word.
+
 Change your mind in six months and that works too: MICHI records what changed,
 why, and that you asked for it, then regenerates the document. Nothing is ever
 deleted, and nothing changes without your name on it.
@@ -102,7 +110,7 @@ The roadmap, in order:
 | 4 | The `architecture` skill · `michi architecture` · SYSTEM and TRD | **done** |
 | 5 | The context engine · `michi context` · `michi graph` | **done** |
 | 6 | The `implementer` skill · the task DAG · the prompt compiler | **done** |
-| 7 | Review, test, debug, verification | not started |
+| 7 | Review, test, debug, verification | **done** |
 | 8 | Agent adapters | not started |
 | 9 | Open-source release | not started |
 

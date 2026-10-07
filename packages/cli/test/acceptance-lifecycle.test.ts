@@ -7,7 +7,7 @@
  * through the user's own agent.
  */
 import { describe, it, expect, afterEach } from "vitest";
-import { mkdtempSync, writeFileSync, rmSync, readFileSync, readdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, readFileSync, readdirSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { run } from "../src/run.js";
@@ -45,6 +45,11 @@ describe("idea to a compiled instruction", () => {
     //  products, see stock, record it in and out, and get low-stock alerts.
     //  I don't know the technical details."
     await michi(root, ["init"]);
+
+    // The owner tells MICHI the one command it may run on their behalf.
+    const cfg = join(root, ".michi/config.yaml");
+    writeFileSync(cfg, readFileSync(cfg, "utf8")
+      .replace("allow: {}", "allow:\n    test: echo '4 passed, 0 failed'"), "utf8");
 
     // ---- discovery -------------------------------------------------------
     await michi(root, ["discover", "start"]);
@@ -217,10 +222,73 @@ describe("idea to a compiled instruction", () => {
     expect(shown.runs[0].instruction_hash).toBe(handover.run.instruction_hash);
     expect(shown.task.context.packet).toMatch(/^CTX-/);
 
+    // ---- reviewed, tested, and only then believed ------------------------
+    // A review is a judgement, not evidence that anything runs.
+    const reviewed = data(await michi(root, ["review", "TASK-001", "--verdict", "CHANGES_REQUIRED",
+      "--findings", put(root, "fn.json", { findings: [
+        { file: "src/products.ts", line: 12, problem: "The name is not validated before storing.",
+          why: "An empty name would be saved and shown as a blank row.",
+          fix: "Reject an empty or whitespace-only name." },
+      ]}), "--json"]));
+    expect(reviewed.task.status).toBe("CHANGES_DETECTED");
+
+    // The fix is debugged in order: MICHI refuses a fix nobody reproduced.
+    await expect(michi(root, ["debug", "TASK-001", "--stage", "FIX", "--note", "Added a check."]))
+      .rejects.toThrow(/reproduc/i);
+    await michi(root, ["debug", "TASK-001", "--stage", "REPRODUCE", "--note", "An empty name saves."]);
+    await michi(root, ["debug", "TASK-001", "--stage", "ROOT_CAUSE", "--note", "The write path never checks."]);
+    await michi(root, ["debug", "TASK-001", "--stage", "FIX", "--note", "Validate on the shared write path."]);
+
+    await michi(root, ["review", "TASK-001", "--verdict", "PASS",
+      "--findings", put(root, "fn.json", { findings: [] }), "--json"]);
+
+    // What the agent says about its own tests is a claim, however green.
+    await michi(root, ["test", "TASK-001", "--record", put(root, "v.json", {
+      kind: "TESTS", summary: "I ran the suite and it passed.", passed: true,
+    })]);
+
+    const criteria: { id: string }[] =
+      data(await michi(root, ["task", "show", "TASK-001", "--json"])).task.acceptance_criteria;
+    expect(criteria.length).toBeGreaterThan(0);
+    const verdict = (evidence: string[]) => put(root, "v.json", {
+      criteria: criteria.map((c) => ({
+        id: c.id, status: "SATISFIED", reason: "The suite covers it.", evidence,
+      })),
+    });
+
+    // Refused: every piece of evidence so far came from the agent being judged.
+    await expect(michi(root, ["verify", "TASK-001", "--from", verdict(["TESTS"])]))
+      .rejects.toThrow(/claim|not observed/i);
+
+    // So MICHI runs the one command it was allowed to run, and watches.
+    const ran = data(await michi(root, ["test", "TASK-001", "--run", "test", "--json"]));
+    expect(ran.evidence.produced_by).toBe("MICHI");
+    expect(ran.evidence.exit_code).toBe(0);
+    expect(ran.evidence.command).toContain("echo");
+
+    const verified = data(await michi(root, ["verify", "TASK-001", "--from", verdict(["TESTS"]), "--json"]));
+    expect(verified.task.status).toBe("VERIFIED");
+    expect(verified.task.verification.status).toBe("PASSED");
+    expect(verified.task.verification.evidence.some(
+      (e: { produced_by: string }) => e.produced_by === "MICHI")).toBe(true);
+
+    // Verified is not the same as finished with. Closing is its own act.
+    const filed = data(await michi(root, ["task", "done", "TASK-001", "--json"]));
+    expect(filed.task.status).toBe("DONE");
+    expect(existsSync(join(root, ".michi/tasks/completed/TASK-001.yaml"))).toBe(true);
+    expect(data(await michi(root, ["status", "--json"])).counts.tasks_done).toBe(1);
+
+    // And the verdict still says which part MICHI never saw for itself.
+    const settled = data(await michi(root, ["task", "show", "TASK-001", "--json"]));
+    expect(settled.task.verification.verified_at).toBeTruthy();
+    expect(settled.task.verification.evidence.filter(
+      (e: { produced_by: string }) => e.produced_by === "AGENT").length).toBeGreaterThan(0);
+
     // And MICHI wrote no application code.
     expect(readdirSync(root).filter((x) => !x.startsWith(".michi") && x !== "package.json"
       && !x.startsWith("t.json") && !x.startsWith("p.json") && !x.startsWith("d.json")
-      && !x.startsWith("adr.md") && !x.startsWith("r.json")))
+      && !x.startsWith("adr.md") && !x.startsWith("r.json")
+      && !x.startsWith("fn.json") && !x.startsWith("v.json")))
       .toEqual([]);
   });
 });

@@ -53,8 +53,12 @@ describe("a task record", () => {
       ...base, status: "VERIFIED",
       verification: {
         status: "PASSED",
-        evidence: [{ kind: "TESTS", produced_by: "MICHI", command: "pnpm test",
-                     exit_code: 0, output_summary: "14 passed" }],
+        // MICHI evidence carries the full process record, always.
+        evidence: [{
+          kind: "TESTS", produced_by: "MICHI", allow_key: "test", command: "pnpm test",
+          cwd: ".", started_at: NOW, ended_at: NOW, exit_code: 0,
+          output_summary: "14 passed", output_truncated: false,
+        }],
       },
     })).not.toThrow();
   });

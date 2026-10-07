@@ -118,10 +118,27 @@ verification:
    does not edit source code in response, ever. That is the agent's job, and
    the separation is the point.
 
-### Scope
+### The executor
 
-Phase 1 defines this contract and the abstraction boundary. The executor is
-implemented in Phase 7.
+`runAllowed` in `core/src/verification/execute.ts` is the only place Core
+executes anything. Its signature is the enforcement:
+
+```ts
+runAllowed({ root, now, key })        // a key, never a command string
+```
+
+There is no parameter for a command, so no call site can pass one. The command
+is read from `verification.allow[key]` in the project's own config, and a key
+that is not there is refused with exit 6 — along with everything else the
+project contains. A `package.json` script MICHI was not told about does not
+become runnable because it exists, and a README claiming to grant permission is
+read as text.
+
+`policy.verification_execute: BLOCK` turns execution off entirely.
+
+Every run records its command, working directory, start, end, exit code and a
+capped output summary. A timeout is recorded as a killed run with exit code
+124, not as a failure to be interpreted later.
 
 ## Enforcement
 

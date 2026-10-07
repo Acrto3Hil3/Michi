@@ -7,6 +7,8 @@ import {
   architectureStatus, architectureExport, architectureClose,
   resolveContext, buildGraph, orphans, coverage,
   planTasks, planValidate, taskList, taskShow, taskNext, taskStart, taskReport, taskBlock,
+  taskDone,
+  runTest, recordTest, review, debugStage, verify, DEBUG_STAGES,
 } from "@michi/core";
 import type { Result } from "@michi/core";
 import {
@@ -17,7 +19,8 @@ import {
   renderArchitectureStatus, renderArchitectureClose,
   renderContext, renderGraph, renderGraphMermaid, renderOrphans,
   renderPlanTasks, renderPlanValidate, renderTaskList, renderTaskShow,
-  renderTaskNext, renderTaskStart, renderTaskReport, renderTaskBlock,
+  renderTaskNext, renderTaskStart, renderTaskReport, renderTaskBlock, renderTaskDone,
+  renderTest, renderReview, renderDebug, renderVerify,
 } from "./render.js";
 
 export interface Io {
@@ -411,6 +414,13 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     });
 
   task
+    .command("done <id>")
+    .description("close a verified task and file it under tasks/completed")
+    .action((id: string) => {
+      code = emit(taskDone({ root: root(), now, id }), opts(), io, renderTaskDone);
+    });
+
+  task
     .command("block <id>")
     .description("record that a task cannot proceed, and why")
     .requiredOption("--reason <text>", "what is in the way")
@@ -418,6 +428,74 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
       code = emit(
         taskBlock({ root: root(), now, id, reason: local.reason }), opts(), io, renderTaskBlock,
       );
+    });
+
+  // -------------------------------------------------------------------------
+  // verification — evidence, not assurances
+  // -------------------------------------------------------------------------
+  program
+    .command("test <id>")
+    .description("run an allow-listed check, or record one the agent ran")
+    .option("--run <key>", "a key in verification.allow — never a command")
+    .option("--record <path>", "what the agent reported, as JSON")
+    .action((id: string, local: { run?: string; record?: string }) => {
+      if (!local.run && !local.record) {
+        io.err("Give either --run <key> or --record <file>.");
+        code = ExitCode.USAGE_ERROR;
+        return;
+      }
+      code = emit(
+        local.run
+          ? runTest({ root: root(), now, id, key: local.run })
+          : recordTest({ root: root(), now, id, file: local.record as string }),
+        opts(), io, renderTest,
+      );
+    });
+
+  program
+    .command("review <id>")
+    .description("record a review verdict and its findings")
+    .requiredOption("--verdict <verdict>", "PASS or CHANGES_REQUIRED")
+    .requiredOption("--findings <path>", "the findings, as JSON")
+    .action((id: string, local: { verdict: string; findings: string }) => {
+      if (local.verdict !== "PASS" && local.verdict !== "CHANGES_REQUIRED") {
+        io.err("--verdict must be PASS or CHANGES_REQUIRED.");
+        code = ExitCode.USAGE_ERROR;
+        return;
+      }
+      code = emit(
+        review({ root: root(), now, id, verdict: local.verdict, file: local.findings }),
+        opts(), io, renderReview,
+      );
+    });
+
+  program
+    .command("debug <id>")
+    .description("work a bug through reproduce, observe, hypothesis, root cause, fix, verify")
+    .requiredOption("--stage <stage>", DEBUG_STAGES.join(" | "))
+    .requiredOption("--note <text>", "what you did and what you saw")
+    .action((id: string, local: { stage: string; note: string }) => {
+      if (!(DEBUG_STAGES as readonly string[]).includes(local.stage)) {
+        io.err(`--stage must be one of: ${DEBUG_STAGES.join(", ")}`);
+        code = ExitCode.USAGE_ERROR;
+        return;
+      }
+      code = emit(
+        debugStage({
+          root: root(), now, id,
+          stage: local.stage as (typeof DEBUG_STAGES)[number],
+          note: local.note,
+        }),
+        opts(), io, renderDebug,
+      );
+    });
+
+  program
+    .command("verify <id>")
+    .description("weigh the evidence against the acceptance criteria — the only path to VERIFIED")
+    .requiredOption("--from <path>", "the verdict on each criterion, as JSON")
+    .action((id: string, local: { from: string }) => {
+      code = emit(verify({ root: root(), now, id, file: local.from }), opts(), io, renderVerify);
     });
 
   // -------------------------------------------------------------------------

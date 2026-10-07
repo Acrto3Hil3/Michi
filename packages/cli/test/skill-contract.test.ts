@@ -33,7 +33,10 @@ async function commandExists(parts: string[]): Promise<boolean> {
   return code === 0;
 }
 
-const SKILLS = ["senior-engineer", "product-planner", "architecture", "implementer"] as const;
+const SKILLS = [
+  "senior-engineer", "product-planner", "architecture", "implementer",
+  "reviewer", "tester", "debugger",
+] as const;
 
 describe.each(SKILLS)("%s skill", (name) => {
   const text = () => readFileSync(skillPath(name), "utf8");
@@ -193,5 +196,45 @@ describe("implementer specifics", () => {
 
   it("knows verification is not its job", () => {
     expect(text().toLowerCase()).toMatch(/verif/);
+  });
+});
+
+describe("the verification skills", () => {
+  const text = (name: string) => readFileSync(skillPath(name), "utf8");
+
+  it("the reviewer refuses to say 'looks good'", () => {
+    const body = text("reviewer").toLowerCase();
+    expect(body).toMatch(/looks good/);
+    expect(body).toMatch(/pass|changes_required/);
+    expect(body).toMatch(/file|line/);
+  });
+
+  it("the reviewer judges against the decisions, not its own taste", () => {
+    expect(text("reviewer").toLowerCase()).toMatch(/locked|approved|preference/);
+  });
+
+  it("the tester picks the level from the change", () => {
+    const body = text("tester").toLowerCase();
+    expect(body).toMatch(/unit/);
+    expect(body).toMatch(/integration/);
+    expect(body).toMatch(/behaviour|behavior/);
+  });
+
+  it("the tester knows MICHI only runs what the user allow-listed", () => {
+    expect(text("tester")).toMatch(/verification\.allow/);
+    expect(text("tester")).toMatch(/michi test/);
+  });
+
+  it("the debugger reproduces before fixing", () => {
+    const body = text("debugger").toLowerCase();
+    expect(body).toMatch(/reproduc/);
+    expect(body).toMatch(/root cause/);
+    expect(body).toMatch(/every caller|callers/);
+  });
+
+  it("all three know a report is not evidence", () => {
+    for (const name of ["reviewer", "tester", "debugger"]) {
+      expect(text(name).toLowerCase(), name).toMatch(/evidence|observed|claim/);
+    }
   });
 });

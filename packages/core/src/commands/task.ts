@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 import { MichiError, errorPayload } from "../errors.js";
@@ -12,7 +12,7 @@ import type { RunRecord, Task, TaskState } from "../schemas/task.js";
 import { parseOrInvalid } from "../schemas/parse.js";
 import { compileInstruction } from "../prompt/compile.js";
 import { resolveContext } from "./context.js";
-import { loadRoadmap, loadTasks, roadmapPath, taskPath, withDerivedReadiness } from "./plan-tasks.js";
+import { completedPath, loadRoadmap, loadTasks, roadmapPath, taskPath, withDerivedReadiness } from "./plan-tasks.js";
 import { requireInitialized } from "./scan.js";
 import { cmd } from "../identity.js";
 
@@ -376,6 +376,44 @@ export function taskBlock(
     const blocked = save(root, { ...task, status: "BLOCKED", blocked_reason: reason }, timestamp);
     syncCounts(root, timestamp);
     return ok({ task: blocked });
+  } catch (e) {
+    return errorPayload(MichiError.from(e));
+  }
+}
+
+/**
+ * `VERIFIED → DONE`: the task is closed and filed.
+ *
+ * Closing is a separate act from verifying, because they answer different
+ * questions — whether the evidence holds, and whether this piece of work is
+ * finished with. Only this moves a task out of `tasks/active`, and only a
+ * verified task can go (STATE_MODEL, "DONE is reachable only from VERIFIED").
+ */
+export function taskDone(options: TaskOptions & { id: string }): Result<{ task: Task }> {
+  try {
+    const { root, now, id } = options;
+    requireInitialized(root);
+    const task = taskOrFail(root, id);
+
+    if (task.status === "DONE") {
+      return ok({ task });
+    }
+    if (task.status !== "VERIFIED") {
+      throw new MichiError({
+        class: "BLOCKED", code: "BLOCKED",
+        message: `${id} is ${task.status}, and only a VERIFIED task can be closed.`,
+        detail: { status: task.status, verification: task.verification.status },
+        next: task.verification.status === "PASSED"
+          ? `Nothing is missing — close it from VERIFIED.`
+          : `Get evidence first: ${cmd(`verify ${id}`)}`,
+      });
+    }
+
+    const timestamp = now();
+    const closed = save(root, { ...task, status: "DONE" }, timestamp);
+    renameSync(taskPath(root, id), completedPath(root, id));
+    syncCounts(root, timestamp);
+    return ok({ task: closed });
   } catch (e) {
     return errorPayload(MichiError.from(e));
   }

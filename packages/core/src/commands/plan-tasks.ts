@@ -28,6 +28,7 @@ import { cmd } from "../identity.js";
 
 const ROADMAP = join("tasks", "roadmap.yaml");
 const ACTIVE = join("tasks", "active");
+const COMPLETED = join("tasks", "completed");
 
 export interface PlanTasksOptions {
   root: string;
@@ -58,13 +59,27 @@ export function taskPath(root: string, id: string): string {
   return join(brainDir(root), ACTIVE, `${id}.yaml`);
 }
 
+export function completedPath(root: string, id: string): string {
+  return join(brainDir(root), COMPLETED, `${id}.yaml`);
+}
+
+/**
+ * Every task, open or closed.
+ *
+ * A closed task stays readable: it is what a dependent task's readiness is
+ * derived from, and what `task show` answers from a year later. Moving the
+ * file is filing, not deletion (P10).
+ */
 export function loadTasks(root: string): Task[] {
-  const dir = join(brainDir(root), ACTIVE);
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((f) => /^TASK-\d{3,}\.yaml$/.test(f))
-    .sort()
-    .map((f) => readYaml(join(dir, f), TaskSchema));
+  const out: Task[] = [];
+  for (const dir of [ACTIVE, COMPLETED]) {
+    const at = join(brainDir(root), dir);
+    if (!existsSync(at)) continue;
+    for (const f of readdirSync(at).filter((f) => /^TASK-\d{3,}\.yaml$/.test(f))) {
+      out.push(readYaml(join(at, f), TaskSchema));
+    }
+  }
+  return out.sort((a, b) => a.task_id.localeCompare(b.task_id));
 }
 
 /** `PENDING`/`READY` is recomputed from the dependencies on every read. */

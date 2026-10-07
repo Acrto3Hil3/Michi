@@ -170,20 +170,36 @@ records what the agent said: files touched, test counts, notes, and any decision
 it needed and did not have.
 
 **Nothing in a report moves a task towards `VERIFIED`.** The verification record
-is written by a separate act against observed results (P3). That is Phase 7, and
-until it exists `verification.status` stays `PENDING` no matter what an agent
+is written by a separate act against observed results (P3): `michi verify`, and
+nothing else. `verification.status` stays `PENDING` no matter what an agent
 reports.
 
 Three attempts with no progress marks the task `STALLED`, and handing it over
 again is refused. Looping is not persistence.
 
-### What Phase 6 does not build
+### Evidence carries who produced it
 
-`TESTING`, `REVIEWING`, `VERIFIED` and `DONE` are in the state table and no
-Phase 6 command drives a task into them: reaching them requires evidence, which
-is Phase 7's subject.
+Every piece of evidence records `produced_by`:
 
-`michi task split` is in `CLI_CONTRACT.md` and is **not implemented**. Splitting
+| | `MICHI` | `AGENT` |
+|---|---|---|
+| Written by | `michi test --run <key>` | `michi test --record <file>` |
+| Means | Core ran an allow-listed command and watched it | something was reported to Core |
+| Carries | `allow_key`, `command`, `cwd`, `started_at`, `ended_at`, `exit_code`, `output_summary` | none of those |
+
+The schema enforces both directions: `MICHI` evidence without its process
+record is invalid, and `AGENT` evidence carrying any of those fields is also
+invalid — that would imply Core observed something it did not (P9).
+
+`michi verify` writes `verification.verified_at` and a `criteria` entry per
+acceptance criterion, each `SATISFIED`, `UNSATISFIED` or `NOT_APPLICABLE` with
+a reason. The verdict states how much of itself rested on the agent's word.
+
+### What this does not build
+
+`michi task split` is in `CLI_CONTRACT.md` and is **not implemented**.
+
+Splitting
 needs a decision about what happens to the original task — superseded, blocked,
 or deleted — and the contract does not say. Nothing drives it yet: the signal
 will be a `michi context --budget` failure on a real task, and inventing the
@@ -219,7 +235,9 @@ Off-path: `FAILED` · `BLOCKED` · `STALLED` · `NEEDS_HUMAN`
 - `PENDING → READY` only when every dependency task is `DONE`.
 - `VERIFIED` requires a verification record with at least one piece of evidence
   (P3). No evidence, no `VERIFIED`, no exceptions.
-- `DONE` is reachable only from `VERIFIED`.
+- `DONE` is reachable only from `VERIFIED`, and only `michi task done` gets
+  there. Closing moves the task file to `tasks/completed/`; it stays readable,
+  because the next task's readiness is derived from it.
 - `REVIEWING → CHANGES_DETECTED` when the reviewer returns `CHANGES_REQUIRED`.
 - Any state may go to `BLOCKED` or `NEEDS_HUMAN`; both record why.
 - `FAILED → READY` on retry, incrementing `attempt`.

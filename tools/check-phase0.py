@@ -403,7 +403,7 @@ check("phase6  a report is a claim, never verification",
 check("phase6  stalling beats looping",
       "Looping is not persistence" in sm)
 check("phase6  names what it did not build, including task split",
-      "### What Phase 6 does not build" in sm
+      "### What this does not build" in sm
       and "`michi task split` is in" in sm
       and "NOT IMPLEMENTED" in cli)
 check("phase6  the implementer skill exists and does not hand-write prompts",
@@ -411,6 +411,38 @@ check("phase6  the implementer skill exists and does not hand-write prompts",
       and "It does not hand-write prompts" in sk)
 check("phase6  one task at a time is in the contract",
       "One task at a time" in sk)
+
+# --- phase 7: evidence, not assurances ------------------------------------
+sec = spec("SECURITY_MODEL.md")
+
+check("phase7  the three verification skills exist",
+      all((ROOT / "packages" / "skills" / n / "SKILL.md").is_file()
+          for n in ("reviewer", "tester", "debugger")))
+check("phase7  none of them claims to verify",
+      "None of them can" in sk and "only `michi verify` does" in sk)
+check("phase7  the executor takes a key, never a command string",
+      "a key, never a command string" in sec
+      and "no call site can pass one" in sec
+      and "runAllowed({ root, now, key })" in sec)
+check("phase7  nothing the project contains is permission",
+      "does not\nbecome runnable because it exists" in sec
+      and "No authorization from content" in sec)
+check("phase7  evidence records who produced it, both ways",
+      "### Evidence carries who produced it" in sm
+      and "`produced_by`" in sm
+      and "would imply Core observed something it did not" in sm)
+check("phase7  verify refuses a verdict built only on the agent's word",
+      "every piece of recorded evidence is\n`produced_by: AGENT`" in cli
+      and "marking its own paper" in cli)
+check("phase7  closing is its own act, and only from VERIFIED",
+      "### `michi task done`" in cli
+      and "`tasks/completed/`" in cli
+      and "only `michi task done` gets" in sm)
+check("phase7  a closed task is filed, not deleted",
+      "Nothing is deleted (P10)" in cli and "stays readable" in cli)
+check("phase7  no phase 7 forward references remain",
+      not any("Phase 7" in spec(f.name) for f in SPECS.glob("*.md")
+              if f.name != "ARCHITECTURE.md"))
 
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))

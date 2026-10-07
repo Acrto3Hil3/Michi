@@ -113,7 +113,7 @@ behaviour. See
 - **OQ-006** MICHI Core may execute an allow-listed set of local verification
   commands and capture real results. It never edits source code. Evidence is
   tagged `produced_by: MICHI` or `produced_by: AGENT` and the two are never
-  merged. Executor lands in Phase 7.
+  merged. The executor takes an allow-list *key*, never a command string.
 
 - **OQ-009** a specification revision flags the individual locked decisions
   governing the requirements it moved (`needs_review`, `review_reason`), never
@@ -138,24 +138,42 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-Next: **Phase 7** — the `reviewer`, `tester` and `debugger` skills and the
-verification engine. That is where a reported task becomes a verified one, and
-where OQ-006's allow-listed executor finally gets built.
+Next: **Phase 8** — agent adapters (Cursor, Codex, Gemini CLI, Copilot,
+Windsurf), then **Phase 9**, the open-source release.
 
-Phase 6's shape, before extending it:
+Phase 7's shape, before extending it:
+
+- **`runAllowed` is the only place Core executes anything**, and its signature
+  is the enforcement: it takes `{ root, now, key }` and has no parameter for a
+  command. Do not add one. The command comes from `verification.allow[key]` in
+  the user's own config; a `package.json` script, a README, a comment and an
+  agent's report are all data, not permission.
+- **`verify` refuses a verdict built only on the agent's word.** At least one
+  piece of `produced_by: MICHI` evidence must exist and have passed. The
+  schema enforces provenance both ways — `MICHI` evidence without its process
+  record is invalid, and `AGENT` evidence carrying `allow_key`, `cwd`,
+  `started_at` or `ended_at` is invalid too, because that would imply Core
+  observed something it did not (P9).
+- **Verifying and closing are separate acts.** `verify` reaches `VERIFIED`;
+  `task done` reaches `DONE` and moves the file to `tasks/completed/`. A closed
+  task stays readable — `loadTasks` reads both directories, because the next
+  task's `READY` is derived from its dependencies being `DONE`.
+- `debug` refuses `FIX` or `VERIFY` before a `REPRODUCE` exists.
+
+Phase 6's shape:
 
 - **No edge claims a file implements a requirement.** A task reports what it
   implements (`IMPLEMENTS → REQUIREMENT`) and what it touched
   (`TOUCHED → FILE`), separately. Any file-to-requirement relationship is
   derived through the task and carries its uncertainty. Touching a file does
-  not make it the implementation, and `verified` stays `false` until Phase 7
-  can say otherwise.
+  not make it the implementation, and `verified` stays `false` until the
+  task's verification passes.
 - **The compiled instruction is not stored.** It is a generated artifact,
   reproducible from state; the run record keeps its `instruction_hash` as proof
   of what was handed over. Do not write it to disk, and never edit one.
 - **A report is a claim.** `task report` moves a task to `CHANGES_DETECTED` and
   nothing in it can move one towards `VERIFIED`. The verification record is
-  written from observed results, which is Phase 7's whole subject.
+  written from observed results by `michi verify`, and nothing else.
 - **Readiness is derived**, like a discovery session's status: `PENDING`/`READY`
   is recomputed from dependencies on every read.
 - `michi task split` is deliberately **not implemented** — it needs a lifecycle

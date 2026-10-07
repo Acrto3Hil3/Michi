@@ -139,8 +139,8 @@ graph claims more than happened.
 A `FILE` node records `reported_by` (the task that named it, or null if the
 scanner found it), `exists` (whether it is actually on disk — an agent can
 report a file it later removed), and `verified`, which is `false` until the
-task's verification passes. Phase 7 is what can change that; until then
-*reported* is the strongest honest word.
+task's verification passes. Until `michi verify` passes on evidence MICHI
+observed, *reported* is the strongest honest word.
 
 `GOVERNS` is listed above as `DECISION → COMPONENT`. Components do not exist;
 the edge that does exist, and that the architecture gate already depends on, is

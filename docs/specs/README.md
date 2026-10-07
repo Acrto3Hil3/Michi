@@ -143,9 +143,9 @@ destructive filesystem operation does not become automatically executable
 because it appears inside a script a test command happens to call. See
 [`SECURITY_MODEL.md`](SECURITY_MODEL.md#verification-execution).
 
-**Scope for now.** Phase 1 defines the contract and the abstraction boundary.
-The executor itself is built in Phase 7. Do not attempt to solve every
-command-security problem before then.
+**The executor** lives in `core/src/verification/execute.ts` and takes an
+allow-list *key*, never a command string — the signature is the enforcement.
+See [`SECURITY_MODEL.md`](SECURITY_MODEL.md#the-executor).
 
 ---
 

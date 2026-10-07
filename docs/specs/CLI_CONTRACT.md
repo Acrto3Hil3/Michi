@@ -517,8 +517,8 @@ compiled prompt is a generated artifact and is reproducible from state, so the
 run record keeps its hash instead.
 
 `task report` records the agent's own account. It moves the task to
-`CHANGES_DETECTED` and never towards `VERIFIED` — that needs evidence, and
-evidence is Phase 7.
+`CHANGES_DETECTED` and never towards `VERIFIED` — that needs evidence, which
+only `michi test --run` and `michi verify` can produce.
 
 ### `michi review` · `michi test` · `michi debug`
 
@@ -541,7 +541,7 @@ michi test <task-id> --run test           run the allow-listed command itself
 `--run <key>` names an entry in `verification.allow`; it is not a command
 string, and no command may be passed at the call site. Results captured this way
 are recorded `produced_by: MICHI`; `--record` results are `produced_by: AGENT`.
-The executor itself lands in Phase 7. `review` with `CHANGES_REQUIRED` returns the task to
+`review` with `CHANGES_REQUIRED` returns the task to
 `CHANGES_DETECTED`. `debug` advances the disciplined process and refuses to
 reach `FIX` before a reproduction is recorded — the process is the point, and a
 CLI that lets you skip to the fix is not enforcing it.
@@ -561,6 +561,28 @@ the verdict states which it rested on. Every criterion must be `SATISFIED`, `UNS
 **Only this command can move a task to `VERIFIED`** (P3), and only `VERIFIED`
 tasks can be `DONE`. There is no override flag. If that becomes annoying, the
 acceptance criteria were written wrong, and that is the thing to fix.
+
+It refuses, with exit 5, when every piece of recorded evidence is
+`produced_by: AGENT`. An agent reporting that its own work passed is the party
+being judged marking its own paper; MICHI must have observed at least one
+check, and that check must have passed. It also refuses while any acceptance
+criterion is unaddressed, and a `SATISFIED` criterion whose cited evidence
+MICHI never observed is reported as resting on the agent's word.
+
+### `michi task done`
+
+```bash
+michi task done <task-id> [--json]
+```
+
+Closes a `VERIFIED` task: sets `DONE` and moves its file from
+`tasks/active/` to `tasks/completed/`. Nothing is deleted (P10), and a closed
+task stays readable — `task show` answers from it, and dependent tasks derive
+their readiness from it.
+
+Verifying and closing are separate acts because they answer different
+questions: whether the evidence holds, and whether this piece of work is
+finished with. Closing anything not `VERIFIED` is refused with exit 5.
 
 ### `michi explain`
 

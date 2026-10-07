@@ -13,6 +13,7 @@ import type {
   ContextPacket, ProjectGraph,
   PlanTasksData, PlanValidateData, TaskListData, TaskShowData, TaskNextData,
   TaskStartData, TaskReportData, Task,
+  RunTestData, ReviewData, DebugData, VerifyData,
 } from "@michi/core";
 import { cmd } from "@michi/core";
 
@@ -696,6 +697,18 @@ export function renderTaskReport(data: TaskReportData): string[] {
   return lines;
 }
 
+export function renderTaskDone(data: { task: Task }): string[] {
+  const observed = data.task.verification.evidence.filter((e) => e.produced_by === "MICHI").length;
+  return [
+    `${data.task.task_id} is DONE — ${data.task.title}`,
+    "",
+    bullet(`Verified on ${observed} check${observed === 1 ? "" : "s"} MICHI ran itself.`),
+    bullet("Filed under tasks/completed. Nothing was deleted."),
+    "",
+    "Anything waiting on it can now start.",
+  ];
+}
+
 export function renderTaskBlock(data: { task: Task }): string[] {
   return [
     `${data.task.task_id} is BLOCKED.`,
@@ -704,4 +717,87 @@ export function renderTaskBlock(data: { task: Task }): string[] {
     "",
     "It stays on the plan. Nothing was deleted.",
   ];
+}
+
+
+// ---------------------------------------------------------------------------
+// Verification
+// ---------------------------------------------------------------------------
+
+export function renderTest(data: RunTestData): string[] {
+  const e = data.evidence;
+  const observed = e.produced_by === "MICHI";
+  const lines = [
+    observed
+      ? `MICHI ran this itself and observed the result.`
+      : `Recorded what the agent reported. MICHI did not observe this.`,
+    "",
+  ];
+  if (observed) {
+    lines.push(bullet(`Command   ${e.command}`));
+    lines.push(bullet(`From      verification.allow.${e.allow_key}`));
+    lines.push(bullet(`Exit      ${e.exit_code}  ${data.passed ? "(passed)" : "(FAILED)"}`));
+  } else {
+    lines.push(bullet(`Reported  ${e.summary}`));
+    lines.push(bullet(`Kind      ${e.kind}`));
+  }
+  if (e.output_summary) {
+    lines.push("", "Output:", ...e.output_summary.split("\n").slice(0, 20).map((l) => `      ${l}`));
+    if (e.output_truncated) lines.push("      … truncated");
+  }
+  lines.push("", `${data.task.task_id} is now ${data.task.status}.`);
+  if (!data.passed) {
+    lines.push("", "That failed. Nothing is verified on a failing check.");
+  }
+  return lines;
+}
+
+export function renderReview(data: ReviewData): string[] {
+  const lines = [`Review of ${data.task.task_id}: ${data.verdict}`, ""];
+  if (data.findings.length === 0) {
+    lines.push("No findings.");
+  } else {
+    for (const f of data.findings) {
+      lines.push(bullet(`${f.file}${f.line ? `:${f.line}` : ""}`));
+      lines.push(`      ${f.problem}`);
+      lines.push(`      Why it matters: ${f.why}`);
+      lines.push(`      Do instead:     ${f.fix}`);
+    }
+  }
+  lines.push("", `${data.task.task_id} is now ${data.task.status}.`);
+  if (data.verdict === "PASS") {
+    lines.push("", "A review is one person's judgement, recorded as such. It is not",
+      "evidence that the work runs.");
+  }
+  return lines;
+}
+
+export function renderDebug(data: DebugData): string[] {
+  const lines = [`Debugging ${data.task.task_id}`, "", "Recorded so far:"];
+  for (const s of data.stages) lines.push(bullet(`${s.stage.padEnd(12)} ${s.note}`));
+  return lines;
+}
+
+export function renderVerify(data: VerifyData): string[] {
+  const v = data.task.verification;
+  const lines = [
+    v.status === "PASSED"
+      ? `${data.task.task_id} is VERIFIED.`
+      : `${data.task.task_id} did NOT verify.`,
+    "",
+  ];
+  for (const c of v.criteria) {
+    lines.push(bullet(`${c.id.padEnd(10)} ${c.status.padEnd(15)} ${c.reason}`));
+  }
+  lines.push(
+    "",
+    `Rested on: ${data.rested_on.michi} criterion/criteria backed by something MICHI observed, ` +
+      `${data.rested_on.agent} by the agent's word alone.`,
+  );
+  if (data.warnings.length > 0) {
+    lines.push("", "Worth knowing:");
+    for (const w of data.warnings) lines.push(bullet(w));
+  }
+  lines.push("", `${data.task.task_id} is now ${data.task.status}.`);
+  return lines;
 }

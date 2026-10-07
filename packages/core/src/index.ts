@@ -100,7 +100,16 @@ export type { Task, TaskState, Roadmap, RunRecord, Evidence } from "./schemas/ta
 export { INSTRUCTION_SECTIONS, compileInstruction } from "./prompt/compile.js";
 export { planTasks, planValidate, loadTasks, withDerivedReadiness } from "./commands/plan-tasks.js";
 export type { PlanTasksOptions, PlanTasksData, PlanValidateData } from "./commands/plan-tasks.js";
-export { taskList, taskShow, taskNext, taskStart, taskReport, taskBlock } from "./commands/task.js";
+export { taskList, taskShow, taskNext, taskStart, taskReport, taskBlock, taskDone } from "./commands/task.js";
 export type {
   TaskOptions, TaskListData, TaskShowData, TaskNextData, TaskStartData, TaskReportData,
 } from "./commands/task.js";
+
+export { runAllowed } from "./verification/execute.js";
+export type { RunAllowedOptions, RunAllowedData } from "./verification/execute.js";
+export {
+  runTest, recordTest, review, debugStage, verify, DEBUG_STAGES,
+} from "./commands/verify.js";
+export type {
+  VerifyOptions, RunTestData, ReviewData, DebugData, DebugStage, VerifyData,
+} from "./commands/verify.js";

@@ -326,10 +326,16 @@ Levels: unit · integration · API · E2E · security · regression · performan
 Tests assert **behaviour, not implementation** (§119) — a test that breaks when
 a function is renamed but nothing behaves differently is a liability.
 
-Every acceptance criterion needs a test that proves it, and the resulting
-`SATISFIES` edge is what makes coverage answerable later.
+Every acceptance criterion needs a test that proves it, and the `VERIFIES`
+edge from criterion to requirement is what makes coverage answerable later.
 
 Failures are reported as failures, with output. Never as "mostly passing".
+
+The skill records results through `michi test`, which has exactly two forms:
+`--run <key>` for a command the user allow-listed, which MICHI runs and
+observes, and `--record <file>` for something only the agent saw. It may not
+pass a command string, and it may not work around a missing allow-list entry —
+the honest move is to ask the user to add one.
 
 ---
 
@@ -339,6 +345,11 @@ Failures are reported as failures, with output. Never as "mostly passing".
 REPRODUCE → OBSERVE → FORM HYPOTHESES → TEST HYPOTHESES → IDENTIFY ROOT CAUSE
 → CREATE FIX PLAN → IMPLEMENT FIX → RUN TESTS → VERIFY → DOCUMENT
 ```
+
+`michi debug --stage` records six of these —
+`REPRODUCE · OBSERVE · HYPOTHESIS · ROOT_CAUSE · FIX · VERIFY` — and refuses
+`FIX` or `VERIFY` before a `REPRODUCE` exists. Recording every intermediate
+thought is not the point; the ordering is.
 
 **Reproduction is evidence, and it comes first.** A bug that cannot be
 reproduced cannot be confirmed fixed — the honest report is "could not
@@ -358,6 +369,16 @@ failure.
 
 **Document** in the task record: what was wrong, why it happened, what fixed it,
 what now prevents it. A bug fixed and not written down gets reintroduced.
+
+---
+
+## None of the three verify anything
+
+`reviewer`, `tester` and `debugger` all record into the task. **None of them can
+move a task to `VERIFIED`** — only `michi verify` does, and it weighs the
+evidence rather than taking the skill's word for it. A passed review is a
+judgement; a recorded test result may be a claim; only what MICHI ran itself is
+an observation. The verdict says which is which.
 
 ---
 

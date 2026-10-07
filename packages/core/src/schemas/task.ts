@@ -34,17 +34,56 @@ export function readyFrom(
   return dependencies.every((id) => statuses[id] === "DONE") ? "READY" : "PENDING";
 }
 
-/** STATE_MODEL.md's evidence kinds, and who observed them (OQ-006). */
-export const EvidenceSchema = z.object({
-  kind: z.enum([
-    "TESTS", "BUILD", "TYPECHECK", "LINT", "REVIEW", "RUNTIME",
-    "SECURITY", "SCREENSHOT", "REPRODUCTION",
-  ]),
-  produced_by: z.enum(["MICHI", "AGENT"]),
-  command: z.string().min(1).nullable().default(null),
-  exit_code: z.number().int().nullable().default(null),
-  output_summary: z.string().nullable().default(null),
-});
+/**
+ * STATE_MODEL.md's evidence kinds, and who observed them (OQ-006).
+ *
+ * `produced_by` is the most important field here. `MICHI` evidence must carry
+ * the full process record, so every execution traces back to a key the user
+ * wrote into `verification.allow`. `AGENT` evidence must NOT carry those
+ * fields: decorating a report with `allow_key` and timings would dress a claim
+ * up as an observation, and keeping the two apart is the whole point.
+ */
+export const EvidenceSchema = z
+  .object({
+    kind: z.enum([
+      "TESTS", "BUILD", "TYPECHECK", "LINT", "REVIEW", "RUNTIME",
+      "SECURITY", "SCREENSHOT", "REPRODUCTION",
+    ]),
+    produced_by: z.enum(["MICHI", "AGENT"]),
+    command: z.string().min(1).nullable().default(null),
+    exit_code: z.number().int().nullable().default(null),
+    output_summary: z.string().nullable().default(null),
+    /** The entry in `verification.allow` that authorised this. MICHI only. */
+    allow_key: z.string().min(1).nullable().default(null),
+    cwd: z.string().min(1).nullable().default(null),
+    started_at: z.string().datetime().nullable().default(null),
+    ended_at: z.string().datetime().nullable().default(null),
+    output_truncated: z.boolean().default(false),
+    /** Whatever the agent said, for AGENT evidence. */
+    summary: z.string().min(1).nullable().default(null),
+    verdict: z.string().min(1).nullable().default(null),
+    by: z.string().min(1).nullable().default(null),
+  })
+  .superRefine((e, ctx) => {
+    const fail = (path: string, message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+
+    if (e.produced_by === "MICHI") {
+      if (!e.allow_key) {
+        fail("allow_key", "MICHI evidence must name the allow_key that authorised the command");
+      }
+      if (!e.command) fail("command", "MICHI evidence must record the command it ran");
+      if (!e.started_at) fail("started_at", "MICHI evidence must record when it started");
+      if (!e.ended_at) fail("ended_at", "MICHI evidence must record when it ended");
+      return;
+    }
+    // AGENT evidence is a claim. Never let it wear the clothes of an observation.
+    for (const field of ["allow_key", "cwd", "started_at", "ended_at"] as const) {
+      if (e[field] !== null) {
+        fail(field, `AGENT evidence may not carry ${field} — that would imply MICHI observed it`);
+      }
+    }
+  });
 export type Evidence = z.infer<typeof EvidenceSchema>;
 
 export const TaskSchema = z
@@ -75,7 +114,17 @@ export const TaskSchema = z
     files_touched: z.array(z.string().min(1)),
     verification: z.object({
       status: z.enum(["PENDING", "PASSED", "FAILED"]),
+      verified_at: z.string().datetime().nullable().default(null),
       evidence: z.array(EvidenceSchema),
+      /** Each acceptance criterion, addressed. An unaddressed one blocks VERIFIED. */
+      criteria: z
+        .array(z.object({
+          id: z.string().min(1),
+          status: z.enum(["SATISFIED", "UNSATISFIED", "NOT_APPLICABLE"]),
+          reason: z.string().min(1),
+          evidence: z.array(z.string().min(1)).default([]),
+        }))
+        .default([]),
     }),
     blocked_reason: z.string().min(1).nullable().default(null),
     created_at: z.string().datetime(),
