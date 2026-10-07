@@ -63,8 +63,10 @@ Nothing is implemented yet. The intended package layout is in
    fresh init, a second init (must write 0 files), `--agent=<one>`, a bad
    `--agent`, `status`, `uninstall`, then `npm pack --dry-run`. Use a scratch
    directory.
-8. **Commits are authored `Subhash Yadav <subhashyadav98146@gmail.com>` only.**
-   No Claude author line, no Claude co-author line.
+8. **Commits are authored `Subhash Yadav <subhashyadav98146@gmail.com>`**, and
+   carry `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` as a trailer.
+   The author line is always the owner's; the co-author trailer records that
+   the work was done with Claude Code. Never put Claude on the author line.
 9. **Never publish or push without explicit say-so.** Not `npm publish`, not
    `git push`, not creating the GitHub repo.
 
