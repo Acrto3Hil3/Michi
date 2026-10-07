@@ -39,23 +39,38 @@ vendor behaviour.
 interface AgentAdapter {
   readonly id: string;              // 'claude-code', 'cursor', 'codex', …
   readonly displayName: string;
+  readonly capabilities: Capabilities;
 
-  /** Is this agent present in the project or on the machine? */
+  /** Is this agent present in the project? Reads; never writes. */
   detect(projectRoot: string): Promise<DetectionResult>;
 
-  /** Where MICHI's instruction files belong for this agent. */
-  installPlan(projectRoot: string): InstallPlan;
-
-  /** Render a skill into this agent's expected format. */
-  renderSkill(skill: Skill): RenderedFile[];
+  /** What should be written for this agent, skills included. Pure. */
+  installPlan(context: InstallContext): InstallPlan;
 
   /** Optional per-agent context defaults. */
-  readonly defaults?: {
-    budgetTokens?: number;
-    tokensPerChar?: number;
-  };
+  readonly defaults?: { budgetTokens?: number };
 }
 ```
+
+`installPlan` takes the skills rather than an adapter reaching for them, and
+returns every file including the rendered skills — so one call is the whole
+answer and there is nothing to keep in step. An adapter chooses where a skill
+goes and how it is framed, never what it says.
+
+`capabilities` is what "degrading gracefully" below is derived from:
+
+```ts
+interface Capabilities {
+  native_skills: boolean;          // loads a directory of skills in MICHI's format
+  runs_commands: boolean | null;   // null = MICHI does not know, which is not false
+}
+```
+
+There is deliberately **no method for packaging the compiled instruction**. The
+compiled instruction is canonical and agent-independent: `michi task start`
+prints it, and that is the handoff. Adapters change where an agent reads its
+*standing* instructions, never the brief for a particular task — which is why
+switching agents mid-build needs no migration.
 
 Adapters are **pure**. They describe what should be written; they do not write
 it. Installation is performed by the CLI under the permission policy, so that
@@ -98,9 +113,18 @@ of whether this boundary is holding: if adding an agent requires touching
 ## Install behaviour
 
 ```text
-michi init                 detect installed agents → propose → ask → write
-michi init --agent cursor  install for a named agent
+michi agents                      detect → propose → write nothing
+michi install --agent <id>…       install for named agents, repeatable
+michi --dry-run install --agent … show the plan, write nothing
+michi init --agent <id>           set up and install in one go
 ```
+
+`michi agents` is detection on its own: it lists every adapter, what each
+would write, whether MICHI knows the agent can run commands, and what it saw
+in this project. It writes nothing, and it ends by naming the command the user
+would run — because detection proposes and the user decides.
+
+`michi install` with no `--agent` installs `manual`: the baseline alone.
 
 Detection proposes; it does not decide. A repository containing both
 `.claude/` and `.cursor/` gets asked, not guessed.
@@ -108,6 +132,13 @@ Detection proposes; it does not decide. A repository containing both
 Installation is idempotent and never destructive (P10): existing files are
 never overwritten. A conflict is reported, with a diff, and left for the user.
 Somebody's hand-tuned `AGENTS.md` is not MICHI's to clobber.
+
+The planner has three outcomes — `WRITE`, `UNCHANGED`, `CONFLICT` — and no
+`DELETE` or `OVERWRITE`, by construction rather than by care. A conflict exits
+7 and still writes every other file: a partial install the user can finish
+beats refusing the whole thing. Installing for several agents at once writes
+the shared baseline once, which is safe because the baseline is identical by
+construction and a test holds it so.
 
 ## The handoff contract
 
@@ -139,6 +170,11 @@ Adapters declare what they support. MICHI adjusts what it asks for, states
 plainly what it could not verify, and never quietly downgrades its standard for
 "done" (P9).
 
+`runs_commands: null` is the honest answer where MICHI cannot tell — GitHub
+Copilot being the current case. It is reported as "unknown whether it runs
+commands", never as "cannot", and the install says that if the agent cannot run
+commands then verification for those tasks is a human step.
+
 ## What adapters may never do
 
 - Change the engineering process — same seven skills, same workflow, everywhere.
@@ -147,4 +183,11 @@ plainly what it could not verify, and never quietly downgrades its standard for
 - Send anything anywhere. Adapters write local files, nothing else (P8).
 - Add a vendor SDK dependency to Core, or any model call anywhere below the
   Experience Layer.
-- Assume a model, a context window, or a pricing model.
+- Assume a model, a context window, or a pricing model. An adapter may
+  *suggest* a budget in tokens; the counting method stays `chars/4` with its
+  label (OQ-005), and the CLI resolves the suggestion to a number before Core
+  sees it. Core is never handed an agent's name.
+- Store a credential. Nothing an adapter plans contains a key, a token or a
+  password, and `.michi/` holds none either.
+- Read or write `.michi/`. Adapters plan files beside the project, and a test
+  holds that no planned path is inside the state directory.

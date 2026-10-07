@@ -16,6 +16,7 @@ import type {
   RunTestData, ReviewData, DebugData, VerifyData,
 } from "@michi/core";
 import { cmd } from "@michi/core";
+import type { AgentsData, InstallData } from "./agents.js";
 
 const bullet = (s: string) => `  ${s}`;
 
@@ -801,3 +802,67 @@ export function renderVerify(data: VerifyData): string[] {
   lines.push("", `${data.task.task_id} is now ${data.task.status}.`);
   return lines;
 }
+
+
+// ---------------------------------------------------------------------------
+// Agents — the adapter boundary. Detection proposes; it never decides.
+// ---------------------------------------------------------------------------
+
+export function renderAgents(data: AgentsData): string[] {
+  const lines: string[] = [];
+  const found = data.agents.filter((a) => a.present && a.id !== "manual");
+
+  if (found.length === 0) {
+    lines.push("No coding agent found in this project.", "");
+    lines.push("That is not a problem: AGENTS.md and the michi CLI are the whole");
+    lines.push("integration, and every agent can read them.", "");
+  } else {
+    lines.push(`Found ${found.length === 1 ? "one agent" : `${found.length} agents`} in this project:`, "");
+    for (const a of found) {
+      lines.push(bullet(`${a.name}  (${a.id})`));
+      for (const e of a.evidence) lines.push(`      saw ${e}`);
+    }
+    lines.push("");
+  }
+
+  lines.push("MICHI can install for:", "");
+  for (const a of data.agents) {
+    const runs = a.runs_commands === true ? "runs commands"
+      : a.runs_commands === false ? "cannot run commands"
+      : "unknown whether it runs commands";
+    lines.push(bullet(`${a.id.padEnd(12)} ${a.name}`));
+    lines.push(`      ${a.writes.length === 1 ? a.writes[0] : `${a.writes.length} files`} · ${runs}`);
+  }
+
+  lines.push("", "Nothing was written. Pick one — MICHI will not choose for you:", "");
+  lines.push(`  michi install --agent ${found[0]?.id ?? "manual"}`);
+  return lines;
+}
+
+export function renderInstall(data: InstallData): string[] {
+  const lines: string[] = [];
+
+  if (data.dry_run) {
+    lines.push(`Would install for ${data.agents.join(", ")}. Nothing was written.`, "");
+    for (const p of data.would_write) lines.push(bullet(`new       ${p}`));
+    for (const p of data.unchanged) lines.push(bullet(`already   ${p}`));
+  } else {
+    lines.push(`Installed for ${data.agents.join(", ")}.`, "");
+    for (const p of data.written) lines.push(bullet(`wrote     ${p}`));
+    for (const p of data.unchanged) lines.push(bullet(`unchanged ${p}`));
+  }
+
+  for (const c of data.conflicts) {
+    lines.push("", `${c.path} already exists and differs. MICHI did not touch it.`, "");
+    for (const line of c.diff) lines.push(`      ${line}`);
+  }
+
+  if (data.notes.length > 0) {
+    lines.push("");
+    for (const note of data.notes) lines.push(bullet(note));
+  }
+
+  lines.push("", "Nothing in .michi/ changed, and no application code was touched.");
+  return lines;
+}
+

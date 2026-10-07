@@ -125,20 +125,42 @@ instead of stalling.
 Initialize MICHI in an existing project.
 
 ```bash
-michi init [--agent <name>] [--force]
+michi init [--agent <name>...] [--force]
 ```
 
 Detects project type, package manager, framework, language, database, ORM, test
-framework, deployment configuration, repository structure, and which coding
-agents are installed. **Shows the findings, then asks permission** before
-writing anything (§57).
+framework, deployment configuration and repository structure. **Shows the
+findings, then asks permission** before writing anything (§57).
 
-Creates `.michi/`, the initial project map, initial state (`stage: DISCOVERY`),
-and the agent integration files for the detected or named agent.
+Creates `.michi/`, the initial project map and initial state
+(`stage: DISCOVERY`). With `--agent` it then installs that agent's integration
+files, exactly as `michi install` would. Without `--agent` it writes no agent
+files at all and points at `michi agents` — detection proposes, and MICHI does
+not pick an agent on the user's behalf.
 
 Never modifies application source code. Idempotent: a second run reports what
 exists and writes nothing. `--force` re-scaffolds missing files only — it never
 overwrites a file with content.
+
+### `michi agents` · `michi install`
+
+```bash
+michi agents                             what MICHI can install for, and what is here
+michi install [--agent <id>...]          write those agents' integration files
+michi --dry-run install --agent <id>     show the plan, write nothing
+```
+
+`agents` reads and writes nothing: it lists every adapter, what each would
+write, whether MICHI knows the agent can run commands, and what it saw in this
+project — then names the command the user would run. Detection proposes.
+
+`install` defaults to `manual`, which writes the baseline `AGENTS.md` alone,
+sufficient on its own for any agent.
+
+Installation is idempotent and never overwrites: an existing file with
+different content is a conflict, reported with a diff, exit 7, with every other
+file still written. Agent-specific knowledge lives only in `adapters/`; a test
+greps for an agent's name outside it (`AGENT_ADAPTER_MODEL.md`).
 
 ### `michi scan`
 
@@ -456,7 +478,7 @@ warnings — a young project is legitimately full of them.
 ### `michi context`
 
 ```bash
-michi context <focus> [--json] [--budget <tokens>] [--explain]
+michi context <focus> [--json] [--budget <tokens> | --agent <id>] [--explain]
                       [--include <ids>] [--exclude <ids>]
 ```
 
@@ -467,6 +489,11 @@ requirement one.
 Resolves and prints the context packet: what is included, at which tier, and —
 importantly — what was excluded and why (§63). `--explain` adds the ranking
 score for each candidate, which is how you debug a selection that looks wrong.
+
+`--agent <id>` uses that adapter's default budget instead of naming a number.
+The CLI resolves it to a number; Core never hears the agent's name (P8).
+Passing both `--agent` and `--budget` is a usage error rather than a silent
+precedence rule.
 
 ```text
 Context for TASK-034

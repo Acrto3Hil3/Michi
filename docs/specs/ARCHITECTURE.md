@@ -139,6 +139,7 @@ Start with three packages. Split further only when a real boundary demands it.
 michi/
 ├── packages/
 │   ├── core/          the engines, schemas and state layer
+│   ├── adapters/      the only place an agent's name means anything
 │   ├── cli/           the binary; thin — argument parsing and rendering
 │   └── skills/        the seven SKILL.md files and their templates
 │
@@ -157,10 +158,16 @@ docs and help text — so that resolving OQ-002 is a configuration change rather
 than a rename across the repository. These specifications say "Core", "the CLI"
 and "the binary" for the same reason.
 
-`scanner/` and `adapters/` are described in §65 as separate packages. They start
-as directories inside `core/`; they graduate to packages when something outside
-`core` needs to depend on them alone. Premature package fragmentation is the
-same mistake as premature microservices (P4).
+`scanner/` is described in §65 as a separate package. It starts as a directory
+inside `core/` and graduates when something outside `core` needs to depend on
+it alone. Premature package fragmentation is the same mistake as premature
+microservices (P4).
+
+`adapters/` **is** a package, for a reason that is not fragmentation: the rule
+is that Core must not know which agent consumes its output, and the cleanest
+way to hold that is for Core to be unable to import an adapter at all. It
+depends on `skills` and nothing else — not on `core` — and the CLI composes the
+two.
 
 ## Engines
 
@@ -199,7 +206,11 @@ cli  ────────►  core  ◄──────── skills (via 
 
 Rules, enforceable by lint:
 
-- `core` imports nothing from `cli`, `skills`, or any adapter.
+- `core` imports nothing from `cli`, `skills`, or `adapters`. A test greps for
+  every agent's name outside `adapters/src` and fails on a hit.
+- `adapters` import nothing from `core`, make no network calls, run no
+  commands, and plan no file inside `.michi/`. They describe files; the CLI
+  writes them.
 - `core` makes no network calls and no model calls, ever.
 - `core` **reads** the user's repository — the scanner must, to build the
   project map — and **writes** only inside `.michi/`. Read widely, write

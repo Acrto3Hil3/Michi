@@ -32,14 +32,23 @@ Your agent builds it — and MICHI checks that it actually works
 It is free, open-source, and runs entirely on your own machine. No account, no
 cloud service, no AI subscription of its own. It works with whichever coding
 agent you already use — Claude Code, Codex, Cursor, Gemini CLI, Windsurf,
-Copilot, Cline, and others.
+Copilot, Cline, and others:
+
+```bash
+michi agents                      # what MICHI found, and what it can set up
+michi install --agent cursor      # or claude-code, codex, windsurf, …
+michi install                     # or none of them: AGENTS.md works everywhere
+```
+
+MICHI never overwrites a file you wrote. If your `AGENTS.md` differs from the
+one MICHI would write, it shows you the difference and leaves yours alone.
 
 MICHI doesn't write your code. Your agent does that. MICHI makes sure your
 agent is building the right thing.
 
 ## Status
 
-**Phases 1 to 7 built.** MICHI can look at a project, hold a structured
+**Phases 1 to 8 built.** MICHI can look at a project, hold a structured
 discovery with you through your AI agent, record what you decided, work out
 with you what actually ships first, settle how it gets built, plan the work,
 hand your agent a precise brief for one piece of it, and then check whether the
@@ -111,7 +120,7 @@ The roadmap, in order:
 | 5 | The context engine · `michi context` · `michi graph` | **done** |
 | 6 | The `implementer` skill · the task DAG · the prompt compiler | **done** |
 | 7 | Review, test, debug, verification | **done** |
-| 8 | Agent adapters | not started |
+| 8 | Agent adapters | **done** |
 | 9 | Open-source release | not started |
 
 ## The idea in one line

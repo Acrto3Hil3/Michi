@@ -138,10 +138,34 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-Next: **Phase 8** — agent adapters (Cursor, Codex, Gemini CLI, Copilot,
-Windsurf), then **Phase 9**, the open-source release.
+Next: **Phase 9** — the open-source release (npm, docs, CI, examples).
 
-Phase 7's shape, before extending it:
+Phase 8's shape, before extending it:
+
+- **`packages/adapters` is the only place an agent's name means anything.** A
+  test greps every agent name across `packages/**/*.ts` outside
+  `adapters/src` and fails on a hit. Core cannot import adapters at all, and
+  adapters cannot import Core — the CLI composes the two. If you find yourself
+  adding an agent name to `core` or `cli`, the boundary has leaked and the fix
+  is in `adapters`, not a conditional.
+- **Adapters are pure.** `installPlan` describes files; the CLI writes them,
+  which is where the permission policy lives. There is no `DELETE` and no
+  `OVERWRITE` outcome by construction: a differing file is a `CONFLICT`,
+  reported with a diff, exit 7, with everything else still written.
+- **There is no method for packaging the compiled instruction, deliberately.**
+  The compiled instruction is canonical and agent-independent; `task start`
+  prints it. Adapters change where an agent reads its *standing* instructions,
+  never the brief for one task. Do not add a `renderInstruction`.
+- **`AGENTS.md` is the guarantee, not a fallback.** Every adapter writes the
+  same baseline, a test holds that it is byte-identical across all of them, and
+  another holds that the whole loop is reachable from it. A feature that cannot
+  be expressed through `AGENTS.md` plus the CLI breaks agent-agnosticism.
+- **`runs_commands: null` means unknown, which is not `false`** (P9). Copilot
+  is the current case.
+- An adapter may suggest a **budget**; the CLI resolves it to a number before
+  Core sees it, and the `chars/4` method stays (OQ-005).
+
+Phase 7's shape:
 
 - **`runAllowed` is the only place Core executes anything**, and its signature
   is the enforcement: it takes `{ root, now, key }` and has no parameter for a

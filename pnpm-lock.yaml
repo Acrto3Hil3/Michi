@@ -18,8 +18,17 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.4)
 
+  packages/adapters:
+    dependencies:
+      '@michi/skills':
+        specifier: workspace:*
+        version: link:../skills
+
   packages/cli:
     dependencies:
+      '@michi/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@michi/core':
         specifier: workspace:*
         version: link:../core
@@ -35,6 +44,8 @@ importers:
       zod:
         specifier: ^3.24.1
         version: 3.25.76
+
+  packages/skills: {}
 
 packages:
 

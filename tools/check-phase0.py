@@ -444,6 +444,47 @@ check("phase7  no phase 7 forward references remain",
       not any("Phase 7" in spec(f.name) for f in SPECS.glob("*.md")
               if f.name != "ARCHITECTURE.md"))
 
+# --- phase 8: the agent adapter boundary ----------------------------------
+aam = spec("AGENT_ADAPTER_MODEL.md")
+arch = spec("ARCHITECTURE.md")
+ADAPTERS_SRC = ROOT / "packages" / "adapters" / "src"
+
+check("phase8  adapters are their own package, and core cannot import them",
+      (ADAPTERS_SRC / "adapters.ts").is_file()
+      and "adapters/      the only place an agent" in arch
+      and "`adapters` import nothing from `core`" in arch)
+check("phase8  every target in the contract has an adapter",
+      all(f'"{a}"' in (ADAPTERS_SRC / "adapters.ts").read_text()
+          for a in ("manual", "claude-code", "cursor", "codex", "gemini-cli",
+                    "copilot", "windsurf", "cline")))
+check("phase8  no agent's name appears outside packages/adapters/src",
+      not [p for p in (ROOT / "packages").rglob("*.ts")
+           if "node_modules" not in p.parts and "dist" not in p.parts
+           and "test" not in p.parts and "adapters/src" not in p.as_posix()
+           and re.search(r"\b(claude-code|cursor|codex|gemini|copilot|windsurf|cline)\b",
+                         p.read_text(), re.I)])
+check("phase8  the compiled instruction is not an adapter's business",
+      "no method for packaging the compiled instruction" in aam
+      and "renderSkill" not in aam)
+check("phase8  the baseline is the guarantee, adapters the optimisation",
+      "the baseline is the guarantee" in aam
+      and "### `michi agents` · `michi install`" in cli
+      and "sufficient on its own for any agent" in cli)
+check("phase8  installing is idempotent and has no overwrite action",
+      "`DELETE` or `OVERWRITE`, by construction" in aam
+      and "idempotent and never overwrites" in cli)
+check("phase8  unknown is not false when MICHI cannot tell",
+      "runs_commands: boolean | null" in aam
+      and "null = MICHI does not know" in aam)
+check("phase8  an adapter may suggest a budget, never a counting method",
+      "the counting method stays `chars/4`" in aam
+      and "Core is never handed an agent's name" in aam)
+check("phase8  adapters store no credential and never touch .michi",
+      "Store a credential" in aam and "Read or write `.michi/`" in aam)
+check("phase8  no phase 8 forward references remain",
+      not any("Phase 8" in spec(f.name) for f in SPECS.glob("*.md")
+              if f.name != "ARCHITECTURE.md"))
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

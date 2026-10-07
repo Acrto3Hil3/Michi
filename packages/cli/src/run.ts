@@ -21,7 +21,10 @@ import {
   renderPlanTasks, renderPlanValidate, renderTaskList, renderTaskShow,
   renderTaskNext, renderTaskStart, renderTaskReport, renderTaskBlock, renderTaskDone,
   renderTest, renderReview, renderDebug, renderVerify,
+  renderAgents, renderInstall,
 } from "./render.js";
+import { agents, agentBudget, install } from "./agents.js";
+import type { InstallData } from "./agents.js";
 
 export interface Io {
   out(line: string): void;
@@ -94,18 +97,29 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .command("init")
     .description("set MICHI up in this project")
     .option("--force", "restore missing MICHI files without overwriting anything")
-    .action((local: { force?: boolean }) => {
+    .option("--agent <name...>", "also install the integration files for this agent")
+    .action((local: { force?: boolean; agent?: string[] }) => {
       const g = opts();
+      const started = init({
+        root: root(),
+        now,
+        force: local.force ?? false,
+        dryRun: g.dryRun ?? false,
+      });
+      code = emit(started, g, io, renderInit);
+      if (code !== ExitCode.SUCCESS || g.dryRun) return;
+
+      if (!local.agent || local.agent.length === 0) {
+        if (!g.json && !g.quiet) {
+          io.out("");
+          io.out("No agent files were written. See what MICHI can install for:");
+          io.out("");
+          io.out("  michi agents");
+        }
+        return;
+      }
       code = emit(
-        init({
-          root: root(),
-          now,
-          force: local.force ?? false,
-          dryRun: g.dryRun ?? false,
-        }),
-        g,
-        io,
-        renderInit,
+        install({ root: root(), agentIds: local.agent, dryRun: false }), g, io, renderInstall,
       );
     });
 
@@ -246,11 +260,12 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .command("context <focus>")
     .description("resolve the project knowledge needed to work on one requirement")
     .option("--budget <tokens>", "cap the estimated context size")
+    .option("--agent <name>", "use that agent's default budget instead of naming one")
     .option("--explain", "list everything that was left out, and why")
     .option("--include <ids>", "comma-separated ids to pull in regardless")
     .option("--exclude <ids>", "comma-separated ids to withhold")
     .action((focus: string, local: {
-      budget?: string; explain?: boolean; include?: string; exclude?: string;
+      budget?: string; agent?: string; explain?: boolean; include?: string; exclude?: string;
     }) => {
       const list = (value?: string) =>
         value ? value.split(",").map((x) => x.trim()).filter((x) => x.length > 0) : [];
@@ -260,6 +275,20 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
         exclude: list(local.exclude),
       };
       if (local.budget !== undefined) request.budget_tokens = Number(local.budget);
+
+      // An adapter's default is resolved to a number here. Core is handed the
+      // number and never the agent's name (P8).
+      if (local.agent !== undefined) {
+        if (local.budget !== undefined) {
+          throw new MichiError({
+            class: "INVALID", code: "USAGE_ERROR",
+            message: "Pass --budget or --agent, not both — MICHI will not guess which one you meant.",
+            next: "--agent uses that agent's default budget; --budget sets one yourself.",
+          });
+        }
+        const fallback = agentBudget(local.agent);
+        if (fallback !== undefined) request.budget_tokens = fallback;
+      }
 
       code = emit(
         resolveContext({ root: root(), now, request }), opts(), io,
@@ -428,6 +457,33 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
       code = emit(
         taskBlock({ root: root(), now, id, reason: local.reason }), opts(), io, renderTaskBlock,
       );
+    });
+
+  // -------------------------------------------------------------------------
+  // agents — the adapter boundary. The only place an agent's name means
+  // anything is packages/adapters; here it is a string the user chose.
+  // -------------------------------------------------------------------------
+  program
+    .command("agents")
+    .description("which coding agents MICHI can install for, and what it found here")
+    .action(async () => {
+      code = emit(await agents({ root: root() }), opts(), io, renderAgents);
+    });
+
+  program
+    .command("install")
+    .description("write the agent integration files for a named agent")
+    .option("--agent <name...>", "which agent, repeatable (default: manual)")
+    .action((local: { agent?: string[] }) => {
+      const g = opts();
+      const result = install({ root: root(), agentIds: local.agent ?? [], dryRun: g.dryRun ?? false });
+      // A conflict is both an outcome report and an error: the user needs to
+      // see what was written and what differs, not just that it failed.
+      if (!result.ok && !g.json && !g.quiet) {
+        const detail = result.error.detail as InstallData | undefined;
+        if (detail?.conflicts) for (const line of renderInstall(detail)) io.out(line);
+      }
+      code = emit(result, g, io, renderInstall);
     });
 
   // -------------------------------------------------------------------------
