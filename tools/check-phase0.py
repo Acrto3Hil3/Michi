@@ -334,6 +334,18 @@ check("OQ-009  names what is still not built",
 
 # --- Phase 5 contracts ----------------------------------------------------
 gm = spec("GRAPH_MODEL.md")
+check("phase6  no FILE -> REQUIREMENT edge is asserted anywhere",
+      "There is no `FILE → REQUIREMENT` edge, deliberately" in gm
+      and "does\nnot make it the implementation" in gm.replace("\r", "")
+      and "derived through the\ntask" in gm.replace("\r", ""))
+check("phase6  a reported file is marked reported, not verified",
+      "reported*, not verified" in cm or "reported, not verified" in cm)
+check("phase6  the stale 'tasks are a later phase' claims are gone",
+      "tasks are\nPhase 6" not in cm.replace("\r", "")
+      and "tasks arrive\n" not in (ROOT / "packages" / "core" / "src" / "graph" / "build.ts").read_text()
+      and "does not yet know which files implement" not in
+          (ROOT / "packages" / "core" / "src" / "prompt" / "compile.ts").read_text())
+
 check("phase5  the graph states which node types it actually built",
       "## What Phase 5 built" in gm
       and "Not implemented:" in gm

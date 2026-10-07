@@ -125,6 +125,30 @@ export function resolveContext(options: ResolveOptions): Result<ContextPacket> {
         consider(node.id, "PREFERRED", `describes how ${focus.id} gets used`, 700);
       } else if (edge.type === "SERVES") {
         excluded.push({ id: node.id, reason: `uses ${focus.id} but was removed from the specification` });
+      } else if (edge.type === "IMPLEMENTS") {
+        consider(node.id, "PREFERRED", `work planned for ${focus.id} (${String(node.attrs.status)})`, 680);
+      }
+    }
+
+    /*
+     * Two hops through a task: the files it reported touching.
+     *
+     * A reported file is what a task *said* it changed, never proof that the
+     * file implements the requirement — so the reason says so, and nothing
+     * here upgrades a claim into evidence. That upgrade is verification's job.
+     */
+    for (const taskNode of [...candidates.keys()].filter((id) => id.startsWith("TASK-"))) {
+      for (const edge of graph.edges) {
+        if (edge.from !== taskNode || edge.type !== "TOUCHED") continue;
+        const node = graph.nodes.find((n) => n.id === edge.to);
+        if (!node) continue;
+        const verified = node.attrs.verified === true;
+        consider(
+          node.id, "PREFERRED",
+          `${taskNode} reported touching this while working on ${focus.id}` +
+            (verified ? "" : " — reported, not verified"),
+          620,
+        );
       }
     }
 

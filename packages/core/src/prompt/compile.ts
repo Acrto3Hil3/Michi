@@ -92,9 +92,22 @@ export function compileInstruction({ task, packet }: CompileInput): string {
     "but is not in scope, say so and leave it alone.",
   ]);
 
+  // Files a previous task *reported* touching. MICHI has not verified that
+  // those files implement anything — only that a task said it changed them.
+  const files = packet.items.filter((i) => i.type === "FILE");
   section("RELEVANT FILES", [
-    "MICHI does not yet know which files implement which requirement — that",
-    "mapping is built from what you report back.",
+    ...(files.length === 0
+      ? [
+          "No files are known for this requirement yet — nothing has reported",
+          "working on it.",
+        ]
+      : [
+          "Earlier work on this requirement reported touching these. That is what",
+          "a previous agent said it changed, not something MICHI has verified, so",
+          "treat it as a starting point rather than a fact:",
+          "",
+          ...files.map((i) => `- ${i.id}  (${i.reason})`),
+        ]),
     "",
     "Inspect what exists before creating anything new. Reuse the patterns",
     "already in this project rather than introducing your own.",

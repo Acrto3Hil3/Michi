@@ -1,10 +1,11 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { brainDir, readJson, readYaml } from "../fs/brain.js";
 import { RequirementsRegistrySchema } from "../schemas/discovery.js";
 import { RegistrySchema } from "../schemas/decision.js";
 import { SpecificationSchema, effectiveScope } from "../schemas/product.js";
 import { ProjectMapSchema } from "../schemas/scan.js";
+import { TaskSchema } from "../schemas/task.js";
 
 /**
  * The project graph.
@@ -27,7 +28,7 @@ import { ProjectMapSchema } from "../schemas/scan.js";
  */
 
 export const NODE_TYPES = [
-  "REQUIREMENT", "DECISION", "USE_CASE", "ACCEPTANCE", "PERSONA", "FILE",
+  "REQUIREMENT", "DECISION", "USE_CASE", "ACCEPTANCE", "PERSONA", "TASK", "FILE",
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
 
@@ -40,6 +41,8 @@ export const EDGE_TYPES = [
   "VERIFIES",      // criterion.requirement           ACCEPTANCE → REQUIREMENT
   "SERVES",        // use_case.requirements           USE_CASE   → REQUIREMENT
   "PERFORMED_BY",  // use_case.persona                USE_CASE   → PERSONA
+  "IMPLEMENTS",    // task.requirements               TASK       → REQUIREMENT
+  "TOUCHED",       // task.files_touched              TASK       → FILE
   "SUPERSEDES",    // decision.supersedes / requirement.supersedes
 ] as const;
 export type EdgeType = (typeof EDGE_TYPES)[number];
@@ -143,18 +146,58 @@ export function buildGraph(root: string): ProjectGraph {
     });
   }
 
-  // --- files the project map actually knows about --------------------------
-  // There is no artifact → file edge yet: those are written when a task
-  // completes and reports what it touched (GRAPH_MODEL.md), and tasks arrive
-  // in a later phase. Until then files are project-level context, not
-  // something a requirement can reach.
-  for (const file of [...(map?.structure.config_files ?? []), ...(map?.structure.entry_points ?? [])]) {
-    if (nodes.some((node) => node.id === file)) continue;
+  // --- tasks ---------------------------------------------------------------
+  const tasksDir = join(brainDir(root), "tasks", "active");
+  const tasks = existsSync(tasksDir)
+    ? readdirSync(tasksDir)
+        .filter((f) => /^TASK-\d{3,}\.yaml$/.test(f))
+        .sort()
+        .map((f) => readYaml(join(tasksDir, f), TaskSchema))
+    : [];
+
+  for (const t of tasks) {
     nodes.push({
-      id: file, type: "FILE", label: file,
-      source: "project/map.json",
-      attrs: { kind: file.includes(".") ? (file.split(".").pop() ?? "") : "" },
+      id: t.task_id, type: "TASK", label: t.title,
+      source: `tasks/active/${t.task_id}.yaml`,
+      attrs: {
+        status: t.status,
+        attempt: t.attempt,
+        verification: t.verification.status,
+      },
     });
+  }
+
+  // --- files ---------------------------------------------------------------
+  // Two sources: what the scanner found, and what a task reported touching.
+  //
+  // A reported file is a **claim** about what a task did, not evidence that
+  // the file implements the requirement. So there is no FILE → REQUIREMENT
+  // edge anywhere: the task says what it implements and what it touched, and
+  // any connection between the two is derived through the task. Touching a
+  // file does not make it the implementation.
+  const fileNode = (id: string, source: string, extra: Record<string, string | number | boolean | null>) => {
+    if (nodes.some((node) => node.id === id)) return;
+    nodes.push({
+      id, type: "FILE", label: id, source,
+      attrs: {
+        kind: id.includes(".") ? (id.split(".").pop() ?? "") : "",
+        exists: existsSync(join(root, id)),
+        ...extra,
+      },
+    });
+  };
+
+  for (const file of [...(map?.structure.config_files ?? []), ...(map?.structure.entry_points ?? [])]) {
+    fileNode(file, "project/map.json", { reported_by: null, verified: false });
+  }
+  for (const t of tasks) {
+    for (const file of t.files_touched) {
+      fileNode(file, `tasks/active/${t.task_id}.yaml`, {
+        reported_by: t.task_id,
+        // Phase 7's job. Until then, reported is all MICHI can honestly say.
+        verified: t.verification.status === "PASSED",
+      });
+    }
   }
 
   const known = new Set(nodes.map((node) => node.id));
@@ -181,6 +224,14 @@ export function buildGraph(root: string): ProjectGraph {
   }
   for (const r of requirements?.requirements ?? []) {
     if (r.supersedes) link(r.id, r.supersedes, "SUPERSEDES", "requirement.supersedes");
+  }
+  for (const t of tasks) {
+    for (const requirement of t.requirements) {
+      link(t.task_id, requirement, "IMPLEMENTS", "task.requirements");
+    }
+    for (const file of t.files_touched) {
+      link(t.task_id, file, "TOUCHED", "task.files_touched");
+    }
   }
 
   // Sorted so a rebuild is byte-identical and a diff is reviewable.

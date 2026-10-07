@@ -78,13 +78,13 @@ function project() {
 describe("the graph is derived from canonical state", () => {
   it("only declares node types that have a canonical source", () => {
     expect(NODE_TYPES).toEqual([
-      "REQUIREMENT", "DECISION", "USE_CASE", "ACCEPTANCE", "PERSONA", "FILE",
+      "REQUIREMENT", "DECISION", "USE_CASE", "ACCEPTANCE", "PERSONA", "TASK", "FILE",
     ]);
   });
 
   it("only declares edge types backed by a real field", () => {
     expect(EDGE_TYPES).toEqual([
-      "GOVERNS", "VERIFIES", "SERVES", "PERFORMED_BY", "SUPERSEDES",
+      "GOVERNS", "VERIFIES", "SERVES", "PERFORMED_BY", "IMPLEMENTS", "TOUCHED", "SUPERSEDES",
     ]);
   });
 

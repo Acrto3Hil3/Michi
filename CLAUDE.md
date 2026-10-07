@@ -86,7 +86,7 @@ Phase 0 complete and internally consistent. **Phases 1 to 6 complete**:
 (status/update/export/close), and the `architecture` (status/export/close), `context`, `graph`, `plan tasks`,
 `plan validate`, `task` (list/show/next/start/report/block), and the
 `senior-engineer`, `product-planner`, `architecture` and `implementer` skills.
-501 tests, TypeScript build clean. Nothing published.
+517 tests, TypeScript build clean. Nothing published.
 
 Still deliberately absent: the reviewer, tester and debugger skills, agent
 adapters and the verification executor. Those are Phases 7–8;
@@ -144,6 +144,12 @@ where OQ-006's allow-listed executor finally gets built.
 
 Phase 6's shape, before extending it:
 
+- **No edge claims a file implements a requirement.** A task reports what it
+  implements (`IMPLEMENTS → REQUIREMENT`) and what it touched
+  (`TOUCHED → FILE`), separately. Any file-to-requirement relationship is
+  derived through the task and carries its uncertainty. Touching a file does
+  not make it the implementation, and `verified` stays `false` until Phase 7
+  can say otherwise.
 - **The compiled instruction is not stored.** It is a generated artifact,
   reproducible from state; the run record keeps its `instruction_hash` as proof
   of what was handed over. Do not write it to disk, and never edit one.

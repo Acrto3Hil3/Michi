@@ -448,6 +448,8 @@ export function renderContext(data: ContextPacket, explain = false): string[] {
     lines.push(bullet(`Budget                  ~${thousands(data.budget_tokens)} tokens`));
   }
 
+  // File paths are ids too, so the column is as wide as the widest one.
+  const width = Math.max(10, ...data.items.map((i) => i.id.length));
   const groups: [ContextPacket["items"][number]["tier"], string][] = [
     ["MUST_INCLUDE", "Cannot be done without"],
     ["PREFERRED", "Materially helps"],
@@ -458,7 +460,7 @@ export function renderContext(data: ContextPacket, explain = false): string[] {
     if (items.length === 0) continue;
     lines.push("", `${heading}:`);
     for (const item of items) {
-      lines.push(bullet(`${item.id.padEnd(10)} ${item.reason}`));
+      lines.push(bullet(`${item.id.padEnd(width)}  ${item.reason}`));
       if (item.needs_review) {
         lines.push(`      ⚠ needs review: ${item.review_reason ?? "the specification changed"}`);
       }
@@ -476,7 +478,8 @@ export function renderContext(data: ContextPacket, explain = false): string[] {
 
   if (explain && data.excluded.length > 0) {
     lines.push("", "Left out:");
-    for (const x of data.excluded) lines.push(bullet(`${x.id.padEnd(10)} ${x.reason}`));
+    const w = Math.max(10, ...data.excluded.map((x) => x.id.length));
+    for (const x of data.excluded) lines.push(bullet(`${x.id.padEnd(w)}  ${x.reason}`));
   } else if (data.excluded.length > 0) {
     lines.push("", `${data.excluded.length} item(s) left out — pass --explain to see why.`);
   }
@@ -496,7 +499,8 @@ export function renderContext(data: ContextPacket, explain = false): string[] {
 
 const EDGE_WORDS: Record<string, string> = {
   GOVERNS: "governs", VERIFIES: "verifies", SERVES: "serves",
-  PERFORMED_BY: "performed by", SUPERSEDES: "supersedes",
+  PERFORMED_BY: "performed by", IMPLEMENTS: "implements",
+  TOUCHED: "reported touching", SUPERSEDES: "supersedes",
 };
 
 export function renderGraph(graph: ProjectGraph, focus?: string): string[] {

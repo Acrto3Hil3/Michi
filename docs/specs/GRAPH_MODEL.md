@@ -86,12 +86,13 @@ and states the differences rather than quietly diverging.
 ### Nodes implemented
 
 ```text
-REQUIREMENT  REQ-001   requirements/requirements.yaml
-DECISION     D001      decisions/index.yaml
-USE_CASE     UC-001    requirements/specification.yaml
-ACCEPTANCE   AC-001    requirements/specification.yaml
-PERSONA      PER-001   requirements/specification.yaml   ← not in the list above
-FILE         path      project/map.json
+REQUIREMENT  REQ-001    requirements/requirements.yaml
+DECISION     D001       decisions/index.yaml
+USE_CASE     UC-001     requirements/specification.yaml
+ACCEPTANCE   AC-001     requirements/specification.yaml
+PERSONA      PER-001    requirements/specification.yaml   ← not in the list above
+TASK         TASK-001   tasks/active/TASK-001.yaml        ← added in Phase 6
+FILE         path       project/map.json · task.files_touched
 ```
 
 `PERSONA` was missing because Phase 0 predates the product specification.
@@ -110,9 +111,36 @@ GOVERNS       DECISION   → REQUIREMENT   decision.affects_requirements
 VERIFIES      ACCEPTANCE → REQUIREMENT   criterion.requirement
 SERVES        USE_CASE   → REQUIREMENT   use_case.requirements
 PERFORMED_BY  USE_CASE   → PERSONA       use_case.persona
+IMPLEMENTS    TASK       → REQUIREMENT   task.requirements
+TOUCHED       TASK       → FILE          task.files_touched
 SUPERSEDES    DECISION   → DECISION      decision.supersedes
               REQUIREMENT → REQUIREMENT  requirement.supersedes
 ```
+
+### There is no `FILE → REQUIREMENT` edge, deliberately
+
+The list at the top of this document has `IMPLEMENTS` as `FILE → REQUIREMENT`.
+That would assert something a task report cannot support: **touching a file does
+not make it the implementation of a requirement.** A task might touch a config
+file, a test fixture, or something it then reverted.
+
+So the two facts a task actually establishes are kept separate, both hanging off
+the task:
+
+```text
+TASK-001 ──IMPLEMENTS──► REQ-001      what it was planned to build
+    └──────TOUCHED──────► src/stock.ts   what it said it changed
+```
+
+Any relationship between the file and the requirement is **derived through the
+task**, two hops, and carries the task's own uncertainty with it. Nothing in the
+graph claims more than happened.
+
+A `FILE` node records `reported_by` (the task that named it, or null if the
+scanner found it), `exists` (whether it is actually on disk — an agent can
+report a file it later removed), and `verified`, which is `false` until the
+task's verification passes. Phase 7 is what can change that; until then
+*reported* is the strongest honest word.
 
 `GOVERNS` is listed above as `DECISION → COMPONENT`. Components do not exist;
 the edge that does exist, and that the architecture gate already depends on, is

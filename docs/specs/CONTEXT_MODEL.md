@@ -324,10 +324,23 @@ run to correlate a stored packet with, which is Phase 6.
 
 ### Files
 
-`FILE` nodes exist in the graph but no artifact reaches them: the
-`IMPLEMENTS` edge is written when a task reports what it touched, and tasks are
-Phase 6. Until then the detected stack and the project's stated constraints
-travel as **project-level** context on every packet, which is where they belong.
+Files reach a packet through the task that reported them, never directly:
+
+```text
+REQ-001 ◄──IMPLEMENTS── TASK-001 ──TOUCHED──► src/stock.ts
+        hop 1                     hop 2
+```
+
+They arrive `PREFERRED`, with a reason that names the task and says plainly
+*"reported, not verified"* — because that is all a task report establishes.
+Nothing in context selection upgrades a claim into evidence; that is
+verification's job.
+
+A requirement nothing has worked on yet carries no files, and the compiled
+instruction says so rather than implying MICHI knows where the code lives.
+
+The detected stack and the project's stated constraints still travel as
+**project-level** context on every packet, which is where they belong.
 
 ## Six ways to spend fewer tokens
 
