@@ -101,6 +101,8 @@ export { INSTRUCTION_SECTIONS, compileInstruction } from "./prompt/compile.js";
 export { planTasks, planValidate, loadTasks, withDerivedReadiness } from "./commands/plan-tasks.js";
 export type { PlanTasksOptions, PlanTasksData, PlanValidateData } from "./commands/plan-tasks.js";
 export { taskList, taskShow, taskNext, taskStart, taskReport, taskBlock, taskDone } from "./commands/task.js";
+export { explain, impactOf } from "./commands/explain.js";
+export type { ExplainData, ImpactData } from "./commands/explain.js";
 export type {
   TaskOptions, TaskListData, TaskShowData, TaskNextData, TaskStartData, TaskReportData,
 } from "./commands/task.js";

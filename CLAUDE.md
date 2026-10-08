@@ -137,13 +137,18 @@ behaviour. See
    artifact is proven (`pnpm release:check` packs, inspects, installs into a
    clean project and drives the whole loop from the installed binary) and
    nothing is published. The blocker, if it is picked up again: npm requires
-   2FA or a bypass token to publish, and only an **Automation** token
-   (website-only — `npm token create` mints publish-type tokens, which still
-   demand an OTP) satisfies that. A `npm login` session token does not, and
-   running `npm login` overwrites whatever token is in
-   `~/.npmrc`, which is how the first attempt was lost. Do not retry with a
-   session token; it fails identically every time. Publishing stays a
-   deliberate act and a green build is not authorisation.
+   2FA to publish. A `npm login` session token never satisfies that, and
+   `npm login` overwrites whatever token is already in `~/.npmrc` — which is
+   how the first attempt was lost. Do not retry with a session token; it fails
+   identically every time, with a 403 naming 2FA.
+
+   The durable route is an **authenticator app** plus `--otp=<real code>`.
+   A classic **Automation** token also works today, but npm is deprecating it:
+   "npm tokens that bypass 2FA are being restricted for account changes and
+   direct publishing" (gh.io/npm-gat-bypass2fa-deprecation). `npm token
+   create` is not a shortcut — it mints publish-type tokens, which still
+   demand an OTP. Publishing stays a deliberate act and a green build is not
+   authorisation.
 3. **The GitHub remote.** `https://github.com/Acrto3Hil3/Michi` exists; commits
    from `4b7e6b1` onward are local only, from an earlier outage. Do not push
    unless asked.
@@ -154,7 +159,19 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-All nine phases are built. **Nothing is published**, and publishing is not
+All nine phases are built, plus `michi explain` and `michi decide impact` —
+the last two commands the contract specified and nothing implemented. The only
+things still specified-but-unbuilt are `michi task split` (needs a lifecycle
+decision the contract does not make) and the graph queries `pathsBetween`,
+`implementers` and `cycles`, which nothing calls yet.
+
+`explain` is the P11 command, and its one rule is that every sentence traces
+to a recorded field: a missing field becomes a sentence saying it is missing,
+never a plausible reconstruction. Tests hold the prose to that, and to not
+doubling a full stop or mangling a recorded title's capitalisation — both of
+which the real binary showed before the tests did.
+
+**Nothing is published**, and publishing is not
 authorised — see the open list above.
 
 Phase 9's shape:

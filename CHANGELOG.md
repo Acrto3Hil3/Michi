@@ -19,7 +19,17 @@ understand rather than guessing at it.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- `michi explain <id> [--simple]` — what a decision, requirement, task or file
+  is and why, in plain language, answered from the artifacts alone. An ADR id
+  resolves to the decision it documents. Where the record does not contain the
+  answer it says so, rather than reconstructing a plausible one.
+- `michi decide impact <id>` — the blast radius of changing a decision,
+  computed from the graph: the requirements it governs, the locked decisions
+  resting on the same requirements, the work planned under it (marked where an
+  agent has already attempted it), and the files those tasks reported
+  touching. Reported files are labelled as a claim, not a measured cost.
 
 ## [0.1.0] — unreleased
 

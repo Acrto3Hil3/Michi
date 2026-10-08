@@ -17,6 +17,7 @@ import type {
 } from "@subhashyadav98146/michi-core";
 import { cmd } from "@subhashyadav98146/michi-core";
 import type { AgentsData, InstallData } from "./agents.js";
+import type { ExplainData, ImpactData } from "@subhashyadav98146/michi-core";
 
 const bullet = (s: string) => `  ${s}`;
 
@@ -866,3 +867,65 @@ export function renderInstall(data: InstallData): string[] {
   return lines;
 }
 
+
+// ---------------------------------------------------------------------------
+// Explain — the project in plain language, from artifacts only
+// ---------------------------------------------------------------------------
+
+export function renderExplain(data: ExplainData): string[] {
+  const lines = [data.title, ""];
+  for (const paragraph of data.paragraphs) lines.push(paragraph, "");
+
+  if (data.not_recorded.length > 0) {
+    lines.push("Not recorded, so MICHI will not guess:", "");
+    for (const gap of data.not_recorded) lines.push(bullet(gap));
+    lines.push("");
+  }
+  if (data.related.length > 0) {
+    lines.push(`Related: ${data.related.join(" · ")}`);
+  }
+  return lines;
+}
+
+export function renderImpact(data: ImpactData): string[] {
+  if (data.total === 0) {
+    return [
+      `Nothing depends on ${data.id} yet — ${data.title}.`,
+      "",
+      "Changing it now costs nothing but the conversation.",
+    ];
+  }
+
+  const lines = [
+    `Changing ${data.id} — ${data.title} — affects ${data.total} recorded thing${data.total === 1 ? "" : "s"}.`,
+    "",
+  ];
+  const group = (label: string, ids: readonly string[]) => {
+    if (ids.length === 0) return;
+    lines.push(`${label} (${ids.length})`);
+    for (const id of ids) lines.push(`      ${id}`);
+    lines.push("");
+  };
+  group("Requirements it shapes", data.requirements);
+  group("Decisions resting on the same requirements", data.decisions);
+  // Tasks already worked on are annotated rather than listed twice: a second
+  // group made the same id appear under two headings, and the stated total
+  // then looked wrong to anyone counting rows.
+  group("Work planned under it", data.tasks.map((id) =>
+    data.tasks_with_work.includes(id) ? `${id}  (already worked on)` : id));
+  group("Files a task reported touching", data.files);
+
+  if (data.tasks_with_work.length > 0) {
+    lines.push(
+      `${data.tasks_with_work.length} piece${data.tasks_with_work.length === 1 ? "" : "s"} of work ` +
+      `has already been attempted under this decision. Changing it means some of that is wasted.`,
+    );
+    lines.push("");
+  }
+  lines.push(
+    "The files are there because a task reported touching them, which is a",
+    "claim rather than something MICHI watched. Treat the list as where to",
+    "look, not as a measured cost.",
+  );
+  return lines;
+}

@@ -9,6 +9,7 @@ import {
   planTasks, planValidate, taskList, taskShow, taskNext, taskStart, taskReport, taskBlock,
   taskDone,
   runTest, recordTest, review, debugStage, verify, DEBUG_STAGES,
+  explain, impactOf,
 } from "@subhashyadav98146/michi-core";
 import type { Result } from "@subhashyadav98146/michi-core";
 import {
@@ -21,7 +22,7 @@ import {
   renderPlanTasks, renderPlanValidate, renderTaskList, renderTaskShow,
   renderTaskNext, renderTaskStart, renderTaskReport, renderTaskBlock, renderTaskDone,
   renderTest, renderReview, renderDebug, renderVerify,
-  renderAgents, renderInstall,
+  renderAgents, renderInstall, renderExplain, renderImpact,
 } from "./render.js";
 import { agents, agentBudget, install } from "./agents.js";
 import type { InstallData } from "./agents.js";
@@ -459,6 +460,17 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
       );
     });
 
+  program
+    .command("explain <id>")
+    .description("what something is and why, in plain language, from the record alone")
+    .option("--simple", "drop the ids — prose only")
+    .action((id: string, local: { simple?: boolean }) => {
+      code = emit(
+        explain({ root: root(), now, id, simple: local.simple ?? false }),
+        opts(), io, renderExplain,
+      );
+    });
+
   // -------------------------------------------------------------------------
   // agents — the adapter boundary. The only place an agent's name means
   // anything is packages/adapters; here it is a string the user chose.
@@ -569,6 +581,13 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .description("one decision and the record written up for it")
     .action((id: string) => {
       code = emit(decideShow({ root: root(), now, id }), opts(), io, renderDecideShow);
+    });
+
+  decide
+    .command("impact <id>")
+    .description("what changing this decision would affect, from the graph")
+    .action((id: string) => {
+      code = emit(impactOf({ root: root(), now, id }), opts(), io, renderImpact);
     });
 
   decide

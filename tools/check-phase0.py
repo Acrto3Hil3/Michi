@@ -542,6 +542,32 @@ check("OQ-002  identity is still one constant, so the scope can change cheaply",
       "identity.ts" in spec("README.md")
       and (ROOT / "packages" / "core" / "src" / "identity.ts").is_file())
 
+# --- explain and impact: the project in plain language ---------------------
+# Long prose wraps, so these match on the bold terms rather than on a phrase
+# whose line breaks move whenever the paragraph is reflowed.
+check("explain  all four explainable kinds are specified",
+      all(k in cli for k in ("**decision**", "**requirement**", "**task**", "**file**")))
+check("explain  it answers from the record and never reconstructs",
+      "A missing field becomes a sentence" in cli
+      and "reconstruction (P9)" in cli)
+check("explain  --simple drops the ids, not just the jargon",
+      "It strips the ids too" in cli)
+check("explain  an ADR id resolves to its decision",
+      "An ADR id resolves to the decision it documents" in cli)
+check("explain  a component is answered as not recorded, not invented",
+      "Components cannot be explained" in cli and "deferred to `DESIGN`" in cli)
+check("impact  the blast radius comes from the graph, not a guess",
+      "### `michi decide impact`" in cli
+      and "computed from the graph rather than guessed" in cli)
+check("impact  the total counts each thing once",
+      "counts each thing once" in cli and "annotated\nrather than listed a second time" in cli)
+check("impact  reported files are labelled as a claim",
+      "which is a claim" in cli and "not a measured cost" in cli)
+check("explain  both commands are implemented, not just specified",
+      (ROOT / "packages" / "core" / "src" / "commands" / "explain.ts").is_file()
+      and 'command("explain <id>")' in (run := (ROOT / "packages" / "cli" / "src" / "run.ts").read_text())
+      and 'command("impact <id>")' in run)
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

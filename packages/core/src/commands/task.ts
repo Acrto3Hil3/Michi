@@ -100,7 +100,7 @@ export interface TaskShowData {
   runs: RunRecord[];
 }
 
-function runsOf(root: string, task: Task): RunRecord[] {
+export function runsOf(root: string, task: Task): RunRecord[] {
   return task.runs
     .map((id) => join(brainDir(root), SESSIONS, `${id}.yaml`))
     .filter((file) => existsSync(file))

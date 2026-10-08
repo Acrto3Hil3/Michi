@@ -181,6 +181,21 @@ check $? "michi verify and task done"
   && pass "the closed task is filed, not deleted" \
   || fail "the closed task was not filed"
 
+"$MICHI" explain D001 | grep -q 'A database' \
+  && pass "michi explain answers a decision in plain language" \
+  || fail "michi explain did not answer from the record"
+"$MICHI" explain D001 --simple | grep -qE 'REQ-[0-9]|ADR-[0-9]|D00[0-9]' \
+  && fail "michi explain --simple still prints ids" \
+  || pass "michi explain --simple prints no ids"
+if "$MICHI" explain NotARecordedThing >/dev/null 2>&1; then
+  fail "explain invented an answer for something not recorded"
+else
+  pass "michi explain says it is not recorded rather than reconstructing"
+fi
+"$MICHI" decide impact D001 | grep -q 'REQ-001' \
+  && pass "michi decide impact reports the blast radius" \
+  || fail "michi decide impact found nothing"
+
 m install --agent claude-code
 [ -f "$PROJECT/AGENTS.md" ] && [ -f "$PROJECT/.claude/skills/tester/SKILL.md" ] \
   && pass "michi install — the baseline and the skills, from the packed artifact" \

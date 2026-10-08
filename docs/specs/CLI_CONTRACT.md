@@ -622,6 +622,45 @@ Answers from artifacts only. If the artifacts do not contain the answer, the
 answer is "that is not recorded" — never a reconstruction (§100, P9).
 
 `--simple` forces the plain-language layer, and it is always available (P11).
+It strips the ids too — a requirement id is for following a link, and a person
+who cannot read the YAML has no use for one mid-sentence.
+
+Four things can be explained, each from its own artifact: a **decision** (the
+choice, the option's own words, the rationale, who approved it and when, the
+ADR, and what was ruled out and why), a **requirement** (the description as
+written, who confirmed it, whether it is in the first version and why, how
+anyone will know it works, and what governs it), a **task** (what it serves,
+where it stands, and what an agent *said* versus what MICHI observed), and a
+**file** (which task reported it, and that reported is not verified).
+
+An ADR id resolves to the decision it documents, because that is what somebody
+typing `michi explain ADR-004` is asking about.
+
+Components cannot be explained: they are deferred to `DESIGN`
+(`STATE_MODEL.md`), so `michi explain AuthService` answers that it is not
+recorded rather than describing something that does not exist.
+
+Every sentence traces to a recorded field. A missing field becomes a sentence
+saying it is missing — the `not_recorded` list — rather than a plausible
+reconstruction (P9).
+
+### `michi decide impact`
+
+```bash
+michi decide impact <decision-id> [--json]
+```
+
+The blast radius, computed from the graph rather than guessed
+(`DECISION_MODEL.md`, "Impact analysis"): the requirements the decision
+governs, the locked decisions resting on those same requirements, the work
+planned under it — marked where an agent has already attempted it — and the
+files those tasks reported touching.
+
+The reported total counts each thing once. Work already attempted is annotated
+rather than listed a second time, so the number matches what is on screen.
+
+The files are there because a task *reported* touching them, which is a claim,
+and the output says so. It is where to look, not a measured cost.
 
 ---
 

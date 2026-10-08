@@ -54,6 +54,16 @@ michi discover start               # tell it what you want to build
 `michi status` answers "what now" at every point. Every command takes `--json`
 as well, which is what the skills running inside your agent use.
 
+Two commands worth knowing if you do not read code:
+
+```bash
+michi explain D001 --simple    # what this decision is, and why, in plain words
+michi decide impact D001       # what changing it would affect
+```
+
+`explain` answers only from what was written down. If the record does not
+contain the answer, it says so rather than inventing a plausible one.
+
 ```bash
 michi agents                       # what MICHI found, and what it can set up
 michi install                      # no adapter needed: AGENTS.md works anywhere
