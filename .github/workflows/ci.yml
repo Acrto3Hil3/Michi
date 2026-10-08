@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # No postinstall scripts, by policy: SECURITY_MODEL.md, "Supply chain".
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm check:specs
+
+  # Pack the real tarballs, inspect them, install them into a clean project
+  # and drive the whole loop from the installed binary. Publishes nothing.
+  release-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm release:check

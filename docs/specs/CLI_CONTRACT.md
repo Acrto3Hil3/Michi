@@ -10,8 +10,8 @@ it, so that validation, permission checks and atomic writes cannot be bypassed.
 It is deliberately thin: parse arguments, call engines in MICHI Core, render the
 result. No engineering logic lives here (see `ARCHITECTURE.md`).
 
-The binary is written `michi` throughout this document. That name is not
-confirmed (OQ-002) and is read from configuration rather than hard-coded.
+The binary is written `michi` throughout this document. The name is settled
+(OQ-002) and is still read from configuration rather than hard-coded.
 
 ## Two audiences
 

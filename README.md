@@ -40,6 +40,33 @@ michi install --agent cursor      # or claude-code, codex, windsurf, …
 michi install                     # or none of them: AGENTS.md works everywhere
 ```
 
+## Getting started
+
+Not published yet — see **Status** below. When it is, it will be one command:
+
+```bash
+npm install -g @michi/cli
+```
+
+Until then, from a clone:
+
+```bash
+pnpm install && pnpm build
+pnpm verify                        # 655 tests, typecheck, spec consistency
+node packages/cli/dist/index.js --help
+```
+
+Then, in your own project:
+
+```bash
+michi init --agent claude-code     # or cursor, codex, windsurf, gemini-cli, …
+michi status                       # always start here
+michi discover start               # tell it what you want to build
+```
+
+`michi status` is the answer to "what now" at every point. Everything takes
+`--json` as well, which is what the skills running inside your agent use.
+
 MICHI never overwrites a file you wrote. If your `AGENTS.md` differs from the
 one MICHI would write, it shows you the difference and leaves yours alone.
 
@@ -48,7 +75,7 @@ agent is building the right thing.
 
 ## Status
 
-**Phases 1 to 8 built.** MICHI can look at a project, hold a structured
+**Phases 1 to 9 built.** MICHI can look at a project, hold a structured
 discovery with you through your AI agent, record what you decided, work out
 with you what actually ships first, settle how it gets built, plan the work,
 hand your agent a precise brief for one piece of it, and then check whether the
@@ -64,8 +91,17 @@ you, running inside the AI agent you already use; **MICHI Core**, which is
 ordinary software with no AI in it at all; and `.michi/`, a folder of plain text
 files holding everything your project has decided.
 
-One question remains open — what the published package will be called. It is
-listed [here](docs/specs/README.md#open).
+**Not published yet.** The packages are built, packed and proven: `pnpm
+release:check` packs the four tarballs, inspects them for anything that should
+not ship, installs them into a clean throwaway project and drives the entire
+loop — discovery through verification — using only the installed binary. It
+publishes nothing. Pushing to npm is a deliberate, separate act and has not
+happened.
+
+The published names will be `@michi/cli`, `@michi/core`, `@michi/adapters` and
+`@michi/skills`, with `michi` as the command you type. One note if you go
+looking: the unscoped `michi` package on npm is **not** this project — it is an
+unrelated URL router last touched in 2022.
 
 Requirements accumulate rather than being overwritten: come back in six months
 with a change and MICHI adds to what you already agreed, marking what the
@@ -121,7 +157,7 @@ The roadmap, in order:
 | 6 | The `implementer` skill · the task DAG · the prompt compiler | **done** |
 | 7 | Review, test, debug, verification | **done** |
 | 8 | Agent adapters | **done** |
-| 9 | Open-source release | not started |
+| 9 | Release readiness · npm packaging | **done, unpublished** |
 
 ## The idea in one line
 

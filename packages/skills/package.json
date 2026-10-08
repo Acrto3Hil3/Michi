@@ -1,6 +1,35 @@
 {
-  "name": "@michi/skills",
   "version": "0.1.0",
-  "private": true,
-  "description": "MICHI's skills — the Experience Layer. Instructions for the user's own coding agent."
+  "license": "MIT",
+  "author": "Subhash Yadav",
+  "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
+  "bugs": {
+    "url": "https://github.com/Acrto3Hil3/Michi/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "name": "@michi/skills",
+  "private": false,
+  "description": "MICHI's skills \u2014 the Experience Layer. Instructions for the user's own coding agent.",
+  "keywords": [
+    "michi",
+    "agent-skills",
+    "claude-code",
+    "prompt"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Acrto3Hil3/Michi.git",
+    "directory": "packages/skills"
+  },
+  "files": [
+    "*/SKILL.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./*/SKILL.md": "./*/SKILL.md"
+  }
 }

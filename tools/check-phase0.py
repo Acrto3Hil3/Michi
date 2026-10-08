@@ -103,11 +103,15 @@ check("OQ-005  no bare exact-looking token counts",
                               r"Not `|estimate|budget")),
       "; ".join(bad))
 
-# --- OQ-002  npm identity not treated as settled --------------------------
-check("OQ-002  npm names appear only as unconfirmed",
-      not (bad := unqualified(r"@michi/",
-                              r"not settled|assume|not been checked|unverified|OQ-002")),
-      "; ".join(bad))
+# --- OQ-002  npm identity, now settled -----------------------------------
+check("OQ-002  the npm names are settled, with the check that settled them",
+      "LOCKED: `@michi/*`, binary `michi`" in spec("README.md")
+      and "Checked against the npm registry" in spec("README.md"))
+check("OQ-002  the unscoped michi package is flagged as somebody else's",
+      "not** this project" in (ROOT / "README.md").read_text())
+check("OQ-002  identity is still one constant, so the scope can change cheaply",
+      "identity.ts" in spec("README.md")
+      and (ROOT / "packages" / "core" / "src" / "identity.ts").is_file())
 
 # --- v1 non-goals ---------------------------------------------------------
 check("non-goals  MICHI's own storage is text files, not a database",
@@ -484,6 +488,54 @@ check("phase8  adapters store no credential and never touch .michi",
 check("phase8  no phase 8 forward references remain",
       not any("Phase 8" in spec(f.name) for f in SPECS.glob("*.md")
               if f.name != "ARCHITECTURE.md"))
+
+# --- phase 9: release readiness ------------------------------------------
+import json as _json
+MANIFESTS = {n: _json.loads((ROOT / "packages" / n / "package.json").read_text())
+             for n in ("core", "adapters", "skills", "cli")}
+
+check("phase9  all four packages are publishable and share one version",
+      all(m.get("private") is False for m in MANIFESTS.values())
+      and len({m["version"] for m in MANIFESTS.values()}) == 1)
+check("phase9  the CLI's reported version matches the packages",
+      f'version: "{MANIFESTS["cli"]["version"]}"'
+      in (ROOT / "packages" / "core" / "src" / "identity.ts").read_text())
+check("phase9  every package carries metadata a stranger needs",
+      all(all(k in m for k in ("description", "license", "repository", "homepage",
+                               "bugs", "keywords", "engines", "files"))
+          for m in MANIFESTS.values()))
+check("phase9  every package ships its own LICENSE and README",
+      all((ROOT / "packages" / n / f).is_file()
+          for n in MANIFESTS for f in ("LICENSE", "README.md")))
+check("phase9  nothing ships sourcemaps, tests or tsconfig",
+      all(not any(pat in f for f in m["files"]
+                  for pat in (".map", "test", "tsconfig"))
+          for m in MANIFESTS.values()))
+check("phase9  only the CLI claims the binary, and it is michi",
+      MANIFESTS["cli"].get("bin") == {"michi": "./dist/index.js"}
+      and not any("bin" in m for n, m in MANIFESTS.items() if n != "cli"))
+check("phase9  the release check proves the tarball rather than the repository",
+      (ROOT / "tools" / "release-check.sh").is_file()
+      and "publishes nothing" in (ROOT / "tools" / "release-check.sh").read_text().lower()
+      and "release:check" in (ROOT / "package.json").read_text())
+check("phase9  CI runs the release check, and installs no postinstall scripts",
+      (ci := ROOT / ".github" / "workflows" / "ci.yml").is_file()
+      and "--ignore-scripts" in ci.read_text()
+      and "release:check" in ci.read_text())
+check("phase9  publishing is never a side effect of a green build",
+      "npm publish" not in (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+      and "deliberate, separate act" in (ROOT / "CONTRIBUTING.md").read_text())
+check("phase9  a changelog and contributing guide exist, and name the non-goals",
+      (ROOT / "CHANGELOG.md").is_file()
+      and "Deliberately not included" in (ROOT / "CHANGELOG.md").read_text()
+      and "will get a change rejected" in (ROOT / "CONTRIBUTING.md").read_text())
+check("phase9  the README tells a new user how to install and run it",
+      "## Getting started" in (readme := (ROOT / "README.md").read_text())
+      and "michi init" in readme and "michi status" in readme
+      and "release:check" in readme)
+check("phase9  the state format's compatibility promise is written down",
+      "schema_version" in (ROOT / "CHANGELOG.md").read_text()
+      and "may change between minor versions" in (ROOT / "CHANGELOG.md").read_text())
 
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))

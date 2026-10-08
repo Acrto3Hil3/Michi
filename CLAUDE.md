@@ -127,10 +127,17 @@ behaviour. See
 
 **Open — needs the owner, don't decide these unasked:**
 
-1. **OQ-002** — npm package and binary names are unverified. Doesn't block
-   implementation; package identity is read from configuration.
-3. `npm login` — the user must run it themselves.
-4. No GitHub repository exists, and `gh` is not installed.
+1. **`npm login`, then `npm org ls michi`** — the only thing between here and
+   a published package. OQ-002 is settled (`@michi/*`, binary `michi`), but a
+   registry read cannot prove the *scope* is unowned, and that check needs the
+   owner's credentials. Never publish without being asked.
+2. **Publishing to npm.** The artifact is proven (`pnpm release:check` packs,
+   inspects, installs into a clean project and drives the whole loop from the
+   installed binary). Publishing is a separate, deliberate act and has not
+   been authorised. A green build is not authorisation.
+3. **The GitHub remote.** `https://github.com/Acrto3Hil3/Michi` exists; commits
+   from `4b7e6b1` onward are local only, from an earlier outage. Do not push
+   unless asked.
 
 **OQ-007 is answered and implemented**: discovery is cumulative. Requirements
 are project-level, ids come from `requirements/requirements.yaml`, `close`
@@ -138,9 +145,26 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
-Next: **Phase 9** — the open-source release (npm, docs, CI, examples).
+All nine phases are built. **Nothing is published**, and publishing is not
+authorised — see the open list above.
 
-Phase 8's shape, before extending it:
+Phase 9's shape:
+
+- **`pnpm release:check` is the only thing that proves a release.** It packs
+  the four tarballs, inspects them for dev files, state, missing licences,
+  `workspace:` deps and credential-shaped strings, installs them into a clean
+  throwaway project, and drives the whole loop — discovery through
+  `task done` — using only the installed binary. A green `pnpm verify` proves
+  the repository works, which is a different claim.
+- **`pnpm pack`, never `npm pack`.** pnpm rewrites `workspace:*` to the real
+  version on the way out; npm ships it verbatim and the install cannot resolve.
+- **The four packages share one version and ship together.** Bumping means all
+  four `package.json` files *and* `core/src/identity.ts`, which is what the CLI
+  reports. An invariant holds them in step.
+- **Publishing is never a side effect of a green build.** CI runs the release
+  check and has no `npm publish` step, deliberately.
+
+Phase 8's shape:
 
 - **`packages/adapters` is the only place an agent's name means anything.** A
   test greps every agent name across `packages/**/*.ts` outside

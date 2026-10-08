@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import type { Skill } from "./types.js";
 
 /**
@@ -11,11 +12,27 @@ import type { Skill } from "./types.js";
  * what it says.
  */
 
-/** `packages/adapters/{src,dist}` → `packages/skills`, either way. */
+/**
+ * Where the skills are, in a published install and in this repository.
+ *
+ * Resolving the package is the reliable answer and is tried first. The
+ * relative path is the fallback that covers running from source, where
+ * `packages/adapters/{src,dist}` sits beside `packages/skills`.
+ */
 function skillsDir(): string {
-  const dir = fileURLToPath(new URL("../../skills/", import.meta.url));
-  if (!existsSync(dir)) throw new Error(`MICHI's skills are missing — looked in ${dir}`);
-  return dir;
+  const tried: string[] = [];
+  try {
+    const manifest = createRequire(import.meta.url).resolve("@michi/skills/package.json");
+    const dir = `${dirname(manifest)}/`;
+    if (existsSync(dir)) return dir;
+    tried.push(dir);
+  } catch {
+    tried.push("@michi/skills (not resolvable from here)");
+  }
+  const beside = fileURLToPath(new URL("../../skills/", import.meta.url));
+  if (existsSync(beside)) return beside;
+  tried.push(beside);
+  throw new Error(`MICHI's skills are missing — looked in ${tried.join(", ")}`);
 }
 
 function frontmatterValue(source: string, key: string): string {

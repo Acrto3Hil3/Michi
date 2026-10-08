@@ -331,15 +331,36 @@ one here.
 
 ## Open
 
-### OQ-002 — npm package and binary names · **open, does not block Phase 1**
+### OQ-002 — npm package and binary names · **LOCKED: `@michi/*`, binary `michi`**
 
-`MICHI.md` §57 and §65 assume `@michi/cli`, `@michi/core`, `@michi/skills` and a
-`michi` binary. Availability on npm has **not been checked**.
+Checked against the npm registry on 2026-10-08:
 
-Treated as unresolved. Package and binary identity is read from configuration
-rather than hard-coded across the architecture, so resolving this later is a
-configuration change, not a refactor. Must be settled before the first public
-release.
+| Name | Registry | Verdict |
+|---|---|---|
+| `@michi/cli` · `@michi/core` · `@michi/adapters` · `@michi/skills` | 404 | available |
+| `michi` (unscoped) | 200 | **taken** — "Simple URL router", v0.0.7, published 2014, one version, last touched 2022, maintainer `meo` |
+| `michi-cli` · `michicode` · `michi-dev` | 404 | available, not needed |
+
+**Decision.** The four packages publish as `@michi/cli`, `@michi/core`,
+`@michi/adapters` and `@michi/skills`, sharing one version and released
+together. The command stays `michi`.
+
+The unscoped `michi` being taken does not affect the command: `bin` names are
+not registered on npm — they are links created inside an install — so
+`@michi/cli` provides `michi` regardless of who owns the unscoped package. The
+README says so plainly, because somebody *will* try `npm i -g michi` and get an
+unrelated 2014 URL router.
+
+**What is still unproven, and cannot be proven from here.** A 404 for
+`@michi/core` means no such package exists; it does **not** prove the `@michi`
+scope is unclaimed, because a scope can be owned and empty. The registry's org
+endpoint answers `403` to anyone not signed in, so the only way to settle it is
+`npm login` followed by `npm org ls michi`, or the first publish itself. That is
+the owner's step, and it is the one thing between here and a published package.
+
+Identity still lives in one constant (`core/src/identity.ts`), so if the scope
+turns out to be owned by somebody else, changing it is a one-file edit rather
+than a rename across the repository.
 
 ---
 

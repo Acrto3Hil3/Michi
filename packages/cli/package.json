@@ -1,15 +1,45 @@
 {
-  "name": "@michi/cli",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
+  "author": "Subhash Yadav",
+  "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
+  "bugs": {
+    "url": "https://github.com/Acrto3Hil3/Michi/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "name": "@michi/cli",
+  "private": false,
   "type": "module",
+  "description": "MICHI \u2014 the path from idea to software. Turns an idea into requirements, decisions and a precise brief for your AI coding agent.",
+  "keywords": [
+    "michi",
+    "cli",
+    "ai-coding-agent",
+    "requirements",
+    "local-first",
+    "agents-md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Acrto3Hil3/Michi.git",
+    "directory": "packages/cli"
+  },
   "bin": {
     "michi": "./dist/index.js"
   },
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
+    "@michi/adapters": "workspace:*",
     "@michi/core": "workspace:*",
-    "commander": "^12.1.0",
-    "@michi/adapters": "workspace:*"
+    "commander": "^12.1.0"
   }
 }

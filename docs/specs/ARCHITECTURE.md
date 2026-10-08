@@ -150,13 +150,14 @@ michi/
 └── tests/             cross-package integration tests
 ```
 
-**Published names are not settled** (OQ-002). `MICHI.md` assumes `@michi/core`,
-`@michi/cli`, `@michi/skills` and a `michi` binary, but npm availability has not
-been checked. Package and binary identity is therefore read from configuration
-and referenced through one constant — never spelled out across the codebase,
-docs and help text — so that resolving OQ-002 is a configuration change rather
-than a rename across the repository. These specifications say "Core", "the CLI"
-and "the binary" for the same reason.
+**Published names are settled** (OQ-002): `@michi/cli`, `@michi/core`,
+`@michi/adapters` and `@michi/skills`, with `michi` as the command. The
+unscoped `michi` package on npm belongs to an unrelated project. Package and
+binary identity is still read from configuration and referenced through one
+constant — never spelled out across the codebase, docs and help text — because
+a registry read cannot prove scope ownership, so the scope may yet have to
+change. These specifications say "Core", "the CLI" and "the binary" for the
+same reason.
 
 `scanner/` is described in §65 as a separate package. It starts as a directory
 inside `core/` and graduates when something outside `core` needs to depend on
