@@ -133,10 +133,17 @@ behaviour. See
    OQ-002 is settled as `@subhashyadav98146/*` with the CLI at
    `michi-cli`. The command stays `michi`: bin names are not registered
    on npm. Never publish without being asked.
-2. **Publishing to npm.** The artifact is proven (`pnpm release:check` packs,
-   inspects, installs into a clean project and drives the whole loop from the
-   installed binary). Publishing is a separate, deliberate act and has not
-   been authorised. A green build is not authorisation.
+2. **Publishing to npm — attempted, then set aside by the owner.** The
+   artifact is proven (`pnpm release:check` packs, inspects, installs into a
+   clean project and drives the whole loop from the installed binary) and
+   nothing is published. The blocker, if it is picked up again: npm requires
+   2FA or a bypass token to publish, and only an **Automation** token
+   (website-only — `npm token create` mints publish-type tokens, which still
+   demand an OTP) satisfies that. A `npm login` session token does not, and
+   running `npm login` overwrites whatever token is in
+   `~/.npmrc`, which is how the first attempt was lost. Do not retry with a
+   session token; it fails identically every time. Publishing stays a
+   deliberate act and a green build is not authorisation.
 3. **The GitHub remote.** `https://github.com/Acrto3Hil3/Michi` exists; commits
    from `4b7e6b1` onward are local only, from an earlier outage. Do not push
    unless asked.
