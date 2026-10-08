@@ -17,7 +17,7 @@ Until 1.0.0, the `.michi/` state format may change between minor versions. It
 carries a `schema_version`, and MICHI refuses to read state it does not
 understand rather than guessing at it.
 
-## [0.1.1] — 2026-10-08
+## [0.1.1] — 2026-10-08  ·  first working release
 
 ### Fixed
 
@@ -43,11 +43,15 @@ understand rather than guessing at it.
   agent has already attempted it), and the files those tasks reported
   touching. Reported files are labelled as a claim, not a measured cost.
 
-## [0.1.0] — unreleased
+## [0.1.0] — withdrawn
 
 The first version. MICHI turns an idea into requirements, decisions,
 architecture, a plan and a precise brief for a coding agent, then checks the
 result against evidence.
+
+> `michi-adapters@0.1.0` and `michi-cli@0.1.0` cannot be installed — see the
+> 0.1.1 entry above. Use 0.1.1 or later. Everything described below is in
+> 0.1.1; only the packaging was wrong.
 
 ### The project state
 
@@ -119,5 +123,6 @@ around it.
 `michi task split` is specified and not implemented — it needs a lifecycle
 decision the contract does not yet make.
 
-[Unreleased]: https://github.com/Acrto3Hil3/Michi/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Acrto3Hil3/Michi/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Acrto3Hil3/Michi/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Acrto3Hil3/Michi/releases/tag/v0.1.0

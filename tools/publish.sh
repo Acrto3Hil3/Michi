@@ -75,7 +75,12 @@ for p in "${PKGS[@]}"; do
 done
 
 # The only check that matters: can a stranger install it and run it?
-npm install --silent --no-audit --no-fund "$SCOPE/michi-cli@$VERSION" >/dev/null \
+#
+# --prefer-online is load-bearing. npm caches the packument — the list of
+# versions — so a machine that fetched this package minutes ago still believes
+# the old version is the newest one, and the install fails seconds after a
+# perfectly good publish. The registry is right; the local cache is stale.
+npm install --prefer-online --silent --no-audit --no-fund "$SCOPE/michi-cli@$VERSION" >/dev/null \
   || fail "installing the published CLI failed"
 ./node_modules/.bin/michi --version >/dev/null \
   || fail "the published binary does not run"

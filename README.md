@@ -35,13 +35,11 @@ MICHI fills that gap.
 
 ## Getting started
 
-Not published to npm yet, so from a clone:
-
 ```bash
-git clone https://github.com/Acrto3Hil3/Michi.git && cd Michi
-pnpm install && pnpm build
-pnpm verify           # 655 tests, typecheck, spec consistency
+npm install -g @subhashyadav98146/michi-cli
 ```
+
+Needs Node 20 or newer, and an AI coding agent you already use.
 
 Then, in your own project:
 
@@ -193,7 +191,7 @@ MICHI encourages the smallest engineering solution that satisfies the approved r
 
 ## Project status
 
-**All nine phases are built.** 655 tests, 147 specification-consistency
+**Published and working.** 690 tests, 147 specification-consistency
 invariants, and `pnpm release:check` — which packs the real tarballs, inspects
 them, installs them into a clean throwaway project and drives the whole loop
 from the installed binary, 47 checks in all. It publishes nothing, and nothing

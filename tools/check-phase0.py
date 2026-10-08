@@ -536,6 +536,9 @@ check("phase9  publishing goes through a script that cannot use npm publish",
 check("phase9  a half-finished release resumes rather than halting",
       says(pubtext, "Resuming must skip those rather than halting on the first one")
       and "already published — skipping" in pubtext)
+check("phase9  the post-publish install defeats npm's stale packument cache",
+      "--prefer-online" in pubtext
+      and says(pubtext, "The registry is right; the local cache is stale"))
 check("phase9  a publish is verified from the registry, not from the upload",
       says(pubtext, "from the registry, into a clean directory")
       and "workspace:*) fail" in pubtext
