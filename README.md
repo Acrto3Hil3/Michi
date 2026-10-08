@@ -1,59 +1,46 @@
 # MICHI
 
-**The path from idea to software.**
+<div align="center">
+  <img src="assets/michi-logo.svg" alt="MICHI logo" width="220" />
+</div>
 
-From rough ideas to clear engineering decisions, architecture, and precise
-instructions for your AI coding agent.
+<p align="center">
+  <strong>The path from idea to software.</strong>
+</p>
 
----
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-96.3%25-blue.svg" />
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.7%25-3776AB.svg" />
+  <img alt="Local-first" src="https://img.shields.io/badge/Local-first-Yes-0EA5E9.svg" />
+  <img alt="AI agent ready" src="https://img.shields.io/badge/AI%20agent-ready-4ade80.svg" />
+</p>
 
-## What this is
+MICHI is an engineering layer between a human and an AI coding agent. It helps turn vague product intent into clear requirements, structured decisions, architecture, and precise implementation instructions.
 
-You have an idea for software and an AI coding agent that can write code. What
-you probably don't have is someone to tell you when the agent is about to build
-the wrong thing.
+Instead of handing your agent a loose idea, MICHI turns it into a reliable engineering brief that keeps the project aligned, reviewable, and verifiable.
 
-MICHI is that someone. It sits between you and your coding agent:
+## Why MICHI exists
 
-```text
-You describe what you want, in ordinary words
-        ↓
-MICHI asks the questions a senior engineer would ask
-        ↓
-You make the decisions that matter, explained in plain language
-        ↓
-MICHI writes those decisions down, permanently
-        ↓
-MICHI hands your agent a precise brief instead of a vague wish
-        ↓
-Your agent builds it — and MICHI checks that it actually works
-```
+Most people do not struggle because AI cannot code. They struggle because they do not know how to tell an AI agent exactly what should be built, what constraints matter, and what decisions have already been made.
 
-It is free, open-source, and runs entirely on your own machine. No account, no
-cloud service, no AI subscription of its own. It works with whichever coding
-agent you already use — Claude Code, Codex, Cursor, Gemini CLI, Windsurf,
-Copilot, Cline, and others:
+MICHI fills that gap.
 
-```bash
-michi agents                      # what MICHI found, and what it can set up
-michi install --agent cursor      # or claude-code, codex, windsurf, …
-michi install                     # or none of them: AGENTS.md works everywhere
-```
+- It asks the engineering questions a senior engineer would ask.
+- It captures decisions as durable project memory.
+- It prevents accidental architecture drift.
+- It keeps project context small, relevant, and useful.
+- It gives your coding agent a crisp brief instead of a vague wish.
+- It records what was decided, why, and what changed later.
 
 ## Getting started
 
-Not published yet — see **Status** below. When it is, it will be one command:
+Not published to npm yet, so from a clone:
 
 ```bash
-npm install -g @subhashyadav98146/michi-cli
-```
-
-Until then, from a clone:
-
-```bash
+git clone https://github.com/Acrto3Hil3/Michi.git && cd Michi
 pnpm install && pnpm build
-pnpm verify                        # 655 tests, typecheck, spec consistency
-node packages/cli/dist/index.js --help
+pnpm verify           # 655 tests, typecheck, spec consistency
 ```
 
 Then, in your own project:
@@ -64,107 +51,190 @@ michi status                       # always start here
 michi discover start               # tell it what you want to build
 ```
 
-`michi status` is the answer to "what now" at every point. Everything takes
-`--json` as well, which is what the skills running inside your agent use.
+`michi status` answers "what now" at every point. Every command takes `--json`
+as well, which is what the skills running inside your agent use.
+
+```bash
+michi agents                       # what MICHI found, and what it can set up
+michi install                      # no adapter needed: AGENTS.md works anywhere
+```
 
 MICHI never overwrites a file you wrote. If your `AGENTS.md` differs from the
 one MICHI would write, it shows you the difference and leaves yours alone.
 
-MICHI doesn't write your code. Your agent does that. MICHI makes sure your
-agent is building the right thing.
+## The core idea
 
-## Status
+```text
+You describe the goal in ordinary language
+        ↓
+MICHI asks the important engineering questions
+        ↓
+You choose the decisions that matter
+        ↓
+MICHI records them as project memory
+        ↓
+MICHI compiles a precise task brief
+        ↓
+Your AI coding agent implements it
+        ↓
+MICHI checks the evidence and keeps the project honest
+```
 
-**Phases 1 to 9 built.** MICHI can look at a project, hold a structured
-discovery with you through your AI agent, record what you decided, work out
-with you what actually ships first, settle how it gets built, plan the work,
-hand your agent a precise brief for one piece of it, and then check whether the
-work it reported actually happened. Nothing is published yet.
+## What MICHI is
 
-What exists right now is the specification:
+MICHI is a local-first, open-source software engineering intelligence layer for AI-assisted development.
 
-- [`MICHI.md`](MICHI.md) — the master product document, and the source of truth
-- [`docs/specs/`](docs/specs/) — eleven engineering contracts derived from it
+It does not replace your coding agent. It makes your coding agent significantly more effective by creating a disciplined bridge between:
 
-The architecture is settled. MICHI has three layers: the **skills** that talk to
-you, running inside the AI agent you already use; **MICHI Core**, which is
-ordinary software with no AI in it at all; and `.michi/`, a folder of plain text
-files holding everything your project has decided.
+- human intent
+- product requirements
+- engineering decisions
+- technical architecture
+- relevant project context
+- actionable implementation instructions
+- verification and review
 
-**Not published yet.** The packages are built, packed and proven: `pnpm
-release:check` packs the four tarballs, inspects them for anything that should
-not ship, installs them into a clean throwaway project and drives the entire
-loop — discovery through verification — using only the installed binary. It
-publishes nothing. Pushing to npm is a deliberate, separate act and has not
-happened.
+## What MICHI is not
 
-The packages publish under `@subhashyadav98146/`, with the CLI at
-`michi-cli` and `michi` as the command you type — `bin` names are not
-registered on npm, so the two are independent. Two notes if you go looking:
-the unscoped `michi` package is **not** this project (an unrelated URL router,
-last touched 2022), and the `@michi` scope belongs to someone else.
+MICHI is not:
 
-Requirements accumulate rather than being overwritten: come back in six months
-with a change and MICHI adds to what you already agreed, marking what the
-change replaced instead of quietly losing it.
+- a SaaS platform
+- a hosted AI service
+- a replacement for Claude Code, Codex, Cursor, Gemini CLI, Windsurf, Copilot, or similar tools
+- a new AI model
+- a cloud dependency
+- a forced architecture system
 
-And the hard conversation — which four of your eighteen ideas are version one —
-happens with the cut written down. "Later" is recorded as a promise, not lost
-as a deletion, and MICHI will not decide it for you.
+MICHI is a local engineering control layer that improves how software gets built with AI.
 
-Then the technical choices, one at a time, in money and risk rather than
-architecture diagrams — and MICHI will not let the project move on while
-anything in the first version has no decided approach.
+## The problem it solves
 
-And when it comes to building, MICHI plans the work from what you agreed and
-compiles a brief for one piece of it: the requirement in your words, the
-decision you approved and the reason you approved it, the limits you set, and
-how anyone will know it worked — instead of your whole project. When your agent
-reports back, MICHI records that as what the agent *said*. "The agent says the
-tests pass" and "the tests pass" stay different sentences.
+A founder or product owner might say:
 
-Then it checks. You tell MICHI, once, which commands it is allowed to run on
-your project — your tests, your linter, nothing else. MICHI runs those itself
-and keeps what it saw apart from what it was told. Nothing is marked done on an
-agent's account of its own work, however confident; and when it is marked done,
-the verdict says plainly which parts rest on something MICHI watched and which
-parts rest on somebody's word.
+> “I want an app where customers can sign up, buy products, and track orders.”
 
-Change your mind in six months and that works too: MICHI records what changed,
-why, and that you asked for it, then regenerates the document. Nothing is ever
-deleted, and nothing changes without your name on it.
+That sounds clear, but it leaves many questions unanswered:
 
-What works today: point MICHI at a project and it writes down what is actually
-there, saying plainly which parts it could not establish rather than guessing.
-Then describe what you want to build, and your AI agent — following MICHI's
-`senior-engineer` skill — asks you the questions a senior engineer would, turns
-your answers into written requirements, and puts real technical choices to you
-in plain language with a recommendation.
+- Who are the users?
+- What is the admin model?
+- Which auth system should be used?
+- What database and schema fit this product?
+- What APIs are required?
+- What is in scope for version 1?
+- What should be deferred?
+- How do we verify correctness?
 
-Nothing becomes a requirement until you say so, and nothing becomes a decision
-until you choose. MICHI refuses to record either on your behalf — that is
-enforced in the code, not left to good intentions.
+MICHI helps convert that intent into a structured engineering understanding before implementation begins.
 
-The roadmap, in order:
+## How it works
 
-| Phase | What | State |
+MICHI has three layers:
+
+1. Skills
+   - The conversational intelligence layer that runs inside your existing AI coding agent.
+   - It helps explore requirements, recommend decisions, ask clarifying questions, and keep the project grounded.
+
+2. MICHI Core
+   - Deterministic, local-first software with no mandatory AI dependency.
+   - It validates project state, stores decisions, and manages project memory.
+
+3. `.michi/`
+   - A plain-text project brain that stores the decisions, requirements, architecture, and state that matter.
+
+## Architecture in one glance
+
+```text
+Human idea
+   ↓
+MICHI discovery and decision workflow
+   ↓
+Requirements + approved decisions + architecture
+   ↓
+Context packet + implementation brief
+   ↓
+Existing AI coding agent
+   ↓
+Code + tests + review + verification
+   ↓
+Persistent project knowledge
+```
+
+## Key capabilities
+
+### Decision-first workflow
+
+MICHI recommends, explains, asks, confirms, and locks important product and engineering decisions before implementation continues.
+
+### Project memory that lasts
+
+Conversation is temporary. Project artifacts are durable. MICHI records decisions, requirements, and architecture in a way future agents can understand.
+
+### Context engineering
+
+MICHI does not dump entire repositories into every prompt. It selects only the relevant requirements, decisions, files, and constraints needed for the current task.
+
+### Verification-first mindset
+
+“An agent says it works” is not enough. MICHI treats evidence as a first-class concept, including tests, linting, build checks, and runtime verification.
+
+### Minimal-complexity philosophy
+
+MICHI encourages the smallest engineering solution that satisfies the approved requirement reliably, without unnecessary dependencies or premature abstraction.
+
+## Project status
+
+**All nine phases are built.** 655 tests, 147 specification-consistency
+invariants, and `pnpm release:check` — which packs the real tarballs, inspects
+them, installs them into a clean throwaway project and drives the whole loop
+from the installed binary, 47 checks in all. It publishes nothing, and nothing
+is published.
+
+| Phase | What | Status |
 |---|---|---|
-| 0 | Specification | **done** |
-| 1 | `michi init` · `scan` · `status` | **done** |
-| 2 | The `senior-engineer` skill · `michi discover` · `michi decide` | **done** |
-| 3 | The `product-planner` skill · `michi plan` · the PRD | **done** |
-| 4 | The `architecture` skill · `michi architecture` · SYSTEM and TRD | **done** |
-| 5 | The context engine · `michi context` · `michi graph` | **done** |
-| 6 | The `implementer` skill · the task DAG · the prompt compiler | **done** |
-| 7 | Review, test, debug, verification | **done** |
-| 8 | Agent adapters | **done** |
-| 9 | Release readiness · npm packaging | **done, unpublished** |
+| 0 | Specification — eleven engineering contracts | done |
+| 1 | `init` · `scan` · `status` | done |
+| 2 | The `senior-engineer` skill · `discover` · `decide` | done |
+| 3 | The `product-planner` skill · `plan` · the PRD | done |
+| 4 | The `architecture` skill · SYSTEM and TRD | done |
+| 5 | The context engine · `context` · `graph` | done |
+| 6 | The `implementer` skill · the task DAG · the prompt compiler | done |
+| 7 | Review, test, debug, verification | done |
+| 8 | Agent adapters | done |
+| 9 | Release readiness · npm packaging | done, unpublished |
+
+The packages will publish as `@subhashyadav98146/michi-cli`, `-core`,
+`-adapters` and `-skills`, with `michi` as the command you type — `bin` names
+are not registered on npm, so the two are independent. Two notes if you go
+looking: the unscoped `michi` package on npm is **not** this project (an
+unrelated URL router, last touched 2022), and the `@michi` scope belongs to
+somebody else.
+
+## Documentation
+
+- [`MICHI.md`](MICHI.md) — the master product and product-design document
+- [`docs/specs/README.md`](docs/specs/README.md) — engineering contracts and architecture specifications
+- [`docs/specs/`](docs/specs/) — the specification set derived from the product vision
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to work on MICHI, and the rules that will get a change rejected
+- [`CHANGELOG.md`](CHANGELOG.md) — what is in each version, and what is deliberately not included
 
 ## The idea in one line
 
-> You decide **what** you want. MICHI works out **how** it should be built.
-> Your coding agent **builds** it.
+> You decide what you want. MICHI works out how it should be built. Your coding agent builds it.
+
+## Why this matters
+
+AI coding agents are already powerful. The bottleneck is not raw code generation—it is decision quality, architectural clarity, and context discipline.
+
+MICHI is built to reduce that gap.
+
+It helps people move from rough ideas to software with fewer wrong turns, less confusion, and better alignment between product intent and implementation.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
+
+---
+
+<p align="center">
+  <sub>Built for a clearer path from idea to software.</sub>
+</p>
