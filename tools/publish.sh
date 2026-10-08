@@ -28,24 +28,34 @@ say "Gate"
   || fail "the gate is not green — fix that before publishing anything"
 pass "tests, invariants and the release check"
 
-say "Checking $VERSION is not already taken"
+# A half-finished release leaves some of the four already at this version.
+# Resuming must skip those rather than halting on the first one — halting is
+# how the 0.1.0 release ended up with two packages published and two not.
+say "Checking what is already at $VERSION"
+TODO=()
 for p in "${PKGS[@]}"; do
   name="$SCOPE/michi-$p"
   code="$(curl -s -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/${name//\//%2F}/$VERSION")"
   if [ "$code" = "200" ]; then
-    fail "$name@$VERSION is already published. Published versions are immutable — bump the version."
+    pass "$name@$VERSION already published — skipping"
+  else
+    TODO+=("$p")
   fi
 done
-pass "$VERSION is free for all four"
 
-say "Publishing"
-echo "  2FA will ask for approval. Each package is approved separately, so"
-echo "  there is no 30-second window to race."
-echo
-for p in "${PKGS[@]}"; do
-  # pnpm, never npm: this is the line that rewrites workspace:*
-  (cd "$REPO/packages/$p" && pnpm publish --no-git-checks "$@")
-done
+if [ ${#TODO[@]} -eq 0 ]; then
+  say "Nothing to publish — all four are already at $VERSION"
+else
+  say "Publishing ${#TODO[@]} package(s)"
+  echo "  2FA asks per package, each approved separately, so there is no"
+  echo "  30-second window to race."
+  echo
+  for p in "${TODO[@]}"; do
+    # pnpm, never npm: this is the line that rewrites workspace:*
+    (cd "$REPO/packages/$p" && pnpm publish --no-git-checks "$@") \
+      || fail "publishing $SCOPE/michi-$p failed — rerun this script, it resumes"
+  done
+fi
 
 say "Verifying what landed, from the registry"
 WORK="$(mktemp -d)"

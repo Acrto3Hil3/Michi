@@ -533,6 +533,9 @@ check("phase9  publishing goes through a script that cannot use npm publish",
       and not [l for l in pubtext.splitlines()
                if re.search(r"(?<!p)npm publish", l) and not l.lstrip().startswith("#")]
       and says((ROOT / "CONTRIBUTING.md").read_text(), "Never run `npm publish` here"))
+check("phase9  a half-finished release resumes rather than halting",
+      says(pubtext, "Resuming must skip those rather than halting on the first one")
+      and "already published — skipping" in pubtext)
 check("phase9  a publish is verified from the registry, not from the upload",
       says(pubtext, "from the registry, into a clean directory")
       and "workspace:*) fail" in pubtext
