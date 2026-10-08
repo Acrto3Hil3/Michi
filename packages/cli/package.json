@@ -41,5 +41,8 @@
     "@subhashyadav98146/michi-adapters": "workspace:*",
     "@subhashyadav98146/michi-core": "workspace:*",
     "commander": "^12.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

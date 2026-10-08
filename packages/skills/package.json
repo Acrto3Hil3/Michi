@@ -31,5 +31,8 @@
   "exports": {
     "./package.json": "./package.json",
     "./*/SKILL.md": "./*/SKILL.md"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

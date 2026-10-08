@@ -40,5 +40,8 @@
   ],
   "dependencies": {
     "@subhashyadav98146/michi-skills": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
