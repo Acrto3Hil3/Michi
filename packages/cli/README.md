@@ -11,7 +11,7 @@ It runs entirely on your own machine. No account, no cloud service, no AI
 subscription of its own, and it never writes your application code.
 
 ```bash
-npm install -g @michi/cli
+npm install -g @subhashyadav98146/michi-senior-dev
 
 cd your-project
 michi init --agent claude-code     # or cursor, codex, windsurf, gemini-cli, …

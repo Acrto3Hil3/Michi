@@ -150,9 +150,11 @@ michi/
 └── tests/             cross-package integration tests
 ```
 
-**Published names are settled** (OQ-002): `@michi/cli`, `@michi/core`,
-`@michi/adapters` and `@michi/skills`, with `michi` as the command. The
-unscoped `michi` package on npm belongs to an unrelated project. Package and
+**Published names are settled** (OQ-002): the four packages publish under
+`@subhashyadav98146/`, with the CLI at `michi-senior-dev` and `michi` as the
+command — `bin` names are not registered on npm, so the two are independent.
+The `@michi` scope and the unscoped `michi` package both belong to other
+accounts. Package and
 binary identity is still read from configuration and referenced through one
 constant — never spelled out across the codebase, docs and help text — because
 a registry read cannot prove scope ownership, so the scope may yet have to

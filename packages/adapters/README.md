@@ -1,4 +1,4 @@
-# @michi/adapters
+# @subhashyadav98146/michi-adapters
 
 MICHI's agent adapters — the only place a coding agent's name means anything.
 
@@ -14,7 +14,7 @@ Ships adapters for Claude Code, Cursor, Codex, Gemini CLI, Copilot, Windsurf
 and Cline — plus `manual`, which writes the universal `AGENTS.md` baseline that
 works with any agent, including one that does not exist yet.
 
-Used through [`@michi/cli`](https://www.npmjs.com/package/@michi/cli)
+Used through [`@subhashyadav98146/michi-senior-dev`](https://www.npmjs.com/package/@subhashyadav98146/michi-senior-dev)
 (`michi agents`, `michi install`).
 
 MIT licensed. See the [project README](https://github.com/Acrto3Hil3/Michi#readme).

@@ -9,8 +9,8 @@ import {
   planTasks, planValidate, taskList, taskShow, taskNext, taskStart, taskReport, taskBlock,
   taskDone,
   runTest, recordTest, review, debugStage, verify, DEBUG_STAGES,
-} from "@michi/core";
-import type { Result } from "@michi/core";
+} from "@subhashyadav98146/michi-core";
+import type { Result } from "@subhashyadav98146/michi-core";
 import {
   renderInit, renderScan, renderStatus,
   renderDiscoverStart, renderDiscoverAnswer, renderDiscoverStatus, renderDiscoverClose,

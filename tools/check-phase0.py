@@ -103,16 +103,6 @@ check("OQ-005  no bare exact-looking token counts",
                               r"Not `|estimate|budget")),
       "; ".join(bad))
 
-# --- OQ-002  npm identity, now settled -----------------------------------
-check("OQ-002  the npm names are settled, with the check that settled them",
-      "LOCKED: `@michi/*`, binary `michi`" in spec("README.md")
-      and "Checked against the npm registry" in spec("README.md"))
-check("OQ-002  the unscoped michi package is flagged as somebody else's",
-      "not** this project" in (ROOT / "README.md").read_text())
-check("OQ-002  identity is still one constant, so the scope can change cheaply",
-      "identity.ts" in spec("README.md")
-      and (ROOT / "packages" / "core" / "src" / "identity.ts").is_file())
-
 # --- v1 non-goals ---------------------------------------------------------
 check("non-goals  MICHI's own storage is text files, not a database",
       "No database" in arch and "no database" in arch.lower()
@@ -536,6 +526,21 @@ check("phase9  the README tells a new user how to install and run it",
 check("phase9  the state format's compatibility promise is written down",
       "schema_version" in (ROOT / "CHANGELOG.md").read_text()
       and "may change between minor versions" in (ROOT / "CHANGELOG.md").read_text())
+
+# --- OQ-002  npm identity, now settled -----------------------------------
+check("OQ-002  the npm names are settled, with the check that settled them",
+      "LOCKED: `@subhashyadav98146/*`" in spec("README.md")
+      and "owned by an account that is not ours" in spec("README.md")
+      and "Calibrating against the known cases" in spec("README.md"))
+check("OQ-002  the command and the package name stay independent",
+      "bin` names are not registered on npm" in spec("README.md")
+      and all(j["name"].startswith("@subhashyadav98146/")
+              for j in MANIFESTS.values()))
+check("OQ-002  the unscoped michi package is flagged as somebody else's",
+      "not** this project" in (ROOT / "README.md").read_text())
+check("OQ-002  identity is still one constant, so the scope can change cheaply",
+      "identity.ts" in spec("README.md")
+      and (ROOT / "packages" / "core" / "src" / "identity.ts").is_file())
 
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))

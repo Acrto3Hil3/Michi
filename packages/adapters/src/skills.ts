@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 import type { Skill } from "./types.js";
 
 /**
- * MICHI's own skills, read from `@michi/skills`.
+ * MICHI's own skills, read from `@subhashyadav98146/michi-skills`.
  *
  * They are plain Markdown and ship as-is. Nothing here rewrites a skill's
  * content: an adapter chooses where a skill goes and how it is framed, never
@@ -22,12 +22,12 @@ import type { Skill } from "./types.js";
 function skillsDir(): string {
   const tried: string[] = [];
   try {
-    const manifest = createRequire(import.meta.url).resolve("@michi/skills/package.json");
+    const manifest = createRequire(import.meta.url).resolve("@subhashyadav98146/michi-skills/package.json");
     const dir = `${dirname(manifest)}/`;
     if (existsSync(dir)) return dir;
     tried.push(dir);
   } catch {
-    tried.push("@michi/skills (not resolvable from here)");
+    tried.push("@subhashyadav98146/michi-skills (not resolvable from here)");
   }
   const beside = fileURLToPath(new URL("../../skills/", import.meta.url));
   if (existsSync(beside)) return beside;

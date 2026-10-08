@@ -1,4 +1,4 @@
-# @michi/skills
+# @subhashyadav98146/michi-skills
 
 MICHI's skills — the Experience Layer.
 
@@ -17,7 +17,7 @@ to someone who does not read code, how to review, test, debug and verify.
 | `debugger` | reproduce, root cause, fix, verify — in that order |
 
 They contain no application code and no model calls. The judgement happens in
-your agent; MICHI's enforcement happens in `@michi/core`.
+your agent; MICHI's enforcement happens in `@subhashyadav98146/michi-core`.
 
 Installed into your project in your agent's own format by `michi install`.
 

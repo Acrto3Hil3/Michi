@@ -45,7 +45,7 @@ michi install                     # or none of them: AGENTS.md works everywhere
 Not published yet — see **Status** below. When it is, it will be one command:
 
 ```bash
-npm install -g @michi/cli
+npm install -g @subhashyadav98146/michi-senior-dev
 ```
 
 Until then, from a clone:
@@ -98,10 +98,11 @@ loop — discovery through verification — using only the installed binary. It
 publishes nothing. Pushing to npm is a deliberate, separate act and has not
 happened.
 
-The published names will be `@michi/cli`, `@michi/core`, `@michi/adapters` and
-`@michi/skills`, with `michi` as the command you type. One note if you go
-looking: the unscoped `michi` package on npm is **not** this project — it is an
-unrelated URL router last touched in 2022.
+The packages publish under `@subhashyadav98146/`, with the CLI at
+`michi-senior-dev` and `michi` as the command you type — `bin` names are not
+registered on npm, so the two are independent. Two notes if you go looking:
+the unscoped `michi` package is **not** this project (an unrelated URL router,
+last touched 2022), and the `@michi` scope belongs to someone else.
 
 Requirements accumulate rather than being overwritten: come back in six months
 with a change and MICHI adds to what you already agreed, marking what the

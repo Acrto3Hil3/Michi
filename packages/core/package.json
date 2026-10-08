@@ -9,7 +9,7 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@michi/core",
+  "name": "@subhashyadav98146/michi-core",
   "private": false,
   "type": "module",
   "description": "MICHI's engines, schemas and project-state layer. Deterministic, offline, model-free.",

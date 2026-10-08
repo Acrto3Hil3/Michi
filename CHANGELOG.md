@@ -3,9 +3,15 @@
 All notable changes to MICHI are recorded here.
 
 This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-The four packages — `@michi/cli`, `@michi/core`, `@michi/adapters` and
-`@michi/skills` — are released in lockstep and share one version number: a
-mixed set is a configuration nobody tested.
+The four packages are released in lockstep and share one version number — a
+mixed set is a configuration nobody tested:
+
+| Package | Role |
+|---|---|
+| `@subhashyadav98146/michi-senior-dev` | the CLI, and the `michi` command |
+| `@subhashyadav98146/michi-core` | engines, schemas, state |
+| `@subhashyadav98146/michi-adapters` | the agent adapters |
+| `@subhashyadav98146/michi-skills` | the seven skills |
 
 Until 1.0.0, the `.michi/` state format may change between minor versions. It
 carries a `schema_version`, and MICHI refuses to read state it does not

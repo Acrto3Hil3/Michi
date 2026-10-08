@@ -46,7 +46,7 @@ describe("the boundary holds", () => {
 describe("every adapter writes the baseline", () => {
   const skills = loadSkills();
 
-  it("loads the seven skills from @michi/skills", () => {
+  it("loads the seven skills from @subhashyadav98146/michi-skills", () => {
     expect(skills.map((s) => s.name).sort()).toEqual([
       "architecture", "debugger", "implementer", "product-planner",
       "reviewer", "senior-engineer", "tester",

@@ -14,8 +14,8 @@ import type {
   PlanTasksData, PlanValidateData, TaskListData, TaskShowData, TaskNextData,
   TaskStartData, TaskReportData, Task,
   RunTestData, ReviewData, DebugData, VerifyData,
-} from "@michi/core";
-import { cmd } from "@michi/core";
+} from "@subhashyadav98146/michi-core";
+import { cmd } from "@subhashyadav98146/michi-core";
 import type { AgentsData, InstallData } from "./agents.js";
 
 const bullet = (s: string) => `  ${s}`;

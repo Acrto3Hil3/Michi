@@ -128,9 +128,11 @@ behaviour. See
 **Open — needs the owner, don't decide these unasked:**
 
 1. **`npm login`, then `npm org ls michi`** — the only thing between here and
-   a published package. OQ-002 is settled (`@michi/*`, binary `michi`), but a
-   registry read cannot prove the *scope* is unowned, and that check needs the
-   owner's credentials. Never publish without being asked.
+   a published package — **done**: signed in as `subhashyadav98146`, and both
+   `@michi` and `@subhashyadav` turned out to be owned by other accounts.
+   OQ-002 is settled as `@subhashyadav98146/*` with the CLI at
+   `michi-senior-dev`. The command stays `michi`: bin names are not registered
+   on npm. Never publish without being asked.
 2. **Publishing to npm.** The artifact is proven (`pnpm release:check` packs,
    inspects, installs into a clean project and drives the whole loop from the
    installed binary). Publishing is a separate, deliberate act and has not

@@ -76,9 +76,9 @@ cd "$PROJECT"
 npm init -y >/dev/null 2>&1
 # All four together: pre-publish, the inter-package deps resolve from the
 # local tarballs rather than from a registry that has never seen them.
-npm install --silent --no-audit --no-fund \
-  "$PACK/michi-core-0.1.0.tgz" "$PACK/michi-skills-0.1.0.tgz" \
-  "$PACK/michi-adapters-0.1.0.tgz" "$PACK/michi-cli-0.1.0.tgz" >/dev/null
+# Whatever pnpm pack named them — the tarball filename follows the package
+# name, so deriving it beats hardcoding a name that a rename will outdate.
+npm install --silent --no-audit --no-fund "$PACK"/*.tgz >/dev/null
 MICHI="$PROJECT/node_modules/.bin/michi"
 [ -x "$MICHI" ] && pass "the michi binary is installed and executable" \
   || { fail "no michi binary"; exit 1; }

@@ -9,7 +9,7 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@michi/adapters",
+  "name": "@subhashyadav98146/michi-adapters",
   "private": false,
   "type": "module",
   "description": "MICHI's agent adapters \u2014 the only place a coding agent's name means anything.",
@@ -39,6 +39,6 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@michi/skills": "workspace:*"
+    "@subhashyadav98146/michi-skills": "workspace:*"
   }
 }

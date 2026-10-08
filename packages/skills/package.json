@@ -9,7 +9,7 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@michi/skills",
+  "name": "@subhashyadav98146/michi-skills",
   "private": false,
   "description": "MICHI's skills \u2014 the Experience Layer. Instructions for the user's own coding agent.",
   "keywords": [

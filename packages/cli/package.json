@@ -9,7 +9,7 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@michi/cli",
+  "name": "@subhashyadav98146/michi-senior-dev",
   "private": false,
   "type": "module",
   "description": "MICHI \u2014 the path from idea to software. Turns an idea into requirements, decisions and a precise brief for your AI coding agent.",
@@ -38,8 +38,8 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@michi/adapters": "workspace:*",
-    "@michi/core": "workspace:*",
+    "@subhashyadav98146/michi-adapters": "workspace:*",
+    "@subhashyadav98146/michi-core": "workspace:*",
     "commander": "^12.1.0"
   }
 }

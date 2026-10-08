@@ -1,11 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { MichiError, errorPayload, isInitialized, ok } from "@michi/core";
-import type { Result } from "@michi/core";
+import { MichiError, errorPayload, isInitialized, ok } from "@subhashyadav98146/michi-core";
+import type { Result } from "@subhashyadav98146/michi-core";
 import {
   ADAPTERS, adapterFor, detectAll, loadSkills, reconcile,
-} from "@michi/adapters";
-import type { DetectionResult, InstallOutcome, PlannedFile } from "@michi/adapters";
+} from "@subhashyadav98146/michi-adapters";
+import type { DetectionResult, InstallOutcome, PlannedFile } from "@subhashyadav98146/michi-adapters";
 import { basename } from "node:path";
 
 /**
