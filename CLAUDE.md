@@ -182,8 +182,14 @@ Phase 9's shape:
   throwaway project, and drives the whole loop — discovery through
   `task done` — using only the installed binary. A green `pnpm verify` proves
   the repository works, which is a different claim.
-- **`pnpm pack`, never `npm pack`.** pnpm rewrites `workspace:*` to the real
-  version on the way out; npm ships it verbatim and the install cannot resolve.
+- **`pnpm pack`/`pnpm publish`, never the `npm` equivalents.** pnpm rewrites
+  `workspace:*` to the real version on the way out; npm ships it verbatim and
+  the published package fails to install with `EUNSUPPORTEDPROTOCOL`. This is
+  not theoretical: `michi-adapters@0.1.0` was published with `npm publish` and
+  is permanently broken, because published versions are immutable. Publishing
+  goes through `pnpm release:publish`, which also installs what it published
+  from the registry afterwards — a successful upload proves only that the
+  upload worked.
 - **The four packages share one version and ship together.** Bumping means all
   four `package.json` files *and* `core/src/identity.ts`, which is what the CLI
   reports. An invariant holds them in step.

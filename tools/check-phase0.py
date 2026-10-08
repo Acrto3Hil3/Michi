@@ -20,6 +20,18 @@ spec = lambda n: text[SPECS / n]
 fails = []
 
 
+def says(haystack, phrase):
+    """Substring match that ignores how the prose happens to be wrapped.
+
+    Markdown and shell comments reflow whenever a sentence is edited, so a
+    literal phrase that spans a line break silently stops matching. Collapsing
+    whitespace (and leading comment markers) on both sides makes these checks
+    depend on what the text says rather than on where the lines happen to end.
+    """
+    flat = lambda t: " ".join(t.replace("\n#", " ").replace("\n", " ").split())
+    return flat(phrase) in flat(haystack)
+
+
 def check(name, ok, detail=""):
     print(("  PASS  " if ok else "  FAIL  ") + name)
     if not ok:
@@ -512,6 +524,19 @@ check("phase9  CI runs the release check, and installs no postinstall scripts",
       (ci := ROOT / ".github" / "workflows" / "ci.yml").is_file()
       and "--ignore-scripts" in ci.read_text()
       and "release:check" in ci.read_text())
+# `npm publish` must not be *executed* here. It appears in the comments
+# explaining why, and "pnpm publish" contains it as a substring, so the check
+# is on the runnable lines only.
+check("phase9  publishing goes through a script that cannot use npm publish",
+      (pub := ROOT / "tools" / "publish.sh").is_file()
+      and "pnpm publish" in (pubtext := pub.read_text())
+      and not [l for l in pubtext.splitlines()
+               if re.search(r"(?<!p)npm publish", l) and not l.lstrip().startswith("#")]
+      and says((ROOT / "CONTRIBUTING.md").read_text(), "Never run `npm publish` here"))
+check("phase9  a publish is verified from the registry, not from the upload",
+      says(pubtext, "from the registry, into a clean directory")
+      and "workspace:*) fail" in pubtext
+      and says(pubtext, "a successful publish proves only that the upload worked"))
 check("phase9  publishing is never a side effect of a green build",
       "npm publish" not in (ROOT / ".github" / "workflows" / "ci.yml").read_text()
       and "deliberate, separate act" in (ROOT / "CONTRIBUTING.md").read_text())

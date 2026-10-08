@@ -20,7 +20,7 @@ export const IDENTITY = {
   scope: "@subhashyadav98146",
   /** How the tool refers to itself in prose. */
   displayName: "MICHI",
-  version: "0.1.0",
+  version: "0.1.1",
 } as const;
 
 export function cmd(rest: string): string {

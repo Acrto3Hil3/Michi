@@ -17,7 +17,19 @@ Until 1.0.0, the `.michi/` state format may change between minor versions. It
 carries a `schema_version`, and MICHI refuses to read state it does not
 understand rather than guessing at it.
 
-## [Unreleased]
+## [0.1.1] — 2026-10-08
+
+### Fixed
+
+- `@subhashyadav98146/michi-adapters@0.1.0` was published with a
+  `workspace:*` dependency and cannot be installed — `npm publish` ships that
+  protocol verbatim where `pnpm publish` rewrites it to a real version.
+  Published versions are immutable, so 0.1.1 is the fix and 0.1.0 is
+  deprecated. `michi-core@0.1.0` and `michi-skills@0.1.0` were unaffected.
+- Publishing now goes through `pnpm release:publish`, which refuses a version
+  already on the registry, uses pnpm throughout, and afterwards installs what
+  it published **from the registry** into a clean directory — a successful
+  upload proves only that the upload worked.
 
 ### Added
 

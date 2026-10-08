@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "check:specs": "python3 tools/check-phase0.py",
     "verify": "pnpm typecheck && pnpm test && pnpm check:specs",
-    "release:check": "bash tools/release-check.sh"
+    "release:check": "bash tools/release-check.sh",
+    "release:publish": "bash tools/publish.sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

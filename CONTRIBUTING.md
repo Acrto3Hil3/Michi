@@ -62,12 +62,22 @@ Declare `runs_commands: null` rather than guessing. Unknown is not false.
 The four packages share one version and ship together: a mixed set is a
 configuration nobody tested.
 
-1. `pnpm verify` and `pnpm release:check`, both clean.
-2. Move the `CHANGELOG.md` entry out of `[Unreleased]`, with the date.
-3. Bump the version in all four `package.json` files **and** in
+1. Move the `CHANGELOG.md` entry out of `[Unreleased]`, with the date.
+2. Bump the version in all four `package.json` files **and** in
    `packages/core/src/identity.ts`, which is where the CLI reads it from.
-4. Tag `v<version>`.
-5. Publish — a deliberate, separate act, never a side effect of a green build.
+3. Tag `v<version>`.
+4. `pnpm release:publish` — a deliberate, separate act, never a side effect of
+   a green build. It runs the gate, refuses a version already on the registry,
+   publishes all four, and then installs what it just published from the
+   registry into a clean directory to prove a stranger can use it.
+
+> **Never run `npm publish` here.** These packages depend on each other with
+> pnpm's `workspace:*` protocol, which is correct for development and
+> meaningless to a registry. `pnpm publish` rewrites it to the real version on
+> the way out; `npm publish` ships it verbatim, and the published package then
+> fails to install with `EUNSUPPORTEDPROTOCOL`. That is exactly how
+> `michi-adapters@0.1.0` was broken, and published versions are immutable — the
+> only fix was a version bump.
 
 Until 1.0.0 the `.michi/` state format may change between minor versions. It
 carries a `schema_version` and MICHI refuses state it does not understand
