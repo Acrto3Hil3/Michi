@@ -2,25 +2,11 @@
 
 MICHI's engines, schemas and project-state layer.
 
-Ordinary software: deterministic, offline, and model-free. It makes no network
-calls and asks no model anything. The same inputs produce the same bytes, so
-two reads never disagree.
+**You probably want [`@subhashyadav98146/michi-cli`](https://www.npmjs.com/package/@subhashyadav98146/michi-cli) instead.**
+That is the package people install, and its page explains the whole thing in
+one read. This one is a piece of it, installed automatically as a dependency.
 
-It is the layer underneath [`@subhashyadav98146/michi-cli`](https://www.npmjs.com/package/@subhashyadav98146/michi-cli).
-Most people want that package, not this one.
+It holds the requirements, decisions and evidence, and makes no network
+calls and no model calls. Same input, same bytes, every time.
 
-```ts
-import { init, status, resolveContext } from "@subhashyadav98146/michi-core";
-
-const started = init({ root: process.cwd(), now: () => new Date().toISOString() });
-if (!started.ok) console.error(started.error.message);
-```
-
-Every engine takes an explicit input, returns `Result<T>` with typed errors,
-and takes its clock as a parameter — so nothing fabricates a timestamp.
-
-The only thing Core executes in your project is a verification command you
-listed yourself under `verification.allow`. It never edits source code, not
-even to fix a failing check.
-
-MIT licensed. See the [project README](https://github.com/Acrto3Hil3/Michi#readme).
+MIT licensed · [Source and full docs](https://github.com/Acrto3Hil3/Michi)

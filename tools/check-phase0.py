@@ -593,6 +593,26 @@ check("explain  both commands are implemented, not just specified",
       and 'command("explain <id>")' in (run := (ROOT / "packages" / "cli" / "src" / "run.ts").read_text())
       and 'command("impact <id>")' in run)
 
+# --- the npm page: one read, no hopping between packages -------------------
+CLI_README = (ROOT / "packages" / "cli" / "README.md").read_text()
+
+check("npm  the CLI page stands on its own — install, start, and what to type",
+      all(t in CLI_README for t in
+          ("npm install -g @subhashyadav98146/michi-cli", "michi init", "michi status"))
+      and says(CLI_README, "You need two things"))
+check("npm  it says up front that an agent is required and code is not written",
+      says(CLI_README, "not a replacement for one")
+      and says(CLI_README, "It never writes your code"))
+check("npm  it shows the claim-versus-evidence rule, which is the whole point",
+      "michi verify" in CLI_README
+      and says(CLI_README, "That is a claim about its own work, not evidence"))
+check("npm  it is short enough to read in one sitting",
+      len(CLI_README.splitlines()) < 220)
+check("npm  the internal packages send people to the CLI rather than stranding them",
+      all(says(readme, "You probably want") and len(readme.splitlines()) < 30
+          for readme in ((ROOT / "packages" / n / "README.md").read_text()
+                         for n in ("core", "adapters", "skills"))))
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()
