@@ -362,7 +362,7 @@ been mistaken for ownership.
 
 | Package | Role |
 |---|---|
-| `@subhashyadav98146/michi-senior-dev` | the CLI — the one people install |
+| `@subhashyadav98146/michi-cli` | the CLI — the one people install |
 | `@subhashyadav98146/michi-core` | engines, schemas, state |
 | `@subhashyadav98146/michi-adapters` | the agent adapters |
 | `@subhashyadav98146/michi-skills` | the seven skills |
@@ -380,17 +380,17 @@ decision was reached by asking the owner, after `@michi` and `@subhashyadav`
 both turned out to be taken.
 
 ---|---|---|
-| `@subhashyadav98146/michi-senior-dev` · `@subhashyadav98146/michi-core` · `@subhashyadav98146/michi-adapters` · `@subhashyadav98146/michi-skills` | 404 | available |
+| `@subhashyadav98146/michi-cli` · `@subhashyadav98146/michi-core` · `@subhashyadav98146/michi-adapters` · `@subhashyadav98146/michi-skills` | 404 | available |
 | `michi` (unscoped) | 200 | **taken** — "Simple URL router", v0.0.7, published 2014, one version, last touched 2022, maintainer `meo` |
 | `michi-cli` · `michicode` · `michi-dev` | 404 | available, not needed |
 
-**Decision.** The four packages publish as `@subhashyadav98146/michi-senior-dev`, `@subhashyadav98146/michi-core`,
+**Decision.** The four packages publish as `@subhashyadav98146/michi-cli`, `@subhashyadav98146/michi-core`,
 `@subhashyadav98146/michi-adapters` and `@subhashyadav98146/michi-skills`, sharing one version and released
 together. The command stays `michi`.
 
 The unscoped `michi` being taken does not affect the command: `bin` names are
 not registered on npm — they are links created inside an install — so
-`@subhashyadav98146/michi-senior-dev` provides `michi` regardless of who owns the unscoped package. The
+`@subhashyadav98146/michi-cli` provides `michi` regardless of who owns the unscoped package. The
 README says so plainly, because somebody *will* try `npm i -g michi` and get an
 unrelated 2014 URL router.
 

@@ -45,7 +45,7 @@ michi install                     # or none of them: AGENTS.md works everywhere
 Not published yet — see **Status** below. When it is, it will be one command:
 
 ```bash
-npm install -g @subhashyadav98146/michi-senior-dev
+npm install -g @subhashyadav98146/michi-cli
 ```
 
 Until then, from a clone:
@@ -99,7 +99,7 @@ publishes nothing. Pushing to npm is a deliberate, separate act and has not
 happened.
 
 The packages publish under `@subhashyadav98146/`, with the CLI at
-`michi-senior-dev` and `michi` as the command you type — `bin` names are not
+`michi-cli` and `michi` as the command you type — `bin` names are not
 registered on npm, so the two are independent. Two notes if you go looking:
 the unscoped `michi` package is **not** this project (an unrelated URL router,
 last touched 2022), and the `@michi` scope belongs to someone else.

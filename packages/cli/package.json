@@ -9,7 +9,7 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@subhashyadav98146/michi-senior-dev",
+  "name": "@subhashyadav98146/michi-cli",
   "private": false,
   "type": "module",
   "description": "MICHI \u2014 the path from idea to software. Turns an idea into requirements, decisions and a precise brief for your AI coding agent.",

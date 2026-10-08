@@ -131,7 +131,7 @@ behaviour. See
    a published package — **done**: signed in as `subhashyadav98146`, and both
    `@michi` and `@subhashyadav` turned out to be owned by other accounts.
    OQ-002 is settled as `@subhashyadav98146/*` with the CLI at
-   `michi-senior-dev`. The command stays `michi`: bin names are not registered
+   `michi-cli`. The command stays `michi`: bin names are not registered
    on npm. Never publish without being asked.
 2. **Publishing to npm.** The artifact is proven (`pnpm release:check` packs,
    inspects, installs into a clean project and drives the whole loop from the

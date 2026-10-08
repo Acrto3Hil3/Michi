@@ -151,7 +151,7 @@ michi/
 ```
 
 **Published names are settled** (OQ-002): the four packages publish under
-`@subhashyadav98146/`, with the CLI at `michi-senior-dev` and `michi` as the
+`@subhashyadav98146/`, with the CLI at `michi-cli` and `michi` as the
 command — `bin` names are not registered on npm, so the two are independent.
 The `@michi` scope and the unscoped `michi` package both belong to other
 accounts. Package and

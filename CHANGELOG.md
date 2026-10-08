@@ -8,7 +8,7 @@ mixed set is a configuration nobody tested:
 
 | Package | Role |
 |---|---|
-| `@subhashyadav98146/michi-senior-dev` | the CLI, and the `michi` command |
+| `@subhashyadav98146/michi-cli` | the CLI, and the `michi` command |
 | `@subhashyadav98146/michi-core` | engines, schemas, state |
 | `@subhashyadav98146/michi-adapters` | the agent adapters |
 | `@subhashyadav98146/michi-skills` | the seven skills |

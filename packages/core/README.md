@@ -6,7 +6,7 @@ Ordinary software: deterministic, offline, and model-free. It makes no network
 calls and asks no model anything. The same inputs produce the same bytes, so
 two reads never disagree.
 
-It is the layer underneath [`@subhashyadav98146/michi-senior-dev`](https://www.npmjs.com/package/@subhashyadav98146/michi-senior-dev).
+It is the layer underneath [`@subhashyadav98146/michi-cli`](https://www.npmjs.com/package/@subhashyadav98146/michi-cli).
 Most people want that package, not this one.
 
 ```ts

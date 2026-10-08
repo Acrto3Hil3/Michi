@@ -2,7 +2,7 @@
  * Package and binary identity.
  *
  * OQ-002 is settled: `@subhashyadav98146/*`, with the CLI published as
- * `michi-senior-dev` and the command still `michi` — bin names are not
+ * `michi-cli` and the command still `michi` — bin names are not
  * registered on npm, so the two are independent (docs/specs/README.md).
  * Everything that names the tool reads it from here, so moving scope stays a
  * small mechanical change rather than a rename across the repository.

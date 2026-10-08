@@ -14,7 +14,7 @@ Ships adapters for Claude Code, Cursor, Codex, Gemini CLI, Copilot, Windsurf
 and Cline — plus `manual`, which writes the universal `AGENTS.md` baseline that
 works with any agent, including one that does not exist yet.
 
-Used through [`@subhashyadav98146/michi-senior-dev`](https://www.npmjs.com/package/@subhashyadav98146/michi-senior-dev)
+Used through [`@subhashyadav98146/michi-cli`](https://www.npmjs.com/package/@subhashyadav98146/michi-cli)
 (`michi agents`, `michi install`).
 
 MIT licensed. See the [project README](https://github.com/Acrto3Hil3/Michi#readme).
