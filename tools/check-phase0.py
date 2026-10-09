@@ -641,6 +641,22 @@ check("example  a schema error points at it, a missing file does not",
 check("example  the examples live in one place, not scattered per command",
       (ROOT / "packages" / "core" / "src" / "commands" / "example.ts").is_file())
 
+# --- the editor extension -------------------------------------------------
+VSC = ROOT / "packages" / "vscode"
+check("vscode  it ships an icon the marketplace will accept",
+      (VSC / "media" / "icon.png").is_file()
+      and '"icon": "media/icon.png"' in (VSC / "package.json").read_text())
+check("vscode  the vsix carries no source, tests or sourcemaps",
+      all(p in (VSC / ".vscodeignore").read_text() for p in ("src/**", "test/**", "**/*.map")))
+check("vscode  both registries are documented, with why there are two",
+      says((pub := (VSC / "PUBLISHING.md").read_text()), "VS Code Marketplace")
+      and "open-vsx.org" in pub
+      and says(pub, "the forks use Open VSX"))
+check("vscode  it does not bundle a second copy of the CLI",
+      says(pub, "do not bundle a copy")
+      and "@subhashyadav98146/michi-cli" not in
+          _json.loads((VSC / "package.json").read_text()).get("dependencies", {}))
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

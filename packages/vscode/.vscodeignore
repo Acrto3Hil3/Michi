@@ -1,0 +1,8 @@
+# Only dist, the icon, the readme and the licence ship.
+src/**
+test/**
+tsconfig.json
+**/*.ts
+**/*.map
+.vscode/**
+node_modules/**

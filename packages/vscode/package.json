@@ -7,21 +7,54 @@
   "license": "MIT",
   "publisher": "subhashyadav98146",
   "author": "Subhash Yadav",
-  "repository": { "type": "git", "url": "git+https://github.com/Acrto3Hil3/Michi.git", "directory": "packages/vscode" },
-  "bugs": { "url": "https://github.com/Acrto3Hil3/Michi/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Acrto3Hil3/Michi.git",
+    "directory": "packages/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/Acrto3Hil3/Michi/issues"
+  },
   "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
-  "categories": ["AI", "Programming Languages", "Other"],
-  "keywords": ["ai", "agent", "requirements", "architecture", "agents.md"],
-  "engines": { "vscode": "^1.85.0", "node": ">=20" },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "requirements",
+    "architecture",
+    "agents.md"
+  ],
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=20"
+  },
   "main": "./dist/extension.js",
   "type": "commonjs",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "commands": [
-      { "command": "michi.setup", "title": "MICHI: Set up in this project" },
-      { "command": "michi.status", "title": "MICHI: What needs me?" },
-      { "command": "michi.connectAgent", "title": "MICHI: Connect a coding agent" },
-      { "command": "michi.explain", "title": "MICHI: Explain this decision or requirement" }
+      {
+        "command": "michi.setup",
+        "title": "MICHI: Set up in this project"
+      },
+      {
+        "command": "michi.status",
+        "title": "MICHI: What needs me?"
+      },
+      {
+        "command": "michi.connectAgent",
+        "title": "MICHI: Connect a coding agent"
+      },
+      {
+        "command": "michi.explain",
+        "title": "MICHI: Explain this decision or requirement"
+      }
     ],
     "configuration": {
       "title": "MICHI",
@@ -40,6 +73,19 @@
     }
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0"
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.1",
+    "ovsx": "^0.10.1"
+  },
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0B0B0B",
+    "theme": "dark"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "package": "pnpm build && vsce package --no-dependencies --out michi.vsix",
+    "publish:vscode": "vsce publish --no-dependencies",
+    "publish:openvsx": "ovsx publish michi.vsix"
   }
 }

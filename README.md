@@ -1,7 +1,7 @@
 # MICHI
 
 <div align="center">
-  <img src="assets/michi-logo.svg" alt="MICHI logo" width="220" />
+  <img src="assets/michi-logo-512.png" alt="MICHI" width="240" />
 </div>
 
 <p align="center">
@@ -38,6 +38,11 @@ MICHI fills that gap.
 ```bash
 npm install -g @subhashyadav98146/michi-cli
 ```
+
+Or install the **VS Code extension**, which offers to connect MICHI to
+whichever coding agent is already in your project — detecting what's there,
+showing the exact files before writing any of them, and remembering if you say
+no. It drives the CLI, so you still need the command above.
 
 Needs Node 20 or newer, and an AI coding agent you already use.
 

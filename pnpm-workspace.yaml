@@ -6,4 +6,6 @@ packages:
 # dependency, so the script is denied rather than approved.
 # See docs/specs/SECURITY_MODEL.md, "Supply chain": no postinstall scripts.
 allowBuilds:
+  '@vscode/vsce-sign': set this to true or false
   esbuild: false
+  keytar: set this to true or false
