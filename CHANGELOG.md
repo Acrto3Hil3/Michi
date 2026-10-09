@@ -17,10 +17,17 @@ Until 1.0.0, the `.michi/` state format may change between minor versions. It
 carries a `schema_version`, and MICHI refuses to read state it does not
 understand rather than guessing at it.
 
-## [Unreleased]
+## [0.1.2] — 2026-10-09
 
 ### Added
 
+- Adapters for **Google Antigravity, Zed, JetBrains Junie, AWS Kiro and Trae**,
+  bringing the total to thirteen. Most of them read `AGENTS.md`, which MICHI
+  already wrote, so these are largely detection plus the one native file each
+  prefers — `michi agents` now recognises the editor rather than leaving the
+  user to guess.
+- Trae's rules path comes from community tooling rather than Trae's own
+  documentation, and the adapter says so rather than implying it was verified.
 - `michi example <name> [--raw]` — a complete, valid file for every command
   that takes `--file`. A schema failure names one missing field at a time, so
   finding a file's shape by trial cost a round-trip per field; the first

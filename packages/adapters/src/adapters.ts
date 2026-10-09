@@ -190,6 +190,92 @@ const cline: AgentAdapter = {
   installPlan: withInstructionFile("cline", ".clinerules", "Project rules"),
 };
 
+/**
+ * The editors that arrived after `AGENTS.md` settled as the common standard.
+ *
+ * Zed takes it as the primary instructions file, Kiro picks up a root one
+ * automatically, Junie reads it before its own legacy format, and Antigravity
+ * reads it alongside `GEMINI.md`. So for most of these the baseline *is* the
+ * integration, and the adapter exists so `michi agents` recognises the editor
+ * and writes the one extra file it prefers.
+ */
+
+const antigravity: AgentAdapter = {
+  id: "antigravity",
+  displayName: "Google Antigravity",
+  capabilities: CAN_RUN,
+  detect: makeDetect("antigravity", "Google Antigravity",
+    [".antigravity", ".agents/rules", ".agent/rules"]),
+  installPlan: (ctx) => ({
+    ...withInstructionFile("antigravity", ".agents/rules/michi.md", "Project rules")(ctx),
+    notes: [
+      "Antigravity reads AGENTS.md alongside its own GEMINI.md. Where both" +
+      " define the same thing, GEMINI.md is reported to win — so keep anything" +
+      " Antigravity-specific there and leave AGENTS.md for everyone.",
+    ],
+  }),
+};
+
+const zed: AgentAdapter = {
+  id: "zed",
+  displayName: "Zed",
+  capabilities: CAN_RUN,
+  detect: makeDetect("zed", "Zed", [".zed", ".rules"]),
+  installPlan: (ctx) => ({
+    ...baselineOnly("zed")(ctx),
+    notes: [
+      "AGENTS.md is Zed's primary project instructions file, so it is the whole" +
+      " integration. Zed picks one file from a priority list rather than merging," +
+      " so a stray .cursorrules or .rules in this project can hide AGENTS.md.",
+    ],
+  }),
+};
+
+const junie: AgentAdapter = {
+  id: "junie",
+  displayName: "JetBrains Junie",
+  capabilities: CAN_RUN,
+  detect: makeDetect("junie", "JetBrains Junie", [".junie", ".idea"]),
+  installPlan: (ctx) => ({
+    ...withInstructionFile("junie", ".junie/AGENTS.md", "Project instructions")(ctx),
+    notes: [
+      "Junie checks .junie/AGENTS.md before the root AGENTS.md, so the file in" +
+      " .junie wins for Junie while the root one still serves every other agent.",
+    ],
+  }),
+};
+
+const kiro: AgentAdapter = {
+  id: "kiro",
+  displayName: "AWS Kiro",
+  capabilities: CAN_RUN,
+  detect: makeDetect("kiro", "AWS Kiro", [".kiro", ".kiro/steering"]),
+  installPlan: (ctx) => ({
+    ...baselineOnly("kiro")(ctx),
+    notes: [
+      "Kiro picks up a root AGENTS.md automatically as steering, so nothing" +
+      " else is needed. Project-specific steering lives in .kiro/steering/ and" +
+      " is yours, not MICHI's to write.",
+    ],
+  }),
+};
+
+const trae: AgentAdapter = {
+  id: "trae",
+  displayName: "Trae",
+  capabilities: UNKNOWN_RUN,
+  detect: makeDetect("trae", "Trae", [".trae", ".trae/rules"]),
+  installPlan: (ctx) => ({
+    ...withInstructionFile("trae", ".trae/rules/project_rules.md", "Project rules")(ctx),
+    notes: [
+      "Trae's rules path comes from community tooling rather than from Trae's" +
+      " own documentation — MICHI could not confirm it against an official" +
+      " source. AGENTS.md is written either way, and that is the part MICHI" +
+      " is sure about.",
+    ],
+  }),
+};
+
 export const ADAPTERS: Record<string, AgentAdapter> = {
   manual,
   "claude-code": claudeCode,
@@ -199,6 +285,11 @@ export const ADAPTERS: Record<string, AgentAdapter> = {
   copilot,
   windsurf,
   cline,
+  antigravity,
+  zed,
+  junie,
+  kiro,
+  trae,
 };
 
 export function adapterIds(): string[] {

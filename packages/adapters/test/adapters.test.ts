@@ -25,7 +25,8 @@ describe("the boundary holds", () => {
 
   it("covers every target the contract names", () => {
     for (const id of ["manual", "claude-code", "cursor", "codex", "gemini-cli",
-                      "copilot", "windsurf", "cline"]) {
+                      "copilot", "windsurf", "cline",
+                      "antigravity", "zed", "junie", "kiro", "trae"]) {
       expect(adapterIds(), id).toContain(id);
     }
   });
@@ -207,5 +208,54 @@ describe("installing is idempotent and never destructive", () => {
       (p) => (p === "a" ? "1" : p === "b" ? "different" : null),
     ).map((o) => o.action));
     expect(actions).toEqual(new Set(["UNCHANGED", "CONFLICT", "WRITE"]));
+  });
+});
+
+describe("the editors that arrived after AGENTS.md became the standard", () => {
+  const skills = loadSkills();
+  const paths = (id: string) =>
+    adapterFor(id).installPlan({ projectRoot: "/p", projectName: "shop", skills })
+      .files.map((f) => f.path);
+
+  it("writes where each one actually reads", () => {
+    expect(paths("antigravity")).toContain(".agents/rules/michi.md");
+    expect(paths("junie")).toContain(".junie/AGENTS.md");
+    expect(paths("trae")).toContain(".trae/rules/project_rules.md");
+  });
+
+  it("leaves Zed and Kiro on the baseline, because that is what they read", () => {
+    // Zed takes AGENTS.md as its primary instructions file, and Kiro picks up
+    // a root AGENTS.md automatically. An extra file would be noise.
+    expect(paths("zed")).toEqual(["AGENTS.md"]);
+    expect(paths("kiro")).toEqual(["AGENTS.md"]);
+  });
+
+  it("detects each one from something the editor itself creates", async () => {
+    for (const [id, marker] of [
+      ["antigravity", ".antigravity/config.json"],
+      ["zed", ".zed/settings.json"],
+      ["junie", ".junie/guidelines.md"],
+      ["kiro", ".kiro/steering/x.md"],
+      ["trae", ".trae/rules/project_rules.md"],
+    ] as const) {
+      const root = project({ [marker]: "x" });
+      const found = (await detectAll(root)).find((d) => d.id === id);
+      expect(found?.present, id).toBe(true);
+      expect(found?.evidence.length, id).toBeGreaterThan(0);
+      after();
+    }
+  });
+
+  it("says it does not know, where the convention is not documented", () => {
+    // Trae's rules path comes from community tooling, not from Trae's own
+    // documentation. Saying so beats quietly implying it was verified (P9).
+    const plan = adapterFor("trae").installPlan({ projectRoot: "/p", projectName: "shop", skills });
+    expect(plan.notes.join(" ").toLowerCase()).toMatch(/not.*documented|community|could not confirm/);
+  });
+
+  it("still writes the baseline for every one of them", () => {
+    for (const id of ["antigravity", "zed", "junie", "kiro", "trae"]) {
+      expect(paths(id), id).toContain("AGENTS.md");
+    }
   });
 });

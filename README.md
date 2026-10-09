@@ -44,7 +44,7 @@ Needs Node 20 or newer, and an AI coding agent you already use.
 Then, in your own project:
 
 ```bash
-michi init --agent claude-code     # or cursor, codex, windsurf, gemini-cli, …
+michi init --agent claude-code     # or cursor, codex, zed, antigravity, junie, …
 michi status                       # always start here
 michi discover start               # tell it what you want to build
 ```

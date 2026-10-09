@@ -14,9 +14,10 @@ own. It never writes your code.
 npm install -g @subhashyadav98146/michi-cli
 ```
 
-> **You need two things:** Node 20 or newer, and an AI coding agent you already
-> use — Claude Code, Cursor, Codex, Gemini CLI, Windsurf, Copilot or Cline.
-> MICHI is the engineering layer around your agent, not a replacement for one.
+> **You need two things:** Node 20 or newer, and an AI coding agent or editor
+> you already use — Claude Code, Cursor, Codex, Gemini CLI, Windsurf, Copilot,
+> Cline, Antigravity, Zed, JetBrains Junie, Kiro or Trae. MICHI is the
+> engineering layer around your agent, not a replacement for one.
 
 ---
 
@@ -24,7 +25,7 @@ npm install -g @subhashyadav98146/michi-cli
 
 ```bash
 cd your-project
-michi init --agent claude-code     # or cursor, codex, windsurf, gemini-cli, …
+michi init --agent claude-code     # or cursor, codex, zed, antigravity, junie, …
 ```
 
 That creates `.michi/` — your project's memory, plain text files you can read —

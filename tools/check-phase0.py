@@ -462,7 +462,12 @@ check("phase8  adapters are their own package, and core cannot import them",
 check("phase8  every target in the contract has an adapter",
       all(f'"{a}"' in (ADAPTERS_SRC / "adapters.ts").read_text()
           for a in ("manual", "claude-code", "cursor", "codex", "gemini-cli",
-                    "copilot", "windsurf", "cline")))
+                    "copilot", "windsurf", "cline",
+                    "antigravity", "zed", "junie", "kiro", "trae")))
+check("phase8  an unverified convention is marked, not quietly implied",
+      says(aam, "it is only in community tooling")
+      and "could not confirm it against an official" in
+          (ADAPTERS_SRC / "adapters.ts").read_text())
 check("phase8  no agent's name appears outside packages/adapters/src",
       not [p for p in (ROOT / "packages").rglob("*.ts")
            if "node_modules" not in p.parts and "dist" not in p.parts

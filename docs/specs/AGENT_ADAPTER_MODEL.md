@@ -104,7 +104,22 @@ it needs a different design.
 | Copilot | `.github/copilot-instructions.md` | |
 | Windsurf | `.windsurfrules` | |
 | Cline / Roo | `.clinerules` | |
+| Google Antigravity | `.agents/rules/michi.md` | also reads `GEMINI.md`, which wins on conflict |
+| Zed | `AGENTS.md` | its primary instructions file; picks one, never merges |
+| JetBrains Junie | `.junie/AGENTS.md` | checked before the root `AGENTS.md` |
+| AWS Kiro | `AGENTS.md` | picked up as steering automatically |
+| Trae | `.trae/rules/project_rules.md` | path from community tooling, not confirmed officially |
 | Kimi, Qwen, OpenCode, local agents | `AGENTS.md` | baseline |
+
+**`AGENTS.md` won.** Zed, Kiro, Junie, Antigravity and Codex all read it, which
+is why half this table is "baseline" and why adding an editor is usually
+detection plus one file. The universal baseline stopped being a fallback for
+agents nobody had adapted and became the thing most of them read first.
+
+Where an editor's convention is documented by its own vendor, the adapter
+follows it. Where it is only in community tooling — Trae's rules path, at the
+time of writing — the adapter says so in its notes rather than implying MICHI
+verified it (P9).
 
 Adding an agent is one file in `adapters/` plus a row here. That is the measure
 of whether this boundary is holding: if adding an agent requires touching
