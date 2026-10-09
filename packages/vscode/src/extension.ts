@@ -4,6 +4,9 @@ import {
 } from "./cli.js";
 import type { AgentRow, RunResult, StatusData } from "./cli.js";
 import { cliNeedsUpdate, MINIMUM_CLI } from "./version.js";
+import { resolveCli, describeSource } from "./resolve.js";
+import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 
 /**
  * MICHI for VS Code.
@@ -22,8 +25,28 @@ const DECLINED = "michi.declinedSetup";
 const CLI_PACKAGE = "@dev-subhash/michi";
 const UPDATE_COMMAND = `npm install -g ${CLI_PACKAGE}@latest`;
 
-function binary(): string {
-  return vscode.workspace.getConfiguration("michi").get<string>("path") || "michi";
+/** Resolved once per activation; the answer cannot change mid-session. */
+let cli: ReturnType<typeof resolveCli> | undefined;
+
+function onPath(): boolean {
+  try {
+    execFileSync(process.platform === "win32" ? "where" : "which", ["michi"],
+      { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resolve(context: vscode.ExtensionContext): ReturnType<typeof resolveCli> {
+  if (!cli) {
+    cli = resolveCli({
+      setting: vscode.workspace.getConfiguration("michi").get<string>("path") ?? "",
+      onPath,
+      bundled: join(context.extensionPath, "dist", "cli", "michi.mjs"),
+    });
+  }
+  return cli;
 }
 
 function folder(): vscode.WorkspaceFolder | undefined {
@@ -33,12 +56,15 @@ function folder(): vscode.WorkspaceFolder | undefined {
 /** Show a failure in the CLI's own words, with its own next step as an action. */
 async function report(result: RunResult<unknown>, what: string): Promise<void> {
   if (result.missing) {
-    const copy = "Copy install command";
+    // MICHI ships inside this extension, so this means the resolved command
+    // could not run at all — a michi.path pointing at nothing, usually.
+    const where = resolved ? describeSource(resolved.source) : "MICHI";
     const picked = await vscode.window.showErrorMessage(
-      result.message ?? "MICHI is not installed.", copy, "Open docs");
-    if (picked === copy) {
-      await vscode.env.clipboard.writeText(`npm install -g ${CLI_PACKAGE}`);
-      vscode.window.showInformationMessage("Copied. Run it in a terminal, then try again.");
+      `Could not run ${where}.`,
+      { modal: false, detail: result.message ?? "" },
+      "Open settings", "Open docs");
+    if (picked === "Open settings") {
+      await vscode.commands.executeCommand("workbench.action.openSettings", "michi.path");
     } else if (picked === "Open docs") {
       await vscode.env.openExternal(vscode.Uri.parse("https://github.com/Acrto3Hil3/Michi#readme"));
     }
@@ -54,10 +80,13 @@ async function report(result: RunResult<unknown>, what: string): Promise<void> {
   }
 }
 
+let resolved: ReturnType<typeof resolveCli> | undefined;
+
 async function run<T>(args: string[]): Promise<RunResult<T>> {
   const at = folder();
   if (!at) return { ok: false, message: "Open a project folder first." };
-  return michi<T>(nodeExec, binary(), at.uri.fsPath, args);
+  if (!resolved) return { ok: false, message: "MICHI has not finished starting up." };
+  return michi<T>(nodeExec, resolved, at.uri.fsPath, args);
 }
 
 /**
@@ -140,6 +169,9 @@ async function setUp(): Promise<void> {
  * enough to be useful and not enough to be a nuisance.
  */
 async function checkCli(context: vscode.ExtensionContext): Promise<void> {
+  // Only the user's own install can be out of date. The bundled one ships
+  // with this extension, so warning about it would be warning about us.
+  if (resolved?.source === "bundled") return;
   const found = await run<{ version?: string }>(["--version"]);
   // --version does not emit an envelope, so read it off the raw text instead.
   const version = typeof found.data === "string" ? found.data : undefined;
@@ -208,6 +240,9 @@ async function explain(): Promise<void> {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  // The CLI ships inside this extension, so there is nothing for anyone to
+  // install first. A michi they installed themselves still wins.
+  resolved = resolve(context);
   const bar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   bar.command = "michi.status";
   bar.tooltip = "MICHI — what needs you";

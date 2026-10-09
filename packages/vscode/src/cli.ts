@@ -31,12 +31,16 @@ export interface RunResult<T> {
 export type Exec = (
   file: string,
   args: string[],
-  options: { cwd: string },
+  options: { cwd: string; env?: Record<string, string> },
 ) => Promise<{ stdout: string; stderr: string; code: number }>;
 
 export const nodeExec: Exec = (file, args, options) =>
   new Promise((resolve) => {
-    execFile(file, args, { cwd: options.cwd, maxBuffer: 8 * 1024 * 1024 },
+    execFile(file, args, {
+      cwd: options.cwd,
+      maxBuffer: 8 * 1024 * 1024,
+      ...(options.env ? { env: { ...process.env, ...options.env } } : {}),
+    },
       (error, stdout, stderr) => {
         const code = error && typeof (error as { code?: unknown }).code === "number"
           ? (error as unknown as { code: number }).code
@@ -55,13 +59,15 @@ const NOT_INSTALLED = /ENOENT|not found|not recognized/i;
  */
 export async function michi<T>(
   exec: Exec,
-  binary: string,
+  cli: { command: string; args: readonly string[]; env?: Readonly<Record<string, string>> },
   cwd: string,
   args: string[],
 ): Promise<RunResult<T>> {
   let out: { stdout: string; stderr: string; code: number };
   try {
-    out = await exec(binary, [...args, "--json"], { cwd });
+    out = await exec(cli.command, [...cli.args, ...args, "--json"], {
+      cwd, ...(cli.env ? { env: { ...cli.env } } : {}),
+    });
   } catch (e) {
     return { ok: false, missing: true, message: e instanceof Error ? e.message : String(e) };
   }

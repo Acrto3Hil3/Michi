@@ -16,18 +16,21 @@ its own, and it never writes your code.
 
 ---
 
-## Two things to install
+## Install it and start
+
+That's the whole setup. MICHI ships **inside** this extension and runs on the
+Node your editor already has — nothing to install first, nothing to put on
+your PATH, no configuration.
+
+If you already run MICHI from a terminal, that copy wins. Your version is
+yours; the extension won't quietly swap it.
 
 ```bash
-npm install -g @dev-subhash/michi
+npm install -g @dev-subhash/michi     # optional, for terminal use
 ```
 
-Then this extension. It drives that command — it is not a copy of MICHI, so
-there is only ever one version answering, and this extension tells you if the
-CLI falls behind what it expects.
-
-> Needs **Node 20+** and an AI coding agent you already use. MICHI is the
-> engineering layer around your agent, not a replacement for one.
+> You do need an AI coding agent you already use. MICHI is the engineering
+> layer around your agent, not a replacement for one.
 
 ## Then open a project
 

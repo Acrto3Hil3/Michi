@@ -3,6 +3,8 @@ src/**
 test/**
 tsconfig.json
 **/*.ts
+!dist/cli/**
+!skills/**
 **/*.map
 .vscode/**
 node_modules/**

@@ -7,3 +7,7 @@ coverage/
 
 # VS Code extension build output
 *.vsix
+
+# Built into the extension by tools/bundle-cli.mjs
+packages/vscode/dist/
+packages/vscode/skills/

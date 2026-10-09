@@ -91,9 +91,10 @@
     "theme": "dark"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && pnpm bundle:cli",
     "package": "pnpm build && vsce package --no-dependencies --out michi.vsix",
     "publish:vscode": "vsce publish --no-dependencies",
-    "publish:openvsx": "ovsx publish michi.vsix"
+    "publish:openvsx": "ovsx publish michi.vsix",
+    "bundle:cli": "node ../../tools/bundle-cli.mjs"
   }
 }

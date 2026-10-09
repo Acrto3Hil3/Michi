@@ -18,13 +18,13 @@ describe("talking to the CLI", () => {
   it("always asks for --json, because that is the stable contract", async () => {
     const seen: string[][] = [];
     const spy: Exec = async (_f, args) => { seen.push(args); return { stdout: '{"ok":true,"data":{}}', stderr: "", code: 0 }; };
-    await michi(spy, "michi", "/p", ["status"]);
+    await michi(spy, { command: "michi", args: [] }, "/p", ["status"]);
     expect(seen[0]).toEqual(["status", "--json"]);
   });
 
   it("reads the data out of a successful envelope", async () => {
     const r = await michi<{ stage: string }>(
-      fake({ stdout: '{"ok":true,"data":{"stage":"DISCOVERY"}}' }), "michi", "/p", ["status"]);
+      fake({ stdout: '{"ok":true,"data":{"stage":"DISCOVERY"}}' }), { command: "michi", args: [] }, "/p", ["status"]);
     expect(r.ok).toBe(true);
     expect(r.data?.stage).toBe("DISCOVERY");
   });
@@ -36,25 +36,25 @@ describe("talking to the CLI", () => {
     const r = await michi(fake({
       stdout: '{"ok":false,"error":{"code":"BLOCKED","message":"Nobody has confirmed REQ-001.","next":"Ask the user."}}',
       code: 5,
-    }), "michi", "/p", ["plan", "close"]);
+    }), { command: "michi", args: [] }, "/p", ["plan", "close"]);
     expect(r.ok).toBe(false);
     expect(r.message).toBe("Nobody has confirmed REQ-001.");
     expect(r.next).toBe("Ask the user.");
   });
 
   it("recognises a missing binary and says how to get it", async () => {
-    const r = await michi(fake({ stderr: "command not found: michi", code: 127 }), "michi", "/p", ["status"]);
+    const r = await michi(fake({ stderr: "command not found: michi", code: 127 }), { command: "michi", args: [] }, "/p", ["status"]);
     expect(r.missing).toBe(true);
     expect(r.next).toMatch(/npm install -g @dev-subhash\/michi/);
   });
 
   it("survives an exec that throws", async () => {
-    const r = await michi(async () => { throw new Error("ENOENT"); }, "michi", "/p", ["status"]);
+    const r = await michi(async () => { throw new Error("ENOENT"); }, { command: "michi", args: [] }, "/p", ["status"]);
     expect(r.missing).toBe(true);
   });
 
   it("does not pretend output it cannot parse is a user error", async () => {
-    const r = await michi(fake({ stdout: "not json at all" }), "michi", "/p", ["status"]);
+    const r = await michi(fake({ stdout: "not json at all" }), { command: "michi", args: [] }, "/p", ["status"]);
     expect(r.ok).toBe(false);
     expect(r.message).toMatch(/did not return JSON/);
   });
@@ -170,13 +170,13 @@ describe("michi --version", () => {
   it("is read as a bare string, because it is not an envelope", async () => {
     // Running it through the JSON parser would report a perfectly good CLI as
     // broken, which is the opposite of what a version check is for.
-    const r = await michi<string>(fake({ stdout: "0.2.0\n" }), "michi", "/p", ["--version"]);
+    const r = await michi<string>(fake({ stdout: "0.2.0\n" }), { command: "michi", args: [] }, "/p", ["--version"]);
     expect(r.ok).toBe(true);
     expect(r.data).toBe("0.2.0");
   });
 
   it("still reports a CLI that prints nothing", async () => {
-    const r = await michi<string>(fake({ stdout: "" }), "michi", "/p", ["--version"]);
+    const r = await michi<string>(fake({ stdout: "" }), { command: "michi", args: [] }, "/p", ["--version"]);
     expect(r.ok).toBe(false);
   });
 });

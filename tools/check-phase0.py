@@ -33,7 +33,16 @@ def says(haystack, phrase):
     # "not a\n> replacement" stops matching "not a replacement" purely because
     # the sentence happens to sit inside a blockquote.
     import re as _re
-    flat = lambda t: " ".join(_re.sub(r"\n\s*(?:[#>]|[-*+] |\d+\. )?", " ", t).split())
+
+    def flat(t):
+        # Continuation markers on a wrapped line: a shell comment, a
+        # blockquote, a list bullet.
+        t = _re.sub(r"\n\s*(?:[#>]|[-*+] |\d+\. )?", " ", t)
+        # Emphasis is formatting, not content. Without stripping it, a phrase
+        # stops matching the moment somebody bolds a word inside it.
+        t = t.replace("**", "").replace("`", "")
+        return " ".join(t.split())
+
     return flat(phrase) in flat(haystack)
 
 
@@ -667,6 +676,15 @@ check("vscode  the readme's logo ships in the package, not from an unpushed URL"
 check("vscode  where the human name comes from is written down",
       says((VSC / "PUBLISHING.md").read_text(),
            "a sideloaded `.vsix` can only show the id"))
+check("vscode  the CLI ships inside it, so there is nothing to install first",
+      (ROOT / "tools" / "bundle-cli.mjs").is_file()
+      and (VSC / "src" / "resolve.ts").is_file()
+      and says((VSC / "README.md").read_text(), "That's the whole setup")
+      and says((VSC / "src" / "resolve.ts").read_text(),
+               "no `npm install -g`, and no Node either"))
+check("vscode  a michi the user installed themselves still wins",
+      says((VSC / "src" / "resolve.ts").read_text(),
+           "A michi the user installed themselves still wins"))
 check("vscode  the extension and the npm package share a name",
       _json.loads((VSC / "package.json").read_text())["name"] == "michi")
 check("vscode  it tells you when the CLI is behind what it calls",
@@ -674,10 +692,13 @@ check("vscode  it tells you when the CLI is behind what it calls",
       and "MINIMUM_CLI" in (VSC / "src" / "extension.ts").read_text()
       and says((VSC / "src" / "version.ts").read_text(),
                "An unreadable version is not evidence of an old one"))
-check("vscode  the readme names the two installs and does not hide one",
-      says((rd := (VSC / "README.md").read_text()), "Two things to install")
+check("vscode  the readme promises no setup, and keeps that promise",
+      says((rd := (VSC / "README.md").read_text()),
+           "MICHI ships inside this extension")
+      and says(rd, "nothing to install first")
+      # the npm install is still mentioned, as optional, for terminal use
       and "npm install -g @dev-subhash/michi" in rd
-      and says(rd, "it is not a copy of MICHI"))
+      and says(rd, "optional, for terminal use"))
 check("vscode  the publisher id matches the npm scope",
       _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
       and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))
