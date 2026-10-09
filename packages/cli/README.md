@@ -14,10 +14,19 @@ own. It never writes your code.
 npm install -g @dev-subhash/michi
 ```
 
+There is also a **VS Code extension** — search `MICHI` in the Extensions panel.
+It drives this command rather than duplicating it, so there is only ever one
+version of MICHI answering.
+
 > **You need two things:** Node 20 or newer, and an AI coding agent or editor
-> you already use — Claude Code, Cursor, Codex, Gemini CLI, Windsurf, Copilot,
-> Cline, Antigravity, Zed, JetBrains Junie, Kiro or Trae. MICHI is the
-> engineering layer around your agent, not a replacement for one.
+> you already use. MICHI is the engineering layer around your agent, not a
+> replacement for one.
+
+| Works with | |
+|---|---|
+| **Agents** | Claude Code · Codex · Gemini CLI · Cline / Roo |
+| **Editors** | Cursor · Windsurf · Zed · Antigravity · JetBrains Junie · AWS Kiro · Trae · VS Code + Copilot |
+| **Anything else** | through `AGENTS.md`, including agents that don't exist yet |
 
 ---
 

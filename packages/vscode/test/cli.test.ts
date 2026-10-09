@@ -165,3 +165,18 @@ describe("the extension stays a thin client", () => {
     expect(body).not.toMatch(/@subhashyadav98146\/michi-core/);
   });
 });
+
+describe("michi --version", () => {
+  it("is read as a bare string, because it is not an envelope", async () => {
+    // Running it through the JSON parser would report a perfectly good CLI as
+    // broken, which is the opposite of what a version check is for.
+    const r = await michi<string>(fake({ stdout: "0.2.0\n" }), "michi", "/p", ["--version"]);
+    expect(r.ok).toBe(true);
+    expect(r.data).toBe("0.2.0");
+  });
+
+  it("still reports a CLI that prints nothing", async () => {
+    const r = await michi<string>(fake({ stdout: "" }), "michi", "/p", ["--version"]);
+    expect(r.ok).toBe(false);
+  });
+});

@@ -75,6 +75,15 @@ export async function michi<T>(
     };
   }
 
+  // `--version` answers with a bare version string rather than an envelope.
+  // Treating that as a parse failure would report a working CLI as broken.
+  if (args[0] === "--version") {
+    const version = out.stdout.trim();
+    return version
+      ? { ok: true, data: version as unknown as T }
+      : { ok: false, message: "michi --version printed nothing." };
+  }
+
   let envelope: Envelope<T>;
   try {
     envelope = JSON.parse(out.stdout) as Envelope<T>;

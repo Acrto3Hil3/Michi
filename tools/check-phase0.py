@@ -28,7 +28,12 @@ def says(haystack, phrase):
     whitespace (and leading comment markers) on both sides makes these checks
     depend on what the text says rather than on where the lines happen to end.
     """
-    flat = lambda t: " ".join(t.replace("\n#", " ").replace("\n", " ").split())
+    # Strip the markers that continue a wrapped line — a shell comment, a
+    # blockquote, a list bullet — before collapsing whitespace. Without this,
+    # "not a\n> replacement" stops matching "not a replacement" purely because
+    # the sentence happens to sit inside a blockquote.
+    import re as _re
+    flat = lambda t: " ".join(_re.sub(r"\n\s*(?:[#>]|[-*+] |\d+\. )?", " ", t).split())
     return flat(phrase) in flat(haystack)
 
 
@@ -655,6 +660,17 @@ check("vscode  it ships an icon the marketplace will accept",
       and '"icon": "media/icon.png"' in (VSC / "package.json").read_text())
 check("vscode  the vsix carries no source, tests or sourcemaps",
       all(p in (VSC / ".vscodeignore").read_text() for p in ("src/**", "test/**", "**/*.map")))
+check("vscode  the extension and the npm package share a name",
+      _json.loads((VSC / "package.json").read_text())["name"] == "michi")
+check("vscode  it tells you when the CLI is behind what it calls",
+      (VSC / "src" / "version.ts").is_file()
+      and "MINIMUM_CLI" in (VSC / "src" / "extension.ts").read_text()
+      and says((VSC / "src" / "version.ts").read_text(),
+               "An unreadable version is not evidence of an old one"))
+check("vscode  the readme names the two installs and does not hide one",
+      says((rd := (VSC / "README.md").read_text()), "Two things to install")
+      and "npm install -g @dev-subhash/michi" in rd
+      and says(rd, "it is not a copy of MICHI"))
 check("vscode  the publisher id matches the npm scope",
       _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
       and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))

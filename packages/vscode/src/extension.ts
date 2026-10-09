@@ -3,6 +3,7 @@ import {
   michi, nodeExec, isSetUp, statusBarText, agentChoices, agentDetail,
 } from "./cli.js";
 import type { AgentRow, RunResult, StatusData } from "./cli.js";
+import { cliNeedsUpdate, MINIMUM_CLI } from "./version.js";
 
 /**
  * MICHI for VS Code.
@@ -18,6 +19,8 @@ import type { AgentRow, RunResult, StatusData } from "./cli.js";
  */
 
 const DECLINED = "michi.declinedSetup";
+const CLI_PACKAGE = "@dev-subhash/michi";
+const UPDATE_COMMAND = `npm install -g ${CLI_PACKAGE}@latest`;
 
 function binary(): string {
   return vscode.workspace.getConfiguration("michi").get<string>("path") || "michi";
@@ -34,7 +37,7 @@ async function report(result: RunResult<unknown>, what: string): Promise<void> {
     const picked = await vscode.window.showErrorMessage(
       result.message ?? "MICHI is not installed.", copy, "Open docs");
     if (picked === copy) {
-      await vscode.env.clipboard.writeText("npm install -g @dev-subhash/michi");
+      await vscode.env.clipboard.writeText(`npm install -g ${CLI_PACKAGE}`);
       vscode.window.showInformationMessage("Copied. Run it in a terminal, then try again.");
     } else if (picked === "Open docs") {
       await vscode.env.openExternal(vscode.Uri.parse("https://github.com/Acrto3Hil3/Michi#readme"));
@@ -129,6 +132,35 @@ async function setUp(): Promise<void> {
   await connectAgent();
 }
 
+/**
+ * Say once, per CLI version, when the CLI is behind what this extension calls.
+ *
+ * Checking every activation and telling someone every time is how a prompt
+ * gets ignored and then disabled. Once per version they actually have is
+ * enough to be useful and not enough to be a nuisance.
+ */
+async function checkCli(context: vscode.ExtensionContext): Promise<void> {
+  const found = await run<{ version?: string }>(["--version"]);
+  // --version does not emit an envelope, so read it off the raw text instead.
+  const version = typeof found.data === "string" ? found.data : undefined;
+  if (!cliNeedsUpdate(version)) return;
+
+  const told = `michi.toldAbout.${version}`;
+  if (context.globalState.get<boolean>(told)) return;
+  await context.globalState.update(told, true);
+
+  const copy = "Copy update command";
+  const picked = await vscode.window.showWarningMessage(
+    `MICHI ${version} is older than this extension expects (${MINIMUM_CLI}).`,
+    { detail: `Some commands may not exist yet in your CLI.`, modal: false },
+    copy,
+  );
+  if (picked === copy) {
+    await vscode.env.clipboard.writeText(UPDATE_COMMAND);
+    vscode.window.showInformationMessage(`Copied: ${UPDATE_COMMAND}`);
+  }
+}
+
 async function showStatus(): Promise<void> {
   const status = await run<StatusData>(["status"]);
   if (!status.ok || !status.data) return report(status, "Reading the status");
@@ -204,6 +236,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(watcher);
 
   void refresh();
+  void checkCli(context);
   void offerSetup(context);
 }
 
