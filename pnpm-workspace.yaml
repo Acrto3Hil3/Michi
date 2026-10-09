@@ -6,6 +6,9 @@ packages:
 # dependency, so the script is denied rather than approved.
 # See docs/specs/SECURITY_MODEL.md, "Supply chain": no postinstall scripts.
 allowBuilds:
-  '@vscode/vsce-sign': set this to true or false
+  # The extension packaging toolchain: vsce-sign fetches a signing binary and
+  # keytar builds a keychain module. MICHI signs no extensions and reads no
+  # keychain, and `vsce package` works without either.
+  '@vscode/vsce-sign': false
   esbuild: false
-  keytar: set this to true or false
+  keytar: false

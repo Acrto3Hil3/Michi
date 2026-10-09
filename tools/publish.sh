@@ -40,6 +40,25 @@ if [ -z "$WHO" ]; then
 fi
 pass "logged in as $WHO"
 
+# A scope is an organisation that has to exist before anything can go into it,
+# and the registry's answer — "Scope not found" — arrives only at the publish,
+# after the gate has run. Check it here instead.
+say "Checking the $SCOPE scope exists"
+SCOPE_NAME="${SCOPE#@}"
+if npm org ls "$SCOPE_NAME" >/dev/null 2>&1; then
+  pass "$SCOPE exists and this account can see it"
+else
+  echo "  The $SCOPE organisation does not exist on npm."
+  echo
+  echo "  Create it here — this cannot be done from the CLI, there is no"
+  echo "  \`npm org create\`:"
+  echo
+  echo "      https://www.npmjs.com/org/create"
+  echo
+  echo "  Name it \"$SCOPE_NAME\" and pick the free plan. Then run this again."
+  exit 1
+fi
+
 say "Gate"
 (cd "$REPO" && pnpm verify >/dev/null && bash tools/release-check.sh >/dev/null) \
   || fail "the gate is not green — fix that before publishing anything"

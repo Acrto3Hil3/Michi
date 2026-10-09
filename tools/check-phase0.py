@@ -658,6 +658,14 @@ check("vscode  the vsix carries no source, tests or sourcemaps",
 check("vscode  the publisher id matches the npm scope",
       _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
       and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))
+check("release  the scope is checked before the gate, not at the publish",
+      says(pubtext, "Scope not found")
+      and says(pubtext, "there is no")
+      and "npm org ls" in pubtext)
+check("supply-chain  no dependency runs a postinstall script",
+      all(f"{d}: false" in (ws := (ROOT / "pnpm-workspace.yaml").read_text())
+          or f"'{d}': false" in ws
+          for d in ("esbuild", "@vscode/vsce-sign", "keytar")))
 check("release  creating an org is documented as website-only",
       says((ROOT / "CONTRIBUTING.md").read_text(), "There is no `npm org create`"))
 check("vscode  both registries are documented, with why there are two",
