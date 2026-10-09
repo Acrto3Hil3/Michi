@@ -23,6 +23,23 @@ say()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
 pass() { printf '  PASS  %s\n' "$*"; }
 fail() { printf '  FAIL  %s\n' "$*"; exit 1; }
 
+# Check this first: the gate takes a minute, and finding out afterwards that
+# npm is logged out wastes it. An expired session is also easy to misread —
+# a write to a scoped package answers 404, not 401, because the registry will
+# not confirm to an anonymous caller that the package exists.
+say "Checking npm login"
+WHO="$(npm whoami 2>/dev/null || true)"
+if [ -z "$WHO" ]; then
+  echo "  Not logged in to npm."
+  echo "  Run: npm login"
+  echo
+  echo "  If you see a 404 while publishing or deprecating, this is usually why:"
+  echo "  the registry answers 404 rather than 401 for a scoped package when"
+  echo "  nobody is signed in."
+  exit 1
+fi
+pass "logged in as $WHO"
+
 say "Gate"
 (cd "$REPO" && pnpm verify >/dev/null && bash tools/release-check.sh >/dev/null) \
   || fail "the gate is not green — fix that before publishing anything"

@@ -538,6 +538,10 @@ check("phase9  publishing goes through a script that cannot use npm publish",
       and not [l for l in pubtext.splitlines()
                if re.search(r"(?<!p)npm publish", l) and not l.lstrip().startswith("#")]
       and says((ROOT / "CONTRIBUTING.md").read_text(), "Never run `npm publish` here"))
+check("phase9  it checks login before spending a minute on the gate",
+      says(pubtext, "finding out afterwards that npm is logged out wastes it")
+      and "npm whoami" in pubtext
+      and says(pubtext, "the registry answers 404 rather than 401"))
 check("phase9  a half-finished release resumes rather than halting",
       says(pubtext, "Resuming must skip those rather than halting on the first one")
       and "already published — skipping" in pubtext)
