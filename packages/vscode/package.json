@@ -2,7 +2,7 @@
   "name": "michi-vscode",
   "displayName": "MICHI",
   "description": "MICHI \u2014 turn an idea into requirements, decisions, architecture and a precise brief for your AI coding agent. Local-first, no API key, works with Claude Code, Cursor, Copilot, Codex, Zed and more.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "publisher": "dev-subhash",
