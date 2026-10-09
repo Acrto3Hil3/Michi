@@ -19,6 +19,13 @@ PKGS=(core skills adapters cli)
 VERSION="$(node -p "require('$REPO/packages/cli/package.json').version")"
 SCOPE="$(node -p "require('$REPO/packages/cli/package.json').name.split('/')[0]")"
 
+# Read each package's real name from its own manifest. Deriving it from the
+# folder worked until the CLI became @dev-subhash/michi rather than
+# michi-cli — and then the script checked a name that does not exist, decided
+# nothing was published, and reported the failure under the wrong package.
+pkg_name() { node -p "require('$REPO/packages/$1/package.json').name"; }
+encode()   { printf '%s' "${1//\//%2F}"; }
+
 say()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
 pass() { printf '  PASS  %s\n' "$*"; }
 fail() { printf '  FAIL  %s\n' "$*"; exit 1; }
@@ -70,8 +77,8 @@ pass "tests, invariants and the release check"
 say "Checking what is already at $VERSION"
 TODO=()
 for p in "${PKGS[@]}"; do
-  name="$SCOPE/michi-$p"
-  code="$(curl -s -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/${name//\//%2F}/$VERSION")"
+  name="$(pkg_name "$p")"
+  code="$(curl -s -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/$(encode "$name")/$VERSION")"
   if [ "$code" = "200" ]; then
     pass "$name@$VERSION already published — skipping"
   else
@@ -89,7 +96,7 @@ else
   for p in "${TODO[@]}"; do
     # pnpm, never npm: this is the line that rewrites workspace:*
     (cd "$REPO/packages/$p" && pnpm publish --no-git-checks "$@") \
-      || fail "publishing $SCOPE/michi-$p failed — rerun this script, it resumes"
+      || fail "publishing $(pkg_name "$p") failed — rerun this script, it resumes"
   done
 fi
 
@@ -99,8 +106,8 @@ trap 'rm -rf "$WORK"' EXIT
 cd "$WORK" && npm init -y >/dev/null 2>&1
 
 for p in "${PKGS[@]}"; do
-  name="$SCOPE/michi-$p"
-  deps="$(curl -s "https://registry.npmjs.org/${name//\//%2F}/$VERSION" \
+  name="$(pkg_name "$p")"
+  deps="$(curl -s "https://registry.npmjs.org/$(encode "$name")/$VERSION" \
     | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
         try { console.log(JSON.stringify(JSON.parse(s).dependencies||{})) } catch { console.log('ERROR') }})")"
   case "$deps" in
@@ -116,10 +123,11 @@ done
 # versions — so a machine that fetched this package minutes ago still believes
 # the old version is the newest one, and the install fails seconds after a
 # perfectly good publish. The registry is right; the local cache is stale.
-npm install --prefer-online --silent --no-audit --no-fund "$SCOPE/michi-cli@$VERSION" >/dev/null \
-  || fail "installing the published CLI failed"
+CLI_NAME="$(pkg_name cli)"
+npm install --prefer-online --silent --no-audit --no-fund "$CLI_NAME@$VERSION" >/dev/null \
+  || fail "installing $CLI_NAME@$VERSION failed — the registry can take a few minutes to list a brand new package, so try again before assuming it is broken"
 ./node_modules/.bin/michi --version >/dev/null \
   || fail "the published binary does not run"
-pass "a clean install of $SCOPE/michi-cli@$VERSION works and the binary runs"
+pass "a clean install of $CLI_NAME@$VERSION works and the binary runs"
 
 say "PUBLISHED AND VERIFIED — $VERSION"

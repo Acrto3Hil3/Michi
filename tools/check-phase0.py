@@ -658,6 +658,10 @@ check("vscode  the vsix carries no source, tests or sourcemaps",
 check("vscode  the publisher id matches the npm scope",
       _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
       and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))
+check("release  package names come from the manifests, not from folder names",
+      says(pubtext, "Read each package's real name from its own manifest")
+      and "pkg_name()" in pubtext
+      and "michi-$p" not in pubtext)
 check("release  the scope is checked before the gate, not at the publish",
       says(pubtext, "Scope not found")
       and says(pubtext, "there is no")
