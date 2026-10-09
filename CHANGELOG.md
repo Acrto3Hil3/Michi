@@ -17,6 +17,21 @@ Until 1.0.0, the `.michi/` state format may change between minor versions. It
 carries a `schema_version`, and MICHI refuses to read state it does not
 understand rather than guessing at it.
 
+## [Unreleased]
+
+### Added
+
+- **A VS Code extension** (`packages/vscode`). Install it, open a project, and
+  it offers to connect MICHI to whichever coding agent you already use —
+  detecting what's there, listing every option, showing the exact files before
+  writing any of them, and remembering "never for this project".
+
+  It is a thin client over the CLI by design: it knows no agent's name, parses
+  no project state, and passes MICHI's own plain-language errors through rather
+  than replacing them. A test asserts each of those. It is **not published to
+  the marketplace**, and it has never been run inside a real editor — only its
+  non-UI half is covered by tests.
+
 ## [0.1.2] — 2026-10-09
 
 ### Added

@@ -1,0 +1,45 @@
+{
+  "name": "michi-vscode",
+  "displayName": "MICHI",
+  "description": "Turn an idea into requirements, decisions and a precise brief for whichever AI coding agent you already use.",
+  "version": "0.1.2",
+  "private": true,
+  "license": "MIT",
+  "publisher": "subhashyadav98146",
+  "author": "Subhash Yadav",
+  "repository": { "type": "git", "url": "git+https://github.com/Acrto3Hil3/Michi.git", "directory": "packages/vscode" },
+  "bugs": { "url": "https://github.com/Acrto3Hil3/Michi/issues" },
+  "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
+  "categories": ["AI", "Programming Languages", "Other"],
+  "keywords": ["ai", "agent", "requirements", "architecture", "agents.md"],
+  "engines": { "vscode": "^1.85.0", "node": ">=20" },
+  "main": "./dist/extension.js",
+  "type": "commonjs",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      { "command": "michi.setup", "title": "MICHI: Set up in this project" },
+      { "command": "michi.status", "title": "MICHI: What needs me?" },
+      { "command": "michi.connectAgent", "title": "MICHI: Connect a coding agent" },
+      { "command": "michi.explain", "title": "MICHI: Explain this decision or requirement" }
+    ],
+    "configuration": {
+      "title": "MICHI",
+      "properties": {
+        "michi.path": {
+          "type": "string",
+          "default": "michi",
+          "description": "Path to the michi executable. Leave as 'michi' if it is on your PATH."
+        },
+        "michi.offerSetup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Offer to set MICHI up when opening a project that does not have it yet. MICHI never writes anything without asking."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0"
+  }
+}
