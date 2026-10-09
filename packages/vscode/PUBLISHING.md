@@ -44,6 +44,19 @@ npx ovsx create-namespace dev-subhash -p <token>   # once
 pnpm publish:openvsx -p <token>
 ```
 
+## The name a reader sees
+
+The publisher **id** is `dev-subhash`, and that is what appears in the
+extension identifier — `dev-subhash.michi`. It cannot be changed after the
+first publish.
+
+The publisher **display name** is separate, set on the management page, and it
+is what a reader sees under the extension title. Set it to **Subhash Yadav**.
+
+Until the extension is published, a sideloaded `.vsix` can only show the id —
+VS Code has no field for a display name in the manifest, so the id is all it
+has to work with locally. This is not something the build can fix.
+
 ## Before either
 
 - The version in `packages/vscode/package.json` is independent of the CLI's.

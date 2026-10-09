@@ -660,6 +660,13 @@ check("vscode  it ships an icon the marketplace will accept",
       and '"icon": "media/icon.png"' in (VSC / "package.json").read_text())
 check("vscode  the vsix carries no source, tests or sourcemaps",
       all(p in (VSC / ".vscodeignore").read_text() for p in ("src/**", "test/**", "**/*.map")))
+check("vscode  the readme's logo ships in the package, not from an unpushed URL",
+      (VSC / "media" / "logo.png").is_file()
+      and 'src="media/logo.png"' in (VSC / "README.md").read_text()
+      and "raw.githubusercontent" not in (VSC / "README.md").read_text())
+check("vscode  where the human name comes from is written down",
+      says((VSC / "PUBLISHING.md").read_text(),
+           "a sideloaded `.vsix` can only show the id"))
 check("vscode  the extension and the npm package share a name",
       _json.loads((VSC / "package.json").read_text())["name"] == "michi")
 check("vscode  it tells you when the CLI is behind what it calls",

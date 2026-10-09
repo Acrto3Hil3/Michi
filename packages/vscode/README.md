@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Acrto3Hil3/Michi/main/assets/michi-logo-512.png" alt="MICHI" width="180" />
+  <img src="media/logo.png" alt="MICHI" width="180" />
 </div>
 
 # MICHI
