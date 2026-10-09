@@ -1,9 +1,9 @@
 /**
  * Package and binary identity.
  *
- * OQ-002 is settled: `@subhashyadav98146/*`, with the CLI published as
- * `michi-cli` and the command still `michi` — bin names are not
- * registered on npm, so the two are independent (docs/specs/README.md).
+ * OQ-002 is settled: `@dev-subhash/*`, with the CLI published as `michi` and
+ * the command also `michi` — bin names are not registered on npm, so the two
+ * are independent (docs/specs/README.md).
  * Everything that names the tool reads it from here, so moving scope stays a
  * small mechanical change rather than a rename across the repository.
  *
@@ -14,13 +14,13 @@ export const IDENTITY = {
   /** The command users type. */
   binary: "michi",
   /**
-   * The npm scope. `@michi` and `@subhashyadav` are both owned by other
-   * accounts; the unscoped `michi` package is an unrelated URL router.
+   * The npm scope. `@michi`, `@subhashyadav` and the unscoped `michi` all
+   * belong to other accounts; `@dev-subhash` is the owner's own organisation.
    */
-  scope: "@subhashyadav98146",
+  scope: "@dev-subhash",
   /** How the tool refers to itself in prose. */
   displayName: "MICHI",
-  version: "0.1.2",
+  version: "0.2.0",
 } as const;
 
 export function cmd(rest: string): string {

@@ -49,6 +49,6 @@ pnpm publish:openvsx -p <token>
 - `pnpm package` must run clean. The `.vsix` should contain `dist/`, the
   icon, the readme and the licence — no source, no tests, no sourcemaps.
 - The extension needs the CLI installed separately
-  (`npm install -g @subhashyadav98146/michi-cli`). The readme says so; do not
+  (`npm install -g @dev-subhash/michi`). The readme says so; do not
   bundle a copy, because then there would be two versions of MICHI on one
   machine and no way to tell which answered.

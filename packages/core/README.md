@@ -1,8 +1,8 @@
-# @subhashyadav98146/michi-core
+# @dev-subhash/michi-core
 
 MICHI's engines, schemas and project-state layer.
 
-**You probably want [`@subhashyadav98146/michi-cli`](https://www.npmjs.com/package/@subhashyadav98146/michi-cli) instead.**
+**You probably want [`@dev-subhash/michi`](https://www.npmjs.com/package/@dev-subhash/michi) instead.**
 That is the package people install, and its page explains the whole thing in
 one read. This one is a piece of it, installed automatically as a dependency.
 

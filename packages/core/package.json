@@ -1,7 +1,10 @@
 {
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
-  "author": "Subhash Yadav",
+  "author": {
+    "name": "Subhash Yadav",
+    "url": "https://github.com/Acrto3Hil3"
+  },
   "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
   "bugs": {
     "url": "https://github.com/Acrto3Hil3/Michi/issues"
@@ -9,16 +12,21 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@subhashyadav98146/michi-core",
+  "name": "@dev-subhash/michi-core",
   "private": false,
   "type": "module",
-  "description": "MICHI's engines, schemas and project-state layer. Deterministic, offline, model-free.",
+  "description": "MICHI's engines, schemas and project-state layer. Deterministic, offline and model-free \u2014 requirements, decisions and evidence as plain text.",
   "keywords": [
     "michi",
     "requirements",
     "architecture-decision-records",
-    "engineering",
-    "local-first"
+    "adr",
+    "spec-driven-development",
+    "project-memory",
+    "deterministic",
+    "local-first",
+    "zod",
+    "typescript"
   ],
   "repository": {
     "type": "git",
@@ -45,5 +53,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "funding": "https://github.com/Acrto3Hil3/Michi"
 }

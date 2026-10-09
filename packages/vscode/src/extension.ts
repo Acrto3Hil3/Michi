@@ -34,7 +34,7 @@ async function report(result: RunResult<unknown>, what: string): Promise<void> {
     const picked = await vscode.window.showErrorMessage(
       result.message ?? "MICHI is not installed.", copy, "Open docs");
     if (picked === copy) {
-      await vscode.env.clipboard.writeText("npm install -g @subhashyadav98146/michi-cli");
+      await vscode.env.clipboard.writeText("npm install -g @dev-subhash/michi");
       vscode.window.showInformationMessage("Copied. Run it in a terminal, then try again.");
     } else if (picked === "Open docs") {
       await vscode.env.openExternal(vscode.Uri.parse("https://github.com/Acrto3Hil3/Michi#readme"));

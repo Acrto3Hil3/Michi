@@ -1,12 +1,15 @@
 {
   "name": "michi-vscode",
   "displayName": "MICHI",
-  "description": "Turn an idea into requirements, decisions and a precise brief for whichever AI coding agent you already use.",
+  "description": "MICHI \u2014 turn an idea into requirements, decisions, architecture and a precise brief for your AI coding agent. Local-first, no API key, works with Claude Code, Cursor, Copilot, Codex, Zed and more.",
   "version": "0.1.2",
   "private": true,
   "license": "MIT",
   "publisher": "subhashyadav98146",
-  "author": "Subhash Yadav",
+  "author": {
+    "name": "Subhash Yadav",
+    "url": "https://github.com/Acrto3Hil3"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Acrto3Hil3/Michi.git",
@@ -22,11 +25,16 @@
     "Other"
   ],
   "keywords": [
+    "michi",
     "ai",
-    "agent",
+    "ai-agent",
+    "coding-agent",
     "requirements",
     "architecture",
-    "agents.md"
+    "agents-md",
+    "claude-code",
+    "cursor",
+    "copilot"
   ],
   "engines": {
     "vscode": "^1.85.0",

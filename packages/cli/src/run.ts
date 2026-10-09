@@ -10,8 +10,8 @@ import {
   taskDone,
   runTest, recordTest, review, debugStage, verify, DEBUG_STAGES,
   explain, impactOf, example, exampleNames,
-} from "@subhashyadav98146/michi-core";
-import type { Result } from "@subhashyadav98146/michi-core";
+} from "@dev-subhash/michi-core";
+import type { Result } from "@dev-subhash/michi-core";
 import {
   renderInit, renderScan, renderStatus,
   renderDiscoverStart, renderDiscoverAnswer, renderDiscoverStatus, renderDiscoverClose,

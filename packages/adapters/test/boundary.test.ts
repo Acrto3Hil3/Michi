@@ -49,7 +49,7 @@ describe("the adapter boundary", () => {
 
   it("keeps Core from importing the adapters at all", () => {
     for (const file of sources(join(PACKAGES, "core", "src"))) {
-      expect(readFileSync(file, "utf8"), file).not.toContain("@subhashyadav98146/michi-adapters");
+      expect(readFileSync(file, "utf8"), file).not.toContain("@dev-subhash/michi-adapters");
     }
   });
 
@@ -60,7 +60,7 @@ describe("the adapter boundary", () => {
       // sentence in a document. What they may not do is read or write it, so
       // the check is on the import, and the planned paths are checked in
       // adapters.test.ts ("never into .michi").
-      expect(body, file).not.toContain("@subhashyadav98146/michi-core");
+      expect(body, file).not.toContain("@dev-subhash/michi-core");
       expect(body, file).not.toMatch(/(read|write)[A-Za-z]*\([^)]*\.michi/);
     }
   });

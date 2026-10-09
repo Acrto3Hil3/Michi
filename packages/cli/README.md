@@ -11,7 +11,7 @@ Runs entirely on your machine. No account, no cloud, no AI subscription of its
 own. It never writes your code.
 
 ```bash
-npm install -g @subhashyadav98146/michi-cli
+npm install -g @dev-subhash/michi
 ```
 
 > **You need two things:** Node 20 or newer, and an AI coding agent or editor

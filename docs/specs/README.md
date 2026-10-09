@@ -331,23 +331,62 @@ one here.
 
 ## Open
 
-### OQ-002 — npm package and binary names · **LOCKED: `@subhashyadav98146/*`**
+### OQ-002 — npm package and binary names · **LOCKED: `@dev-subhash/*`**
 
-Settled on 2026-10-08 against the registry, the second half of it signed in,
-because the first half could not answer the question that mattered.
+Settled against the registry, signed in, because an anonymous read cannot
+answer the question that matters.
 
-**What an anonymous read showed.** `@michi/cli`, `@michi/core`,
-`@michi/adapters` and `@michi/skills` all returned 404. The unscoped `michi`
-returned 200 — "Simple URL router", v0.0.7, published 2014, one version,
-maintainer `meo`.
+**What an anonymous read showed, and why it was not an answer.** `@michi/cli`
+and its siblings all returned 404, and the unscoped `michi` returned 200 — an
+unrelated URL router, one version, 2014. But a 404 means only that no package
+has been published at that name. It says nothing about who owns the *scope*,
+because a scope can be owned and empty, and the registry's org endpoint
+answers 403 to anyone not signed in.
 
-**Why that was not an answer.** A 404 on `@michi/core` means no package has
-been published there. It says nothing about who owns the *scope*, because a
-scope can be owned and empty, and the registry's org endpoint answers 403 to
-anyone not signed in. Signed in as `subhashyadav98146`:
+**What the signed-in check showed.** `npm org ls` distinguishes the cases once
+calibrated against known ones:
 
 | `npm org ls <name>` | Result | Means |
 |---|---|---|
+| a name nobody has taken | `404` | free |
+| `babel` — a real org, not a member | `{}` | exists, roster not visible |
+| **`michi`** | `{"michi": "owner"}` | owned by another account |
+| **`subhashyadav`** | `{"subhashyadav": "owner"}` | also another account |
+| `dev-subhash` | `404` | **free** |
+
+Calibration is what made those readable. On its own, `{"michi": "owner"}`
+could have been mistaken for ownership.
+
+**Decision.** The owner created the `@dev-subhash` organisation:
+
+| Package | Role |
+|---|---|
+| `@dev-subhash/michi` | the CLI, and the `michi` command |
+| `@dev-subhash/michi-core` | engines, schemas, state |
+| `@dev-subhash/michi-adapters` | the agent adapters |
+| `@dev-subhash/michi-skills` | the seven skills |
+
+The CLI takes the bare `michi` inside the scope so the install line reads
+`npm i -g @dev-subhash/michi`. The other three keep the `michi-` prefix,
+because a package name is quoted without its scope often enough that
+`michi-core` should be self-describing and `core` should not.
+
+**The command is still `michi`.** `bin` names are not registered on npm — they
+are links created inside an install — so the package name and the command are
+independent, and nothing about a user's session changes.
+
+**Superseded.** `0.1.0` through `0.1.2` published under
+`@subhashyadav98146/*`. That scope works and is the owner's, but it carries
+account digits into every install line, which reads as a personal experiment
+rather than a tool. Those versions stay published — nothing is deleted (P10) —
+and are deprecated with a pointer to the new name.
+
+Identity remains one constant (`core/src/identity.ts`) and the package names
+live only in the four manifests, so this move was a small mechanical change
+rather than a rename across the repository. That was the point of putting it
+there.
+
+---|---|---|
 | a name nobody has taken | `404` | free |
 | `babel` — exists, not a member | `{}` | exists, roster not visible |
 | **`michi`** | **`{"michi": "owner"}`** | **exists, owned by an account that is not ours** |
@@ -362,10 +401,10 @@ been mistaken for ownership.
 
 | Package | Role |
 |---|---|
-| `@subhashyadav98146/michi-cli` | the CLI — the one people install |
-| `@subhashyadav98146/michi-core` | engines, schemas, state |
-| `@subhashyadav98146/michi-adapters` | the agent adapters |
-| `@subhashyadav98146/michi-skills` | the seven skills |
+| `@dev-subhash/michi` | the CLI — the one people install |
+| `@dev-subhash/michi-core` | engines, schemas, state |
+| `@dev-subhash/michi-adapters` | the agent adapters |
+| `@dev-subhash/michi-skills` | the seven skills |
 
 **The command is still `michi`.** `bin` names are not registered on npm — they
 are links created inside an install — so the package name and the command are
@@ -380,22 +419,22 @@ decision was reached by asking the owner, after `@michi` and `@subhashyadav`
 both turned out to be taken.
 
 ---|---|---|
-| `@subhashyadav98146/michi-cli` · `@subhashyadav98146/michi-core` · `@subhashyadav98146/michi-adapters` · `@subhashyadav98146/michi-skills` | 404 | available |
+| `@dev-subhash/michi` · `@dev-subhash/michi-core` · `@dev-subhash/michi-adapters` · `@dev-subhash/michi-skills` | 404 | available |
 | `michi` (unscoped) | 200 | **taken** — "Simple URL router", v0.0.7, published 2014, one version, last touched 2022, maintainer `meo` |
 | `michi-cli` · `michicode` · `michi-dev` | 404 | available, not needed |
 
-**Decision.** The four packages publish as `@subhashyadav98146/michi-cli`, `@subhashyadav98146/michi-core`,
-`@subhashyadav98146/michi-adapters` and `@subhashyadav98146/michi-skills`, sharing one version and released
+**Decision.** The four packages publish as `@dev-subhash/michi`, `@dev-subhash/michi-core`,
+`@dev-subhash/michi-adapters` and `@dev-subhash/michi-skills`, sharing one version and released
 together. The command stays `michi`.
 
 The unscoped `michi` being taken does not affect the command: `bin` names are
 not registered on npm — they are links created inside an install — so
-`@subhashyadav98146/michi-cli` provides `michi` regardless of who owns the unscoped package. The
+`@dev-subhash/michi` provides `michi` regardless of who owns the unscoped package. The
 README says so plainly, because somebody *will* try `npm i -g michi` and get an
 unrelated 2014 URL router.
 
 **What is still unproven, and cannot be proven from here.** A 404 for
-`@subhashyadav98146/michi-core` means no such package exists; it does **not** prove the `@michi`
+`@dev-subhash/michi-core` means no such package exists; it does **not** prove the `@michi`
 scope is unclaimed, because a scope can be owned and empty. The registry's org
 endpoint answers `403` to anyone not signed in, so the only way to settle it is
 `npm login` followed by `npm org ls michi`, or the first publish itself. That is

@@ -1,7 +1,10 @@
 {
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
-  "author": "Subhash Yadav",
+  "author": {
+    "name": "Subhash Yadav",
+    "url": "https://github.com/Acrto3Hil3"
+  },
   "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
   "bugs": {
     "url": "https://github.com/Acrto3Hil3/Michi/issues"
@@ -9,14 +12,19 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@subhashyadav98146/michi-skills",
+  "name": "@dev-subhash/michi-skills",
   "private": false,
-  "description": "MICHI's skills \u2014 the Experience Layer. Instructions for the user's own coding agent.",
+  "description": "MICHI's seven skills \u2014 instructions for your own AI coding agent on discovery, planning, architecture, implementation, review, testing and debugging.",
   "keywords": [
     "michi",
     "agent-skills",
-    "claude-code",
-    "prompt"
+    "claude-skills",
+    "prompt",
+    "agents-md",
+    "ai-agent",
+    "coding-agent",
+    "requirements",
+    "code-review"
   ],
   "repository": {
     "type": "git",
@@ -34,5 +42,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "funding": "https://github.com/Acrto3Hil3/Michi"
 }

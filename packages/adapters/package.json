@@ -1,7 +1,10 @@
 {
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
-  "author": "Subhash Yadav",
+  "author": {
+    "name": "Subhash Yadav",
+    "url": "https://github.com/Acrto3Hil3"
+  },
   "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
   "bugs": {
     "url": "https://github.com/Acrto3Hil3/Michi/issues"
@@ -9,15 +12,24 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@subhashyadav98146/michi-adapters",
+  "name": "@dev-subhash/michi-adapters",
   "private": false,
   "type": "module",
-  "description": "MICHI's agent adapters \u2014 the only place a coding agent's name means anything.",
+  "description": "MICHI's agent adapters \u2014 writes AGENTS.md and each editor's own instruction files for Claude Code, Cursor, Copilot, Codex, Windsurf, Zed, Antigravity, Junie, Kiro and more.",
   "keywords": [
     "michi",
-    "agents",
+    "agents-md",
+    "ai-agent",
+    "coding-agent",
     "adapters",
-    "agents-md"
+    "claude-code",
+    "cursor",
+    "copilot",
+    "codex",
+    "windsurf",
+    "zed",
+    "antigravity",
+    "cline"
   ],
   "repository": {
     "type": "git",
@@ -39,9 +51,10 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@subhashyadav98146/michi-skills": "workspace:*"
+    "@dev-subhash/michi-skills": "workspace:*"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "funding": "https://github.com/Acrto3Hil3/Michi"
 }

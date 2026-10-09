@@ -1,7 +1,10 @@
 {
-  "version": "0.1.2",
+  "version": "0.2.0",
   "license": "MIT",
-  "author": "Subhash Yadav",
+  "author": {
+    "name": "Subhash Yadav",
+    "url": "https://github.com/Acrto3Hil3"
+  },
   "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
   "bugs": {
     "url": "https://github.com/Acrto3Hil3/Michi/issues"
@@ -9,17 +12,29 @@
   "engines": {
     "node": ">=20"
   },
-  "name": "@subhashyadav98146/michi-cli",
+  "name": "@dev-subhash/michi",
   "private": false,
   "type": "module",
-  "description": "MICHI \u2014 the path from idea to software. Turns an idea into requirements, decisions and a precise brief for your AI coding agent.",
+  "description": "MICHI \u2014 turn an idea into requirements, decisions, architecture and a precise brief for your AI coding agent. Local-first, no API key, works with Claude Code, Cursor, Copilot, Codex, Zed and more.",
   "keywords": [
     "michi",
-    "cli",
-    "ai-coding-agent",
+    "ai",
+    "ai-agent",
+    "coding-agent",
+    "ai-coding-assistant",
     "requirements",
+    "architecture",
+    "adr",
+    "agents-md",
+    "claude-code",
+    "cursor",
+    "copilot",
+    "codex",
+    "spec-driven-development",
+    "context-engineering",
     "local-first",
-    "agents-md"
+    "cli",
+    "developer-tools"
   ],
   "repository": {
     "type": "git",
@@ -38,11 +53,12 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@subhashyadav98146/michi-adapters": "workspace:*",
-    "@subhashyadav98146/michi-core": "workspace:*",
+    "@dev-subhash/michi-adapters": "workspace:*",
+    "@dev-subhash/michi-core": "workspace:*",
     "commander": "^12.1.0"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "funding": "https://github.com/Acrto3Hil3/Michi"
 }

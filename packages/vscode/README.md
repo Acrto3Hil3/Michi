@@ -28,7 +28,7 @@ It asks before writing anything, and shows you the exact file list first.
 This extension drives the `michi` command. Install it once:
 
 ```bash
-npm install -g @subhashyadav98146/michi-cli
+npm install -g @dev-subhash/michi
 ```
 
 If it isn't on your PATH, set `michi.path` in settings.

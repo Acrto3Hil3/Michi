@@ -14,10 +14,10 @@ import type {
   PlanTasksData, PlanValidateData, TaskListData, TaskShowData, TaskNextData,
   TaskStartData, TaskReportData, Task,
   RunTestData, ReviewData, DebugData, VerifyData,
-} from "@subhashyadav98146/michi-core";
-import { cmd } from "@subhashyadav98146/michi-core";
+} from "@dev-subhash/michi-core";
+import { cmd } from "@dev-subhash/michi-core";
 import type { AgentsData, InstallData } from "./agents.js";
-import type { ExplainData, ImpactData, ExampleData } from "@subhashyadav98146/michi-core";
+import type { ExplainData, ImpactData, ExampleData } from "@dev-subhash/michi-core";
 
 const bullet = (s: string) => `  ${s}`;
 

@@ -36,7 +36,7 @@ MICHI fills that gap.
 ## Getting started
 
 ```bash
-npm install -g @subhashyadav98146/michi-cli
+npm install -g @dev-subhash/michi
 ```
 
 Or install the **VS Code extension**, which offers to connect MICHI to
@@ -215,7 +215,7 @@ is published.
 | 8 | Agent adapters | done |
 | 9 | Release readiness · npm packaging | done, unpublished |
 
-The packages will publish as `@subhashyadav98146/michi-cli`, `-core`,
+The packages will publish as `@dev-subhash/michi`, `-core`,
 `-adapters` and `-skills`, with `michi` as the command you type — `bin` names
 are not registered on npm, so the two are independent. Two notes if you go
 looking: the unscoped `michi` package on npm is **not** this project (an

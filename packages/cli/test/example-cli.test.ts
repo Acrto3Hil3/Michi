@@ -74,7 +74,7 @@ describe("a schema error points at the example", () => {
     const { fileURLToPath } = await import("node:url");
     const source = readFileSync(
       fileURLToPath(new URL("../src/run.ts", import.meta.url)), "utf8");
-    const { exampleNames } = await import("@subhashyadav98146/michi-core");
+    const { exampleNames } = await import("@dev-subhash/michi-core");
     for (const name of exampleNames()) {
       expect(source, `no withExample(..., "${name}") in run.ts`)
         .toMatch(new RegExp(`withExample\\([\\s\\S]{0,200}?"${name}"`));

@@ -569,13 +569,20 @@ check("phase9  the state format's compatibility promise is written down",
 
 # --- OQ-002  npm identity, now settled -----------------------------------
 check("OQ-002  the npm names are settled, with the check that settled them",
-      "LOCKED: `@subhashyadav98146/*`" in spec("README.md")
+      "LOCKED: `@dev-subhash/*`" in spec("README.md")
       and "owned by an account that is not ours" in spec("README.md")
       and "Calibrating against the known cases" in spec("README.md"))
 check("OQ-002  the command and the package name stay independent",
       "bin` names are not registered on npm" in spec("README.md")
-      and all(j["name"].startswith("@subhashyadav98146/")
-              for j in MANIFESTS.values()))
+      and all(j["name"].startswith("@dev-subhash/") for j in MANIFESTS.values()))
+check("OQ-002  the superseded scope is recorded, not quietly dropped",
+      says(spec("README.md"), "Superseded")
+      and "@subhashyadav98146/*" in spec("README.md"))
+check("seo  every package carries an author, keywords and a real description",
+      all(len(j.get("keywords", [])) >= 8 and len(j.get("description", "")) > 60
+          and isinstance(j.get("author"), dict)
+          and j["author"].get("name") == "Subhash Yadav"
+          for j in MANIFESTS.values()))
 check("OQ-002  the unscoped michi package is flagged as somebody else's",
       "not** this project" in (ROOT / "README.md").read_text())
 check("OQ-002  identity is still one constant, so the scope can change cheaply",
@@ -613,7 +620,7 @@ CLI_README = (ROOT / "packages" / "cli" / "README.md").read_text()
 
 check("npm  the CLI page stands on its own — install, start, and what to type",
       all(t in CLI_README for t in
-          ("npm install -g @subhashyadav98146/michi-cli", "michi init", "michi status"))
+          ("npm install -g @dev-subhash/michi", "michi init", "michi status"))
       and says(CLI_README, "You need two things"))
 check("npm  it says up front that an agent is required and code is not written",
       says(CLI_README, "not a replacement for one")
@@ -654,7 +661,7 @@ check("vscode  both registries are documented, with why there are two",
       and says(pub, "the forks use Open VSX"))
 check("vscode  it does not bundle a second copy of the CLI",
       says(pub, "do not bundle a copy")
-      and "@subhashyadav98146/michi-cli" not in
+      and "@dev-subhash/michi" not in
           _json.loads((VSC / "package.json").read_text()).get("dependencies", {}))
 
 # --- cross-references -----------------------------------------------------

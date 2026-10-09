@@ -7,7 +7,7 @@
 # a registry. `pnpm publish` rewrites it to the real version on the way out.
 # `npm publish` ships it verbatim, and the published package then fails to
 # install with EUNSUPPORTEDPROTOCOL — which is exactly how 0.1.0 of
-# @subhashyadav98146/michi-adapters was broken.
+# @dev-subhash/michi-adapters was broken.
 #
 # Afterwards it installs what it just published, from the registry, into a
 # clean directory — because a successful publish proves only that the upload

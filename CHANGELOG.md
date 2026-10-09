@@ -8,14 +8,36 @@ mixed set is a configuration nobody tested:
 
 | Package | Role |
 |---|---|
-| `@subhashyadav98146/michi-cli` | the CLI, and the `michi` command |
-| `@subhashyadav98146/michi-core` | engines, schemas, state |
-| `@subhashyadav98146/michi-adapters` | the agent adapters |
-| `@subhashyadav98146/michi-skills` | the seven skills |
+| `@dev-subhash/michi` | the CLI, and the `michi` command |
+| `@dev-subhash/michi-core` | engines, schemas, state |
+| `@dev-subhash/michi-adapters` | the agent adapters |
+| `@dev-subhash/michi-skills` | the seven skills |
 
 Until 1.0.0, the `.michi/` state format may change between minor versions. It
 carries a `schema_version`, and MICHI refuses to read state it does not
 understand rather than guessing at it.
+
+## [0.2.0] — 2026-10-09
+
+### Changed
+
+- **The packages moved to `@dev-subhash/`**, and the CLI is now
+  `@dev-subhash/michi`:
+
+  ```bash
+  npm install -g @dev-subhash/michi
+  ```
+
+  `@subhashyadav98146/*` worked, but it carried account digits into every
+  install line. `@michi` and `@subhashyadav` are both owned by other accounts;
+  `@dev-subhash` was free. 0.1.0–0.1.2 stay published under the old scope and
+  are deprecated with a pointer here — nothing is deleted.
+
+  **The command is unchanged.** `bin` names are not registered on npm, so
+  `michi` is still what you type.
+
+- Every package now carries the author, a description written for someone who
+  has never heard of MICHI, and the keywords a stranger would actually search.
 
 ## [Unreleased]
 
@@ -61,7 +83,7 @@ understand rather than guessing at it.
 
 ### Fixed
 
-- `@subhashyadav98146/michi-adapters@0.1.0` was published with a
+- `@dev-subhash/michi-adapters@0.1.0` was published with a
   `workspace:*` dependency and cannot be installed — `npm publish` ships that
   protocol verbatim where `pnpm publish` rewrites it to a real version.
   Published versions are immutable, so 0.1.1 is the fix and 0.1.0 is

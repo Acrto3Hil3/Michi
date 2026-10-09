@@ -45,7 +45,7 @@ describe("talking to the CLI", () => {
   it("recognises a missing binary and says how to get it", async () => {
     const r = await michi(fake({ stderr: "command not found: michi", code: 127 }), "michi", "/p", ["status"]);
     expect(r.missing).toBe(true);
-    expect(r.next).toMatch(/npm install -g @subhashyadav98146\/michi-cli/);
+    expect(r.next).toMatch(/npm install -g @dev-subhash\/michi/);
   });
 
   it("survives an exec that throws", async () => {

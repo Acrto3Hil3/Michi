@@ -71,7 +71,7 @@ export async function michi<T>(
       ok: false,
       missing: true,
       message: `MICHI is not installed, or not on this machine's PATH.`,
-      next: `Install it with: npm install -g @subhashyadav98146/michi-cli`,
+      next: `Install it with: npm install -g @dev-subhash/michi`,
     };
   }
 

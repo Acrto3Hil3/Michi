@@ -20,16 +20,16 @@ importers:
 
   packages/adapters:
     dependencies:
-      '@subhashyadav98146/michi-skills':
+      '@dev-subhash/michi-skills':
         specifier: workspace:*
         version: link:../skills
 
   packages/cli:
     dependencies:
-      '@subhashyadav98146/michi-adapters':
+      '@dev-subhash/michi-adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@subhashyadav98146/michi-core':
+      '@dev-subhash/michi-core':
         specifier: workspace:*
         version: link:../core
       commander:
