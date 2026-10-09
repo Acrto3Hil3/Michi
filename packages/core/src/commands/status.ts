@@ -89,8 +89,32 @@ function needsYou(
   if (!hasMap) {
     items.push(`MICHI has not looked at your code yet — run: ${cmd("scan")}`);
   }
+
+  // Nothing specific is outstanding, so answer from the stage. `status` is
+  // what the README and every skill point at for "what now", and a stage
+  // where it says nothing leaves the user with nowhere to go.
+  if (items.length === 0) {
+    items.push(BY_STAGE[state.stage]);
+  }
   return items;
 }
+
+/** The one thing worth doing at each stage, when nothing else is outstanding. */
+const BY_STAGE: Record<ProjectStage, string> = {
+  DISCOVERY: `Tell MICHI what you want to build — run: ${cmd("discover start")}`,
+  SPECIFICATION:
+    `Work out what ships first and how anyone will know it works — run: ${cmd("plan status")}`,
+  ARCHITECTURE:
+    `Settle how the first version gets built — run: ${cmd("architecture status")}`,
+  DESIGN: `Nothing is waiting on you. Plan the work — run: ${cmd("plan tasks --from-requirements")}`,
+  PLANNING: `Plan the work from what was agreed — run: ${cmd("plan tasks --from-requirements")}`,
+  IMPLEMENTATION: `Pick up the next piece of work — run: ${cmd("task next")}`,
+  VALIDATION: `Check the work against evidence — run: ${cmd("task list")}`,
+  REVIEW: `Review what has been built — run: ${cmd("task list")}`,
+  RELEASE: `Everything agreed has been built and checked — run: ${cmd("task list")}`,
+  OPERATIONS:
+    `Nothing is outstanding. Describe a change when you want one — run: ${cmd("discover start")}`,
+};
 
 export function status(options: StatusOptions): Result<StatusData> {
   try {

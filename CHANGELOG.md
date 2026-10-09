@@ -17,6 +17,24 @@ Until 1.0.0, the `.michi/` state format may change between minor versions. It
 carries a `schema_version`, and MICHI refuses to read state it does not
 understand rather than guessing at it.
 
+## [Unreleased]
+
+### Added
+
+- `michi example <name> [--raw]` — a complete, valid file for every command
+  that takes `--file`. A schema failure names one missing field at a time, so
+  finding a file's shape by trial cost a round-trip per field; the first
+  dogfood run needed seven to write one discovery update, and never learned
+  which values `confidence` accepts. Every `VALIDATION_ERROR` now points at
+  the matching example, which makes it one round-trip.
+
+### Fixed
+
+- `michi status` said nothing at `SPECIFICATION` and several later stages,
+  stranding the user at the exact command the README tells them to trust. It
+  now always answers "what now", from the stage when nothing else is
+  outstanding.
+
 ## [0.1.1] — 2026-10-08  ·  first working release
 
 ### Fixed

@@ -619,6 +619,19 @@ check("npm  the internal packages send people to the CLI rather than stranding t
           for readme in ((ROOT / "packages" / n / "README.md").read_text()
                          for n in ("core", "adapters", "skills"))))
 
+# --- example: the shape of a file, in one read not seven ------------------
+check("example  every --file command has one, and the contract says why",
+      "### `michi example`" in cli
+      and says(cli, "needed **seven** to write one discovery update")
+      and says(cli, "every example is fed to its own command in the tests"))
+check("example  --raw exists so the output is a usable file",
+      says(cli, "`--raw` prints only the JSON"))
+check("example  a schema error points at it, a missing file does not",
+      says(cli, "A missing file or a blocked command keeps its own")
+      and "withExample" in (ROOT / "packages" / "cli" / "src" / "run.ts").read_text())
+check("example  the examples live in one place, not scattered per command",
+      (ROOT / "packages" / "core" / "src" / "commands" / "example.ts").is_file())
+
 # --- cross-references -----------------------------------------------------
 defined = set(re.findall(r"### (OQ-\d+)", spec("README.md")))
 referenced = set()

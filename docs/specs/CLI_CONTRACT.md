@@ -611,6 +611,30 @@ Verifying and closing are separate acts because they answer different
 questions: whether the evidence holds, and whether this piece of work is
 finished with. Closing anything not `VERIFIED` is refused with exit 5.
 
+### `michi example`
+
+```bash
+michi example                      list what has an example
+michi example <name> [--raw]       a complete, valid file
+```
+
+A Zod failure names one missing field at a time, so discovering a file's shape
+by trial costs a round-trip per field. A dogfood run of 0.1.1 needed **seven**
+to write one discovery update, and never learned which values `confidence`
+accepts. The caller is usually an agent, and an agent guessing its way through
+a schema is a slow, lossy way to spend somebody's session.
+
+Every command that takes `--file` has an example, and every example is fed to
+its own command in the tests — one that does not work is worse than none,
+because it sends the reader back around the loop they were trying to escape.
+
+`--raw` prints only the JSON, so `michi example discover-answer --raw > f.json`
+is a usable file.
+
+A `VALIDATION_ERROR` from any `--file` command sets `next` to the matching
+`michi example` command. A missing file or a blocked command keeps its own
+`next` — a shape hint there is noise.
+
 ### `michi explain`
 
 ```bash

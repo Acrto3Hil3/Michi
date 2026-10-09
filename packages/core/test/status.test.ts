@@ -5,6 +5,14 @@ import { tempProject, clock, NOW } from "./helpers.js";
 import { init } from "../src/commands/init.js";
 import { status } from "../src/commands/status.js";
 import { discoverStart } from "../src/commands/discover.js";
+import { readYaml, writeYaml } from "../src/fs/brain.js";
+import { StateSchema, PROJECT_STAGES } from "../src/schemas/state.js";
+
+const unwrap = <T,>(r: { ok: true; data: T } | { ok: false; error: unknown }): T => {
+  if (!r.ok) throw new Error(`expected ok, got ${JSON.stringify(r.error)}`);
+  return r.data;
+};
+const tick = clock;
 
 describe("michi status", () => {
   it("says a project is not initialized, with the next step", () => {
@@ -80,5 +88,44 @@ describe("michi status", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.data.detected).toBeNull();
+  });
+});
+
+describe("status always answers 'what now'", () => {
+  it("never goes silent, at any stage", () => {
+    // The README and every skill point at `michi status` as the answer to
+    // "what now". A stage where it says nothing strands the user — which is
+    // exactly what a dogfood run of 0.1.1 hit at SPECIFICATION.
+    const root = tempProject({ "package.json": '{"name":"x"}' });
+    init({ root, now: tick });
+    const statePath = join(root, ".michi/state/state.yaml");
+
+    for (const stage of PROJECT_STAGES) {
+      const state = readYaml(statePath, StateSchema);
+      writeYaml(statePath, { ...state, stage });
+      const data = unwrap(status({ root, now: tick }));
+      expect(data.stage, stage).toBe(stage);
+      expect(data.needs_you, `${stage} left the user with no next step`)
+        .not.toHaveLength(0);
+    }
+  });
+
+  it("names the command for the stage it is actually in", () => {
+    const root = tempProject({ "package.json": '{"name":"x"}' });
+    init({ root, now: tick });
+    const statePath = join(root, ".michi/state/state.yaml");
+
+    const expected: Record<string, RegExp> = {
+      SPECIFICATION: /plan update|plan status/,
+      ARCHITECTURE: /decide|architecture status/,
+      PLANNING: /plan tasks|plan validate/,
+      IMPLEMENTATION: /task next|task list/,
+    };
+    for (const [stage, pattern] of Object.entries(expected)) {
+      const state = readYaml(statePath, StateSchema);
+      writeYaml(statePath, { ...state, stage: stage as never });
+      const items = unwrap(status({ root, now: tick })).needs_you.join(" ");
+      expect(items, stage).toMatch(pattern);
+    }
   });
 });

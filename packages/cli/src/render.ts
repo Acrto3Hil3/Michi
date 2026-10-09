@@ -17,7 +17,7 @@ import type {
 } from "@subhashyadav98146/michi-core";
 import { cmd } from "@subhashyadav98146/michi-core";
 import type { AgentsData, InstallData } from "./agents.js";
-import type { ExplainData, ImpactData } from "@subhashyadav98146/michi-core";
+import type { ExplainData, ImpactData, ExampleData } from "@subhashyadav98146/michi-core";
 
 const bullet = (s: string) => `  ${s}`;
 
@@ -928,4 +928,35 @@ export function renderImpact(data: ImpactData): string[] {
     "look, not as a measured cost.",
   );
   return lines;
+}
+
+
+// ---------------------------------------------------------------------------
+// Example — a complete file, because a schema error names one field at a time
+// ---------------------------------------------------------------------------
+
+export function renderExample(data: ExampleData): string[] {
+  const lines = [
+    `${data.name} — ${data.what}`,
+    "",
+    `Used by:  michi ${data.used_by} <file.json>`,
+    "",
+    ...data.json.split("\n"),
+  ];
+  if (data.notes.length > 0) {
+    lines.push("", "Worth knowing:", "");
+    for (const note of data.notes) lines.push(bullet(note));
+  }
+  return lines;
+}
+
+export function renderExampleList(names: string[]): string[] {
+  return [
+    "Every command that takes a file has a complete example:",
+    "",
+    ...names.map((n) => `  michi example ${n}`),
+    "",
+    "A schema error names one missing field at a time. These name all of them,",
+    "with the values each field accepts.",
+  ];
 }

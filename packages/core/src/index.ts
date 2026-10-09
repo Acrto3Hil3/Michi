@@ -102,6 +102,8 @@ export { planTasks, planValidate, loadTasks, withDerivedReadiness } from "./comm
 export type { PlanTasksOptions, PlanTasksData, PlanValidateData } from "./commands/plan-tasks.js";
 export { taskList, taskShow, taskNext, taskStart, taskReport, taskBlock, taskDone } from "./commands/task.js";
 export { explain, impactOf } from "./commands/explain.js";
+export { EXAMPLES, example, exampleNames } from "./commands/example.js";
+export type { Example, ExampleData } from "./commands/example.js";
 export type { ExplainData, ImpactData } from "./commands/explain.js";
 export type {
   TaskOptions, TaskListData, TaskShowData, TaskNextData, TaskStartData, TaskReportData,

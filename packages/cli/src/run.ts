@@ -9,7 +9,7 @@ import {
   planTasks, planValidate, taskList, taskShow, taskNext, taskStart, taskReport, taskBlock,
   taskDone,
   runTest, recordTest, review, debugStage, verify, DEBUG_STAGES,
-  explain, impactOf,
+  explain, impactOf, example, exampleNames,
 } from "@subhashyadav98146/michi-core";
 import type { Result } from "@subhashyadav98146/michi-core";
 import {
@@ -23,6 +23,7 @@ import {
   renderTaskNext, renderTaskStart, renderTaskReport, renderTaskBlock, renderTaskDone,
   renderTest, renderReview, renderDebug, renderVerify,
   renderAgents, renderInstall, renderExplain, renderImpact,
+  renderExample, renderExampleList,
 } from "./render.js";
 import { agents, agentBudget, install } from "./agents.js";
 import type { InstallData } from "./agents.js";
@@ -42,6 +43,28 @@ interface GlobalOpts {
   quiet?: boolean;
   project?: string;
   dryRun?: boolean;
+}
+
+/**
+ * Point a schema failure at the worked example for that command.
+ *
+ * A Zod error names one field at a time, so discovering a file's shape by
+ * trial costs a round-trip per field — a dogfood run needed seven to write
+ * one discovery update. The example names every field at once, and the
+ * values each accepts.
+ *
+ * Only for VALIDATION_ERROR: a missing file or a blocked command already has
+ * a better `next`, and a shape hint there is noise.
+ */
+function withExample<T>(result: Result<T>, name: string): Result<T> {
+  if (result.ok || result.error.code !== "VALIDATION_ERROR") return result;
+  return {
+    ...result,
+    error: {
+      ...result.error,
+      next: `See the whole shape, with the values each field accepts: ${IDENTITY.binary} example ${name}`,
+    },
+  };
 }
 
 /**
@@ -165,7 +188,8 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .requiredOption("--file <path>", "the discovery update, as JSON")
     .action((local: { file: string }) => {
       code = emit(
-        discoverAnswer({ root: root(), now, file: local.file }), opts(), io, renderDiscoverAnswer,
+        withExample(discoverAnswer({ root: root(), now, file: local.file }), "discover-answer"),
+        opts(), io, renderDiscoverAnswer,
       );
     });
 
@@ -206,7 +230,8 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .requiredOption("--file <path>", "the planning update, as JSON")
     .action((local: { file: string }) => {
       code = emit(
-        planUpdate({ root: root(), now, file: local.file }), opts(), io, renderPlanUpdate,
+        withExample(planUpdate({ root: root(), now, file: local.file }), "plan-update"),
+        opts(), io, renderPlanUpdate,
       );
     });
 
@@ -439,7 +464,8 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .requiredOption("--from <path>", "the agent's report, as JSON")
     .action((id: string, local: { from: string }) => {
       code = emit(
-        taskReport({ root: root(), now, id, file: local.from }), opts(), io, renderTaskReport,
+        withExample(taskReport({ root: root(), now, id, file: local.from }), "task-report"),
+        opts(), io, renderTaskReport,
       );
     });
 
@@ -458,6 +484,25 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
       code = emit(
         taskBlock({ root: root(), now, id, reason: local.reason }), opts(), io, renderTaskBlock,
       );
+    });
+
+  program
+    .command("example [name]")
+    .description("a complete, valid file for any command that takes --file")
+    .option("--raw", "print only the JSON, so it can be redirected into a file")
+    .action((name: string | undefined, local: { raw?: boolean }) => {
+      if (name && local.raw) {
+        const found = example({ name });
+        if (!found.ok) { code = emit(found, opts(), io, renderExample); return; }
+        io.out(found.data.json);
+        return;
+      }
+      if (!name) {
+        if (!opts().json) for (const line of renderExampleList(exampleNames())) io.out(line);
+        else io.out(JSON.stringify({ ok: true, data: { examples: exampleNames() } }, null, 2));
+        return;
+      }
+      code = emit(example({ name }), opts(), io, renderExample);
     });
 
   program
@@ -515,7 +560,7 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
       code = emit(
         local.run
           ? runTest({ root: root(), now, id, key: local.run })
-          : recordTest({ root: root(), now, id, file: local.record as string }),
+          : withExample(recordTest({ root: root(), now, id, file: local.record as string }), "test-record"),
         opts(), io, renderTest,
       );
     });
@@ -532,7 +577,7 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
         return;
       }
       code = emit(
-        review({ root: root(), now, id, verdict: local.verdict, file: local.findings }),
+        withExample(review({ root: root(), now, id, verdict: local.verdict, file: local.findings }), "review"),
         opts(), io, renderReview,
       );
     });
@@ -563,7 +608,8 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .description("weigh the evidence against the acceptance criteria — the only path to VERIFIED")
     .requiredOption("--from <path>", "the verdict on each criterion, as JSON")
     .action((id: string, local: { from: string }) => {
-      code = emit(verify({ root: root(), now, id, file: local.from }), opts(), io, renderVerify);
+      code = emit(withExample(verify({ root: root(), now, id, file: local.from }), "verify"),
+        opts(), io, renderVerify);
     });
 
   // -------------------------------------------------------------------------
@@ -596,7 +642,8 @@ export async function run(argv: string[], io: Io, env: Env = {}): Promise<number
     .requiredOption("--file <path>", "the proposal, as JSON")
     .action((local: { file: string }) => {
       code = emit(
-        decidePropose({ root: root(), now, file: local.file }), opts(), io, renderDecision,
+        withExample(decidePropose({ root: root(), now, file: local.file }), "decide-propose"),
+        opts(), io, renderDecision,
       );
     });
 

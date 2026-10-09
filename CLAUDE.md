@@ -159,6 +159,13 @@ merges, and a requirement is superseded rather than deleted. A proposal
 repeating an active requirement's title is refused unless it declares
 `supersedes`. Do not add a bypass for either rule.
 
+Dogfooded from the published package on 2026-10-09: a fresh install, an empty
+folder, an expense tracker taken from an idea to a verified, closed task. Two
+real defects came out of it and are fixed — `michi status` going silent at
+`SPECIFICATION`, and `--file` schemas costing seven blind round-trips to
+discover. Both had full test coverage and neither was visible from inside the
+repository. Run the loop as a user before trusting the suite.
+
 All nine phases are built, plus `michi explain` and `michi decide impact` —
 the last two commands the contract specified and nothing implemented. The only
 things still specified-but-unbuilt are `michi task split` (needs a lifecycle

@@ -181,6 +181,20 @@ check $? "michi verify and task done"
   && pass "the closed task is filed, not deleted" \
   || fail "the closed task was not filed"
 
+"$MICHI" example discover-answer --raw | head -1 | grep -q '{' \
+  && pass "michi example --raw prints a file that can be redirected" \
+  || fail "michi example --raw is not clean JSON"
+# Discovery is closed by this point, so use a command that still reads a file.
+# Captured rather than piped: this command exits non-zero on purpose, and
+# under `set -o pipefail` a pipeline inherits that even when grep matched.
+echo '{"title":"missing its options"}' > "$PROJECT/bad.json"
+SHAPE_HINT="$("$MICHI" decide propose --file "$PROJECT/bad.json" 2>&1 || true)"
+case "$SHAPE_HINT" in
+  *"michi example decide-propose"*)
+    pass "a schema error points at the whole shape, not one field" ;;
+  *) fail "a schema error gave no way to find the shape" ;;
+esac
+
 "$MICHI" explain D001 | grep -q 'A database' \
   && pass "michi explain answers a decision in plain language" \
   || fail "michi explain did not answer from the record"
