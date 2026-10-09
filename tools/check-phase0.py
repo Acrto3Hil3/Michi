@@ -655,6 +655,11 @@ check("vscode  it ships an icon the marketplace will accept",
       and '"icon": "media/icon.png"' in (VSC / "package.json").read_text())
 check("vscode  the vsix carries no source, tests or sourcemaps",
       all(p in (VSC / ".vscodeignore").read_text() for p in ("src/**", "test/**", "**/*.map")))
+check("vscode  the publisher id matches the npm scope",
+      _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
+      and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))
+check("release  creating an org is documented as website-only",
+      says((ROOT / "CONTRIBUTING.md").read_text(), "There is no `npm org create`"))
 check("vscode  both registries are documented, with why there are two",
       says((pub := (VSC / "PUBLISHING.md").read_text()), "VS Code Marketplace")
       and "open-vsx.org" in pub

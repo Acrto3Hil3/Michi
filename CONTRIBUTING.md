@@ -71,6 +71,10 @@ configuration nobody tested.
    publishes all four, and then installs what it just published from the
    registry into a clean directory to prove a stranger can use it.
 
+> **An npm organisation is created on the website**, at
+> <https://www.npmjs.com/org/create>. There is no `npm org create` — the CLI's
+> `npm org` only manages members of an org that already exists.
+
 > **Never run `npm publish` here.** These packages depend on each other with
 > pnpm's `workspace:*` protocol, which is correct for development and
 > meaningless to a registry. `pnpm publish` rewrites it to the real version on

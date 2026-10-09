@@ -21,10 +21,12 @@ under a Microsoft account, plus a Personal Access Token from Azure DevOps
 (https://dev.azure.com) scoped to **Marketplace → Manage**.
 
 The publisher id must match `"publisher"` in `package.json`, which is
-currently `subhashyadav98146`.
+`dev-subhash`. Set its **display name** to `Subhash Yadav` on that page — the
+id is what appears in the extension's identifier, the display name is what a
+reader sees under the title.
 
 ```bash
-npx vsce login subhashyadav98146     # paste the PAT when asked
+npx vsce login dev-subhash     # paste the PAT when asked
 pnpm publish:vscode
 ```
 
@@ -38,7 +40,7 @@ Needed: an account at https://open-vsx.org (sign in with GitHub), a signed
 Publisher Agreement, and an access token from the profile page.
 
 ```bash
-npx ovsx create-namespace subhashyadav98146 -p <token>   # once
+npx ovsx create-namespace dev-subhash -p <token>   # once
 pnpm publish:openvsx -p <token>
 ```
 
