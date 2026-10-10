@@ -716,6 +716,16 @@ check("supply-chain  no dependency runs a postinstall script",
           for d in ("esbuild", "@vscode/vsce-sign", "keytar")))
 check("release  creating an org is documented as website-only",
       says((ROOT / "CONTRIBUTING.md").read_text(), "There is no `npm org create`"))
+check("vscode  publishing is one command that verifies both registries",
+      (pe := ROOT / "tools" / "publish-extension.sh").is_file()
+      and says((pet := pe.read_text()), "A successful upload proves the upload worked")
+      and "open-vsx.org/api" in pet
+      and "extensionquery" in pet
+      and "release:extension" in (ROOT / "package.json").read_text())
+check("vscode  it refuses before the gate when the tokens are missing",
+      says(pet, "the tokens, before anything slow"))
+check("vscode  it checks the vsix actually contains the bundled CLI",
+      "dist/cli/michi.mjs" in pet and says(pet, "a vsix without it would install and do nothing"))
 check("vscode  both registries are documented, with why there are two",
       says((pub := (VSC / "PUBLISHING.md").read_text()), "VS Code Marketplace")
       and "open-vsx.org" in pub
