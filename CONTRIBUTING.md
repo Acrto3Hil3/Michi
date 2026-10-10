@@ -79,10 +79,23 @@ version — a successful upload only proves the upload worked.
 Users get it from there on their own: npm installs are explicit, and editors
 update extensions themselves, with the CLI travelling inside.
 
-> **Never run `npm publish` or `vsce publish` by hand.** The scripts exist
-> because each has caught a real mistake: a `workspace:*` dependency that no
-> installer can resolve, a package name derived from a folder that had been
+> **An npm organisation is created on the website**, at
+> <https://www.npmjs.com/org/create>. There is no `npm org create` — the CLI's
+> `npm org` only manages members of an org that already exists.
+
+> **Never run `npm publish` here**, or `vsce publish` by hand. These packages
+> depend on each other with pnpm's `workspace:*` protocol, which is correct
+> for development and meaningless to a registry: `pnpm publish` rewrites it to
+> the real version, `npm publish` ships it verbatim and the published package
+> then fails to install with `EUNSUPPORTEDPROTOCOL`. That is exactly how
+> `michi-adapters@0.1.0` was broken, and published versions are immutable.
+>
+> The scripts exist because each hand-run has cost a real mistake: that
+> dependency, a package name derived from a folder that had since been
 > renamed, and a vsix with no CLI inside it.
+
+Publishing is a deliberate, separate act, never a side effect of a green
+build — CI runs the release check and has no publish step.
 
 Until 1.0.0 the `.michi/` state format may change between minor versions. It
 carries a `schema_version` and MICHI refuses state it does not understand
