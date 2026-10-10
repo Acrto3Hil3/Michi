@@ -15,7 +15,7 @@
   "name": "@dev-subhash/michi",
   "private": false,
   "type": "module",
-  "description": "MICHI \u2014 turn an idea into requirements, decisions, architecture and a precise brief for your AI coding agent. Local-first, no API key, works with Claude Code, Cursor, Copilot, Codex, Zed and more.",
+  "description": "MICHI — turn an idea into requirements, decisions, architecture and a precise brief for your AI coding agent. Local-first, no API key, works with Claude Code, Cursor, Copilot, Codex, Zed and more.",
   "keywords": [
     "michi",
     "ai",

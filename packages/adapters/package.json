@@ -15,7 +15,7 @@
   "name": "@dev-subhash/michi-adapters",
   "private": false,
   "type": "module",
-  "description": "MICHI's agent adapters \u2014 writes AGENTS.md and each editor's own instruction files for Claude Code, Cursor, Copilot, Codex, Windsurf, Zed, Antigravity, Junie, Kiro and more.",
+  "description": "MICHI's agent adapters — writes AGENTS.md and each editor's own instruction files for Claude Code, Cursor, Copilot, Codex, Windsurf, Zed, Antigravity, Junie, Kiro and more.",
   "keywords": [
     "michi",
     "agents-md",

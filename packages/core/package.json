@@ -15,7 +15,7 @@
   "name": "@dev-subhash/michi-core",
   "private": false,
   "type": "module",
-  "description": "MICHI's engines, schemas and project-state layer. Deterministic, offline and model-free \u2014 requirements, decisions and evidence as plain text.",
+  "description": "MICHI's engines, schemas and project-state layer. Deterministic, offline and model-free — requirements, decisions and evidence as plain text.",
   "keywords": [
     "michi",
     "requirements",

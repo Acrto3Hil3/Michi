@@ -14,7 +14,9 @@
     "verify": "pnpm typecheck && pnpm test && pnpm check:specs",
     "release:check": "bash tools/release-check.sh",
     "release:publish": "bash tools/publish.sh",
-    "release:extension": "bash tools/publish-extension.sh"
+    "release:extension": "bash tools/publish-extension.sh",
+    "release": "bash tools/release.sh",
+    "version:set": "node tools/set-version.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

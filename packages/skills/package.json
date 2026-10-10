@@ -14,7 +14,7 @@
   },
   "name": "@dev-subhash/michi-skills",
   "private": false,
-  "description": "MICHI's seven skills \u2014 instructions for your own AI coding agent on discovery, planning, architecture, implementation, review, testing and debugging.",
+  "description": "MICHI's seven skills — instructions for your own AI coding agent on discovery, planning, architecture, implementation, review, testing and debugging.",
   "keywords": [
     "michi",
     "agent-skills",

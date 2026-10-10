@@ -515,6 +515,21 @@ import json as _json
 MANIFESTS = {n: _json.loads((ROOT / "packages" / n / "package.json").read_text())
              for n in ("core", "adapters", "skills", "cli")}
 
+# The extension carries a copy of the CLI, so a version that drifts is not
+# untidy — it is an extension shipping an old MICHI with nothing saying so.
+check("release  every package and identity.ts carry the same version",
+      len({_json.loads((ROOT / "packages" / p / "package.json").read_text())["version"]
+           for p in ("core", "cli", "adapters", "skills", "vscode")}) == 1)
+check("release  one command releases npm and the editors together",
+      (rel := ROOT / "tools" / "release.sh").is_file()
+      and says((relt := rel.read_text()), "this publishes both, or neither")
+      and "publish.sh" in relt and "publish-extension.sh" in relt)
+check("release  the version is set in one place, not six by hand",
+      (ROOT / "tools" / "set-version.mjs").is_file()
+      and "version:set" in (ROOT / "package.json").read_text())
+check("release  why the versions must move together is written down",
+      says(relt, "leaves every\n# extension user on the old CLI"))
+
 check("phase9  all four packages are publishable and share one version",
       all(m.get("private") is False for m in MANIFESTS.values())
       and len({m["version"] for m in MANIFESTS.values()}) == 1)

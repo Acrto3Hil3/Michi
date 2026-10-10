@@ -59,29 +59,30 @@ Declare `runs_commands: null` rather than guessing. Unknown is not false.
 
 ## Releasing
 
-The four packages share one version and ship together: a mixed set is a
-configuration nobody tested.
+Everything moves together: four npm packages and the editor extension share
+one version. The extension carries a copy of the CLI inside it — that is what
+makes "install the extension and start" true — so a release that updates npm
+alone leaves every extension user on the old MICHI with nothing telling them.
 
-1. Move the `CHANGELOG.md` entry out of `[Unreleased]`, with the date.
-2. Bump the version in all four `package.json` files **and** in
-   `packages/core/src/identity.ts`, which is where the CLI reads it from.
-3. Tag `v<version>`.
-4. `pnpm release:publish` — a deliberate, separate act, never a side effect of
-   a green build. It runs the gate, refuses a version already on the registry,
-   publishes all four, and then installs what it just published from the
-   registry into a clean directory to prove a stranger can use it.
+```bash
+pnpm version:set 0.3.0     # five manifests and identity.ts, in one place
+# then write the CHANGELOG entry
+pnpm release               # npm, then both editor registries
+```
 
-> **An npm organisation is created on the website**, at
-> <https://www.npmjs.com/org/create>. There is no `npm org create` — the CLI's
-> `npm org` only manages members of an org that already exists.
+`pnpm release` refuses before doing anything slow if the versions disagree, if
+npm is not logged in, or if either extension token is missing. It publishes
+npm first because that half can be resumed if 2FA times out, then the
+extension, then asks every registry whether it is actually serving the new
+version — a successful upload only proves the upload worked.
 
-> **Never run `npm publish` here.** These packages depend on each other with
-> pnpm's `workspace:*` protocol, which is correct for development and
-> meaningless to a registry. `pnpm publish` rewrites it to the real version on
-> the way out; `npm publish` ships it verbatim, and the published package then
-> fails to install with `EUNSUPPORTEDPROTOCOL`. That is exactly how
-> `michi-adapters@0.1.0` was broken, and published versions are immutable — the
-> only fix was a version bump.
+Users get it from there on their own: npm installs are explicit, and editors
+update extensions themselves, with the CLI travelling inside.
+
+> **Never run `npm publish` or `vsce publish` by hand.** The scripts exist
+> because each has caught a real mistake: a `workspace:*` dependency that no
+> installer can resolve, a package name derived from a folder that had been
+> renamed, and a vsix with no CLI inside it.
 
 Until 1.0.0 the `.michi/` state format may change between minor versions. It
 carries a `schema_version` and MICHI refuses state it does not understand
