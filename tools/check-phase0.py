@@ -714,8 +714,12 @@ check("vscode  the readme promises no setup, and keeps that promise",
       # the npm install is still mentioned, as optional, for terminal use
       and "npm install -g @dev-subhash/michi" in rd
       and says(rd, "optional, for terminal use"))
-check("vscode  the publisher id matches the npm scope",
-      _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
+# The npm scope and the marketplace publisher are different namespaces, and
+# the marketplace shows the publisher's display name rather than its id. The
+# id is the owner's own name there; what must hold is that the docs say which
+# is which, not that the two strings match.
+check("vscode  the publisher id is recorded and the docs say where the name comes from",
+      _json.loads((VSC / "package.json").read_text())["publisher"] == "SubhashYadav"
       and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))
 check("release  package names come from the manifests, not from folder names",
       says(pubtext, "Read each package's real name from its own manifest")
