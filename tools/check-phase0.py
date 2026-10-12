@@ -704,7 +704,7 @@ check("vscode  the extension and the npm package share a name",
       _json.loads((VSC / "package.json").read_text())["displayName"] == "MICHI"
       # the marketplace requires a globally unique extension name, and
       # "michi" belongs to another publisher
-      and _json.loads((VSC / "package.json").read_text())["name"] == "michi-engineering"
+      and _json.loads((VSC / "package.json").read_text())["name"] == "michi-dev"
       and says((VSC / "PUBLISHING.md").read_text(),
                "must be unique across the whole Marketplace"))
 check("vscode  it tells you when the CLI is behind what it calls",

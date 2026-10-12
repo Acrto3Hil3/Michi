@@ -48,7 +48,7 @@ pnpm publish:openvsx -p <token>
 
 The extension **`name`** must be unique across the whole Marketplace, not just
 within a publisher — `michi` and `michi-ai` were already taken, so this is
-`michi-engineering` and the identifier is `dev-subhash.michi-engineering`.
+`michi-dev` and the identifier is `dev-subhash.michi-dev`.
 
 The **`displayName`** is "MICHI" and is what appears in search results and as
 the page title. Only the identifier carries the longer name.
