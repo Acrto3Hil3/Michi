@@ -46,12 +46,17 @@ pnpm publish:openvsx -p <token>
 
 ## Two names, and why
 
-The extension **`name`** must be unique across the whole Marketplace, not just
-within a publisher — `michi` and `michi-ai` were already taken, so this is
-`michi-dev` and the identifier is `dev-subhash.michi-dev`.
+Both the **`name`** and the **`displayName`** must be unique across the whole
+Marketplace, not merely within a publisher. `michi` and `Michi` both belong to
+`charlescoult`, and `michi-ai` to `michi-company`, so:
 
-The **`displayName`** is "MICHI" and is what appears in search results and as
-the page title. Only the identifier carries the longer name.
+| Field | Value |
+|---|---|
+| `name` | `michi-dev` → identifier `dev-subhash.michi-dev` |
+| `displayName` | `MICHI — Idea to Software` → what search results show |
+
+The upload rejects each of these separately, and the second rejection only
+appears after the first is fixed, so check both before packaging.
 
 ## The name a reader sees
 

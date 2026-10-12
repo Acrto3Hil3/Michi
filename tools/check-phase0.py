@@ -701,7 +701,9 @@ check("vscode  a michi the user installed themselves still wins",
       says((VSC / "src" / "resolve.ts").read_text(),
            "A michi the user installed themselves still wins"))
 check("vscode  the extension and the npm package share a name",
-      _json.loads((VSC / "package.json").read_text())["displayName"] == "MICHI"
+      # Both the extension name and the display name must be unique across the
+# whole Marketplace. "michi" and "Michi" both belong to charlescoult.
+      _json.loads((VSC / "package.json").read_text())["displayName"].startswith("MICHI")
       # the marketplace requires a globally unique extension name, and
       # "michi" belongs to another publisher
       and _json.loads((VSC / "package.json").read_text())["name"] == "michi-dev"
