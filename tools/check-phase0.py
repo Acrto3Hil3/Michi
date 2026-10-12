@@ -723,6 +723,19 @@ check("vscode  the readme promises no setup, and keeps that promise",
 # the marketplace shows the publisher's display name rather than its id. The
 # id is the owner's own name there; what must hold is that the docs say which
 # is which, not that the two strings match.
+# A marketplace listing is a shop window: every field it can show and does
+# not is a question a visitor answers by leaving.
+check("vscode  the listing fills every field the marketplace can show",
+      all(k in (vj := _json.loads((VSC / "package.json").read_text()))
+          for k in ("displayName", "description", "icon", "galleryBanner",
+                    "categories", "keywords", "badges", "qna", "pricing",
+                    "repository", "bugs", "homepage", "license")))
+check("vscode  it declares what it can and cannot do in an untrusted workspace",
+      vj.get("capabilities", {}).get("untrustedWorkspaces", {}).get("supported") == "limited"
+      and vj["capabilities"]["virtualWorkspaces"]["supported"] is False)
+check("vscode  it ships the three tabs a reader looks for",
+      all((VSC / f).is_file() for f in ("README.md", "LICENSE", "CHANGELOG.md")))
+
 check("vscode  the publisher id is recorded and the docs say where the name comes from",
       _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
       and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))

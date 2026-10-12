@@ -4,11 +4,15 @@
   "description": "MICHI \u2014 turn an idea into requirements, decisions, architecture and a precise brief for your AI coding agent. Local-first, no API key, works with Claude Code, Cursor, Copilot, Codex, Zed and more.",
   "version": "0.2.0",
   "private": true,
+  "pricing": "Free",
   "license": "MIT",
   "publisher": "dev-subhash",
   "author": {
     "name": "Subhash Yadav",
     "url": "https://github.com/Acrto3Hil3"
+  },
+  "sponsor": {
+    "url": "https://github.com/Acrto3Hil3/Michi"
   },
   "repository": {
     "type": "git",
@@ -19,6 +23,7 @@
     "url": "https://github.com/Acrto3Hil3/Michi/issues"
   },
   "homepage": "https://github.com/Acrto3Hil3/Michi#readme",
+  "qna": "https://github.com/Acrto3Hil3/Michi/issues",
   "categories": [
     "AI",
     "Programming Languages",
@@ -36,9 +41,42 @@
     "cursor",
     "copilot"
   ],
+  "badges": [
+    {
+      "url": "https://img.shields.io/badge/License-MIT-green.svg",
+      "href": "https://github.com/Acrto3Hil3/Michi/blob/main/LICENSE",
+      "description": "MIT licensed"
+    },
+    {
+      "url": "https://img.shields.io/npm/v/%40dev-subhash%2Fmichi",
+      "href": "https://www.npmjs.com/package/@dev-subhash/michi",
+      "description": "The MICHI CLI on npm"
+    }
+  ],
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0B0B0B",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0",
     "node": ">=20"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "MICHI can run commands this project lists under verification.allow. In a workspace you do not trust, that list is not yours.",
+      "restrictedConfigurations": [
+        "michi.path"
+      ]
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "MICHI reads and writes .michi/ on disk and runs commands in the project folder."
+    }
   },
   "main": "./dist/extension.js",
   "type": "commonjs",
@@ -84,11 +122,6 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.2.1",
     "ovsx": "^0.10.1"
-  },
-  "icon": "media/icon.png",
-  "galleryBanner": {
-    "color": "#0B0B0B",
-    "theme": "dark"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && pnpm bundle:cli",
