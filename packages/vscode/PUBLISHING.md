@@ -44,6 +44,15 @@ npx ovsx create-namespace dev-subhash -p <token>   # once
 pnpm publish:openvsx -p <token>
 ```
 
+## Two names, and why
+
+The extension **`name`** must be unique across the whole Marketplace, not just
+within a publisher — `michi` and `michi-ai` were already taken, so this is
+`michi-engineering` and the identifier is `dev-subhash.michi-engineering`.
+
+The **`displayName`** is "MICHI" and is what appears in search results and as
+the page title. Only the identifier carries the longer name.
+
 ## The name a reader sees
 
 The publisher **id** is `dev-subhash`, and that is what appears in the
