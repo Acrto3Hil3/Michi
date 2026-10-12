@@ -21,12 +21,12 @@ under a Microsoft account, plus a Personal Access Token from Azure DevOps
 (https://dev.azure.com) scoped to **Marketplace → Manage**.
 
 The publisher id must match `"publisher"` in `package.json`, which is
-`SubhashYadav`. Set its **display name** to `Subhash Yadav` on that page — the
+`dev-subhash`. Set its **display name** to `Subhash Yadav` on that page — the
 id is what appears in the extension's identifier, the display name is what a
 reader sees under the title.
 
 ```bash
-npx vsce login SubhashYadav     # paste the PAT when asked
+npx vsce login dev-subhash     # paste the PAT when asked
 pnpm publish:vscode
 ```
 
@@ -40,14 +40,14 @@ Needed: an account at https://open-vsx.org (sign in with GitHub), a signed
 Publisher Agreement, and an access token from the profile page.
 
 ```bash
-npx ovsx create-namespace SubhashYadav -p <token>   # once
+npx ovsx create-namespace dev-subhash -p <token>   # once
 pnpm publish:openvsx -p <token>
 ```
 
 ## The name a reader sees
 
-The publisher **id** is `SubhashYadav`, and that is what appears in the
-extension identifier — `SubhashYadav.michi`. It cannot be changed after the
+The publisher **id** is `dev-subhash`, and that is what appears in the
+extension identifier — `dev-subhash.michi`. It cannot be changed after the
 first publish.
 
 The publisher **display name** is separate, set on the management page, and it
@@ -64,6 +64,6 @@ has to work with locally. This is not something the build can fix.
 - `pnpm package` must run clean. The `.vsix` should contain `dist/`, the
   icon, the readme and the licence — no source, no tests, no sourcemaps.
 - The extension needs the CLI installed separately
-  (`npm install -g @SubhashYadav/michi`). The readme says so; do not
+  (`npm install -g @dev-subhash/michi`). The readme says so; do not
   bundle a copy, because then there would be two versions of MICHI on one
   machine and no way to tell which answered.

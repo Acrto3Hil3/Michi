@@ -719,7 +719,7 @@ check("vscode  the readme promises no setup, and keeps that promise",
 # id is the owner's own name there; what must hold is that the docs say which
 # is which, not that the two strings match.
 check("vscode  the publisher id is recorded and the docs say where the name comes from",
-      _json.loads((VSC / "package.json").read_text())["publisher"] == "SubhashYadav"
+      _json.loads((VSC / "package.json").read_text())["publisher"] == "dev-subhash"
       and says((VSC / "PUBLISHING.md").read_text(), "the display name is what a reader sees"))
 check("release  package names come from the manifests, not from folder names",
       says(pubtext, "Read each package's real name from its own manifest")
